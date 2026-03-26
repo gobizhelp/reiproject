@@ -5,7 +5,7 @@ import { Property, PropertyPhoto, Comp, DealAnalysis } from "@/lib/types";
 import { formatCurrency, formatPercent } from "@/lib/calculations";
 import {
   Building2, Bed, Bath, Maximize, Calendar, MapPin, Phone, Mail, User,
-  ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info
+  ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info, ArrowRight
 } from "lucide-react";
 
 interface Props {
@@ -271,6 +271,23 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
             </section>
           </div>
         </div>
+
+        {/* Sign Up CTA */}
+        <section className="mt-12 bg-accent/10 border border-accent/30 rounded-2xl p-8 text-center">
+          <h2 className="text-2xl font-bold mb-2">
+            Want to see more {property.contact_name ? `from ${property.contact_name}` : "properties like this"}?
+          </h2>
+          <p className="text-muted mb-6 max-w-lg mx-auto">
+            Sign up for free to browse more off-market deals and connect with wholesalers on DealPacket.
+          </p>
+          <a
+            href="/signup"
+            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+          >
+            Sign up here
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </section>
       </div>
     </div>
   );
