@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Property, PropertyPhoto, Comp, DealAnalysis } from "@/lib/types";
 import { formatCurrency, formatPercent, formatCurrencyRange } from "@/lib/calculations";
 import {
   Building2, Bed, Bath, Maximize, Calendar, MapPin, Phone, Mail, User,
   ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info, ArrowRight,
-  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send
+  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send, X
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 
@@ -18,23 +19,26 @@ interface Props {
   isLoggedIn?: boolean;
   isOwn?: boolean;
   isSaved?: boolean;
-  sentMessageTypes?: string[];
+  existingConversationId?: string | null;
 }
 
-export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, sentMessageTypes: initialSent }: Props) {
+export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, existingConversationId }: Props) {
+  const router = useRouter();
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [saved, setSaved] = useState(initialSaved || false);
-  const [sentTypes, setSentTypes] = useState<string[]>(initialSent || []);
   const [askOpen, setAskOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [sending, setSending] = useState(false);
+  const [conversationStarted, setConversationStarted] = useState(!!existingConversationId);
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
 
   const hasLightRehab = property.light_rehab_arv || property.light_rehab_budget_low;
   const hasFullRehab = property.full_rehab_arv_low || property.full_rehab_budget_low;
   const hasRentals = property.rent_after_reno_low || property.rent_after_reno_basement_low;
-  const showActions = isLoggedIn && !isOwn;
+  const showActions = !isOwn;
 
   async function toggleSave() {
+    if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
     const wasSaved = saved;
     setSaved(!wasSaved);
     const res = await fetch("/api/saved-listings", {
@@ -45,24 +49,41 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
     if (!res.ok) setSaved(wasSaved);
   }
 
-  async function sendMessage(type: string, customMessage?: string) {
-    const prev = [...sentTypes];
-    setSentTypes([...sentTypes, type]);
-    const res = await fetch("/api/listing-messages", {
+  async function handleAction(type: string, customMessage?: string) {
+    if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
+    if (type === "ask_question" && !customMessage) { setAskOpen(true); return; }
+    // If conversation already exists for showing/offer, confirm first
+    if (conversationStarted && (type === "request_showing" || type === "make_offer") && !confirmAction) {
+      setConfirmAction(type);
+      return;
+    }
+    setConfirmAction(null);
+    setSending(true);
+    const res = await fetch("/api/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ propertyId: property.id, messageType: type, customMessage }),
+      body: JSON.stringify({
+        propertyId: property.id,
+        action: type,
+        customMessage,
+        shareContact: false,
+      }),
     });
-    if (!res.ok) setSentTypes(prev);
+
+    if (res.ok) {
+      const data = await res.json();
+      setConversationStarted(true);
+      setAskOpen(false);
+      setQuestion("");
+      router.push(`/messages/${data.conversationId}`);
+    }
+    setSending(false);
   }
 
   async function handleAskQuestion() {
     if (!question.trim()) return;
-    setSending(true);
-    await sendMessage("ask_question", question);
-    setQuestion("");
-    setAskOpen(false);
-    setSending(false);
+    if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
+    await handleAction("ask_question", question);
   }
 
   return (
@@ -172,49 +193,46 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
           </div>
         )}
 
-        {/* Buyer Action Bar */}
+        {/* Action Bar - shown to everyone except property owner */}
         {showActions && (
           <div className="bg-card border border-border rounded-2xl p-4 mb-8">
             <div className="flex flex-col sm:flex-row gap-3">
+              {isLoggedIn && (
+                <button
+                  onClick={toggleSave}
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                    saved
+                      ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                      : "bg-card border border-border text-muted hover:text-foreground hover:border-muted"
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
+                  {saved ? "Saved" : "Save"}
+                </button>
+              )}
               <button
-                onClick={toggleSave}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
-                  saved
-                    ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                    : "bg-card border border-border text-muted hover:text-foreground hover:border-muted"
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
-                {saved ? "Saved" : "Save"}
-              </button>
-              <button
-                onClick={() => sendMessage("request_showing")}
-                disabled={sentTypes.includes("request_showing")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
-                  sentTypes.includes("request_showing")
-                    ? "bg-success/20 text-success border border-success/30 cursor-default"
-                    : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
-                }`}
+                onClick={() => handleAction("request_showing")}
+                disabled={sending}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 disabled:opacity-50"
               >
                 <Eye className="w-4 h-4" />
-                {sentTypes.includes("request_showing") ? "Showing Requested" : "Request Showing"}
+                Request Showing
               </button>
               <button
-                onClick={() => sendMessage("make_offer")}
-                disabled={sentTypes.includes("make_offer")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
-                  sentTypes.includes("make_offer")
-                    ? "bg-success/20 text-success border border-success/30 cursor-default"
-                    : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
-                }`}
+                onClick={() => handleAction("make_offer")}
+                disabled={sending}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 disabled:opacity-50"
               >
                 <DollarSign className="w-4 h-4" />
-                {sentTypes.includes("make_offer") ? "Offer Sent" : "Make Offer"}
+                Make Offer
               </button>
             </div>
             {!askOpen ? (
               <button
-                onClick={() => setAskOpen(true)}
+                onClick={() => {
+                  if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
+                  setAskOpen(true);
+                }}
                 className="w-full mt-3 flex items-center justify-center gap-2 text-sm text-muted hover:text-foreground py-2.5 rounded-lg border border-border hover:border-muted transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
@@ -240,6 +258,50 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                 </button>
               </div>
             )}
+            {/* Existing conversation link */}
+            {conversationStarted && existingConversationId && (
+              <button
+                onClick={() => router.push(`/messages/${existingConversationId}`)}
+                className="w-full mt-3 flex items-center justify-center gap-2 text-sm text-accent py-2.5 rounded-lg border border-accent/30 hover:bg-accent/10 transition-colors"
+              >
+                <MessageSquare className="w-4 h-4" />
+                View Conversation
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Confirm re-send modal */}
+        {confirmAction && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setConfirmAction(null)}>
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold">
+                  {confirmAction === "request_showing" ? "Request Another Showing?" : "Send Another Offer?"}
+                </h3>
+                <button onClick={() => setConfirmAction(null)} className="text-muted hover:text-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm text-muted mb-6">
+                You&apos;ve already {confirmAction === "request_showing" ? "requested a showing" : "sent an offer"} for this property. Would you like to send again?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmAction(null)}
+                  className="flex-1 px-4 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-background transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleAction(confirmAction)}
+                  disabled={sending}
+                  className="flex-1 px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                >
+                  {sending ? "Sending..." : "Send Again"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -510,35 +572,8 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
             )}
           </div>
 
-          {/* Right column - Contact & Showing */}
+          {/* Right column */}
           <div className="space-y-6">
-            {/* Contact Info */}
-            {(property.contact_name || property.contact_phone || property.contact_email) && (
-              <section className="bg-card border border-border rounded-2xl p-6">
-                <h2 className="text-lg font-bold mb-4">Contact</h2>
-                <div className="space-y-3">
-                  {property.contact_name && (
-                    <div className="flex items-center gap-3">
-                      <User className="w-4 h-4 text-muted" />
-                      <span>{property.contact_name}</span>
-                    </div>
-                  )}
-                  {property.contact_phone && (
-                    <a href={`tel:${property.contact_phone}`} className="flex items-center gap-3 text-accent hover:underline">
-                      <Phone className="w-4 h-4" />
-                      <span>{property.contact_phone}</span>
-                    </a>
-                  )}
-                  {property.contact_email && (
-                    <a href={`mailto:${property.contact_email}`} className="flex items-center gap-3 text-accent hover:underline">
-                      <Mail className="w-4 h-4" />
-                      <span>{property.contact_email}</span>
-                    </a>
-                  )}
-                </div>
-              </section>
-            )}
-
             {/* Showing Instructions */}
             {property.showing_instructions && (
               <section className="bg-card border border-border rounded-2xl p-6">

@@ -49,10 +49,10 @@ create table if not exists buyer_buy_boxes (
 alter table profiles enable row level security;
 alter table buyer_buy_boxes enable row level security;
 
--- Profiles: users can manage their own profile
-create policy "Users can view own profile"
+-- Profiles: authenticated users can view any profile (needed for messaging sender info)
+create policy "Authenticated users can view profiles"
   on profiles for select
-  using (auth.uid() = id);
+  using (auth.uid() is not null);
 
 create policy "Users can create own profile"
   on profiles for insert

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // Seller view: messages received
     const { data, error } = await supabase
       .from("listing_messages")
-      .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_type, beds, baths, sqft, property_photos(id, url, display_order)), sender:profiles!listing_messages_sender_id_fkey(full_name, company_name, phone)")
+      .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_type, beds, baths, sqft, property_photos(id, url, display_order))")
       .eq("recipient_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -36,7 +36,25 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: error.message }, { status: 500 });
     }
 
-    return Response.json({ messages: data });
+    // Fetch sender profiles separately (profiles RLS + indirect FK prevents embedded join)
+    const senderIds = [...new Set((data || []).map((m: any) => m.sender_id))];
+    let profileMap: Record<string, any> = {};
+    if (senderIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, company_name, phone")
+        .in("id", senderIds);
+      (profiles || []).forEach((p: any) => {
+        profileMap[p.id] = { full_name: p.full_name, company_name: p.company_name, phone: p.phone };
+      });
+    }
+
+    const messages = (data || []).map((m: any) => ({
+      ...m,
+      sender: profileMap[m.sender_id] || null,
+    }));
+
+    return Response.json({ messages });
   }
 
   // Buyer view: messages sent
@@ -93,21 +111,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Cannot message your own property" }, { status: 400 });
   }
 
-  // For request_showing and make_offer, check if already sent
-  if (messageType !== "ask_question") {
-    const { data: existing } = await supabase
-      .from("listing_messages")
-      .select("id")
-      .eq("sender_id", user.id)
-      .eq("property_id", propertyId)
-      .eq("message_type", messageType)
-      .maybeSingle();
-
-    if (existing) {
-      return Response.json({ message: "Already sent" });
-    }
-  }
-
   const message = messageType === "ask_question"
     ? customMessage.trim()
     : DEFAULT_MESSAGES[messageType];
@@ -124,6 +127,63 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  // Also create/update a conversation so this appears in the DM system
+  try {
+    const { data: existingConv, error: convQueryErr } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("buyer_id", user.id)
+      .eq("property_id", propertyId)
+      .maybeSingle();
+
+    if (convQueryErr) {
+      console.error("Conversation query error:", convQueryErr.message);
+    }
+
+    let conversationId: string | null = null;
+
+    if (existingConv) {
+      conversationId = existingConv.id;
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+    } else if (!convQueryErr) {
+      const { data: newConv, error: convInsertErr } = await supabase
+        .from("conversations")
+        .insert({
+          property_id: propertyId,
+          buyer_id: user.id,
+          seller_id: property.user_id,
+          initial_action: messageType,
+          buyer_shared_contact: false,
+        })
+        .select("id")
+        .single();
+
+      if (convInsertErr) {
+        console.error("Conversation insert error:", convInsertErr.message);
+      }
+      if (newConv) conversationId = newConv.id;
+    }
+
+    if (conversationId) {
+      const { error: msgInsertErr } = await supabase
+        .from("conversation_messages")
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          message,
+        });
+
+      if (msgInsertErr) {
+        console.error("Conversation message insert error:", msgInsertErr.message);
+      }
+    }
+  } catch (e) {
+    console.error("Conversation bridge error:", e);
   }
 
   return Response.json({ message: "Sent" });

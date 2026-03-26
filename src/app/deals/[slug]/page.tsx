@@ -66,11 +66,11 @@ export default async function DealPacketPage({ params }: Props) {
 
   // Fetch buyer-specific data if logged in
   let isSaved = false;
-  let sentMessageTypes: string[] = [];
+  let existingConversationId: string | null = null;
   const isOwn = user?.id === property.user_id;
 
   if (user && !isOwn) {
-    const [savedRes, msgsRes] = await Promise.all([
+    const [savedRes, convRes] = await Promise.all([
       supabase
         .from("saved_listings")
         .select("id")
@@ -78,14 +78,15 @@ export default async function DealPacketPage({ params }: Props) {
         .eq("property_id", property.id)
         .maybeSingle(),
       supabase
-        .from("listing_messages")
-        .select("message_type")
-        .eq("sender_id", user.id)
-        .eq("property_id", property.id),
+        .from("conversations")
+        .select("id")
+        .eq("buyer_id", user.id)
+        .eq("property_id", property.id)
+        .maybeSingle(),
     ]);
 
     isSaved = !!savedRes.data;
-    sentMessageTypes = (msgsRes.data as any[] || []).map((m: any) => m.message_type as string);
+    existingConversationId = convRes.data?.id || null;
   }
 
   return (
@@ -97,7 +98,7 @@ export default async function DealPacketPage({ params }: Props) {
       isLoggedIn={!!user}
       isOwn={isOwn}
       isSaved={isSaved}
-      sentMessageTypes={sentMessageTypes}
+      existingConversationId={existingConversationId}
     />
   );
 }
