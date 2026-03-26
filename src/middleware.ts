@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protected routes
-  const protectedPaths = ['/dashboard', '/properties', '/buyers', '/marketplace', '/my-buy-boxes', '/settings', '/saved-listings', '/messages', '/admin'];
+  const protectedPaths = ['/dashboard', '/properties', '/buyers', '/marketplace', '/my-buy-boxes', '/settings', '/saved-listings', '/matched-listings', '/messages', '/admin'];
   const isProtected = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
@@ -86,5 +86,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/properties/:path*', '/buyers/:path*', '/marketplace/:path*', '/my-buy-boxes/:path*', '/settings/:path*', '/saved-listings/:path*', '/messages/:path*', '/admin/:path*', '/login', '/signup', '/auth/callback'],
+  matcher: ['/dashboard/:path*', '/properties/:path*', '/buyers/:path*', '/marketplace/:path*', '/my-buy-boxes/:path*', '/settings/:path*', '/saved-listings/:path*', '/matched-listings/:path*', '/messages/:path*', '/admin/:path*', '/login', '/signup', '/auth/callback'],
 };
