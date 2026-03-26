@@ -21,6 +21,13 @@ export default async function MarketplacePage() {
 
   const buyerTier = profile?.buyer_tier ?? "free";
 
+  // Fetch user's saved searches (Pro+ feature)
+  const { data: savedSearches } = await supabase
+    .from("saved_searches")
+    .select("id, name, filters, created_at, updated_at")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false });
+
   // Fetch all published properties with photos
   const { data: properties } = await supabase
     .from("properties")
@@ -105,6 +112,7 @@ export default async function MarketplacePage() {
         sentMessages={sentMessageMap}
         currentUserId={user.id}
         buyerTier={buyerTier}
+        initialSavedSearches={savedSearches || []}
         earlyAccessPropertyIds={earlyAccessPropertyIds}
       />
     </div>
