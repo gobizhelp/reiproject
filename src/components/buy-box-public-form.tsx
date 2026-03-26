@@ -8,6 +8,7 @@ import {
   DB_COLUMN_FIELD_IDS,
 } from "@/lib/buy-box-types";
 import { Loader2, Send, CheckCircle } from "lucide-react";
+import CitySearchSelect from "@/components/city-search-select";
 
 interface Props {
   form: BuyBoxForm;
@@ -80,6 +81,8 @@ export default function BuyBoxPublicForm({ form }: Props) {
             submission[field.id] = val || false;
           } else if (field.type === "multi-select") {
             submission[field.id] = val || [];
+          } else if (field.id === "locations" && Array.isArray(val)) {
+            submission[field.id] = val.length > 0 ? JSON.stringify(val) : null;
           } else {
             submission[field.id] = val || null;
           }
@@ -301,6 +304,24 @@ function FieldRenderer({
             </option>
           ))}
         </select>
+      </div>
+    );
+  }
+
+  // City search for locations field
+  if (field.id === "locations") {
+    const cityList: string[] = Array.isArray(value) ? value : [];
+    return (
+      <div>
+        <label className={labelClass}>
+          {field.label}
+          {field.required && <span className="text-danger ml-1">*</span>}
+        </label>
+        <CitySearchSelect
+          value={cityList}
+          onChange={(cities) => onChange(cities)}
+          placeholder="Search for a city..."
+        />
       </div>
     );
   }

@@ -15,7 +15,17 @@ import {
   Building,
   X,
   Download,
+  MapPin,
 } from "lucide-react";
+
+function parseLocations(locations: string | null): string[] {
+  if (!locations) return [];
+  try {
+    const parsed = JSON.parse(locations);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {}
+  return locations.split(",").map((s) => s.trim()).filter(Boolean);
+}
 
 interface Props {
   submissions: BuyBoxSubmission[];
@@ -61,7 +71,7 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
           s.email,
           s.phone,
           s.company_name,
-          s.locations,
+          ...parseLocations(s.locations),
           ...(s.property_types || []),
           ...(s.financing_types || []),
           ...customVals,
@@ -179,7 +189,7 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
         s.phone || "",
         s.company_name || "",
         (s.property_types || []).join("; "),
-        s.locations || "",
+        parseLocations(s.locations).join("; "),
         s.min_price ?? "",
         s.max_price ?? "",
         s.min_beds ?? "",
@@ -480,7 +490,22 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                         {(sub.property_types || []).length > 0 && (
                           <DetailRow label="Property Types" value={(sub.property_types || []).join(", ")} />
                         )}
-                        {sub.locations && <DetailRow label="Locations" value={sub.locations} />}
+                        {sub.locations && parseLocations(sub.locations).length > 0 && (
+                          <div className="flex items-start gap-2 text-sm">
+                            <span className="text-muted flex-shrink-0 w-28">Locations:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {parseLocations(sub.locations).map((loc) => (
+                                <span
+                                  key={loc}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/10 text-accent text-xs"
+                                >
+                                  <MapPin className="w-3 h-3" />
+                                  {loc}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {(sub.min_price || sub.max_price) && (
                           <DetailRow
                             label="Budget"

@@ -9,20 +9,38 @@ import {
   PROPERTY_CONDITION_OPTIONS, CLOSING_TIMELINE_OPTIONS,
 } from "@/lib/buy-box-types";
 import {
-  Plus, Trash2, Edit3, X, Save, Loader2, Package, ChevronDown, ChevronUp
+  Plus, Trash2, Edit3, X, Save, Loader2, Package, ChevronDown, ChevronUp, MapPin
 } from "lucide-react";
+import CitySearchSelect from "@/components/city-search-select";
 
 interface Props {
   buyBoxes: BuyerBuyBox[];
   userId: string;
 }
 
-type BuyBoxFormData = Omit<BuyerBuyBox, "id" | "user_id" | "created_at" | "updated_at">;
+type BuyBoxFormData = Omit<BuyerBuyBox, "id" | "user_id" | "created_at" | "updated_at"> & {
+  locations_list: string[];
+};
+
+function parseLocations(locations: string | null): string[] {
+  if (!locations) return [];
+  try {
+    const parsed = JSON.parse(locations);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {}
+  // Fallback: treat as comma-separated
+  return locations.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function serializeLocations(list: string[]): string | null {
+  return list.length > 0 ? JSON.stringify(list) : null;
+}
 
 const emptyForm: BuyBoxFormData = {
   name: "",
   property_types: [],
   locations: null,
+  locations_list: [],
   min_price: null,
   max_price: null,
   min_beds: null,
@@ -56,6 +74,7 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
       name: box.name,
       property_types: box.property_types || [],
       locations: box.locations,
+      locations_list: parseLocations(box.locations),
       min_price: box.min_price,
       max_price: box.max_price,
       min_beds: box.min_beds,
@@ -84,7 +103,7 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
       user_id: userId,
       name: form.name.trim(),
       property_types: form.property_types,
-      locations: form.locations || null,
+      locations: serializeLocations(form.locations_list),
       min_price: form.min_price || null,
       max_price: form.max_price || null,
       min_beds: form.min_beds || null,
@@ -208,12 +227,10 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
             {/* Locations */}
             <div>
               <label className="block text-sm font-medium mb-2">Target Markets / Areas</label>
-              <textarea
-                value={form.locations || ""}
-                onChange={(e) => setForm({ ...form, locations: e.target.value })}
-                rows={2}
-                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                placeholder="e.g. Miami-Dade County, Broward County..."
+              <CitySearchSelect
+                value={form.locations_list}
+                onChange={(cities) => setForm({ ...form, locations_list: cities })}
+                placeholder="Search for a city..."
               />
             </div>
 
@@ -426,9 +443,15 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
                         {box.max_price ? `$${box.max_price.toLocaleString()}` : "No max"}
                       </span>
                     )}
-                    {box.locations && (
-                      <span className="text-xs text-muted bg-background px-2 py-0.5 rounded truncate max-w-[200px]">
-                        {box.locations}
+                    {box.locations && parseLocations(box.locations).slice(0, 2).map((loc) => (
+                      <span key={loc} className="inline-flex items-center gap-1 text-xs text-muted bg-background px-2 py-0.5 rounded">
+                        <MapPin className="w-3 h-3" />
+                        {loc}
+                      </span>
+                    ))}
+                    {box.locations && parseLocations(box.locations).length > 2 && (
+                      <span className="text-xs text-muted bg-background px-2 py-0.5 rounded">
+                        +{parseLocations(box.locations).length - 2} more
                       </span>
                     )}
                   </div>
