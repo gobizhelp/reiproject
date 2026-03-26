@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Property } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
 import {
-  Heart, MapPin, Bed, Bath, Maximize, Building2, Trash2
+  Heart, MapPin, Bed, Bath, Maximize, Building2, Trash2,
+  Eye, DollarSign, MessageSquare, Send
 } from "lucide-react";
 
 interface SavedListingRow {
@@ -17,13 +18,17 @@ interface SavedListingRow {
   };
 }
 
+type ActionType = "request_showing" | "make_offer" | "ask_question";
+
 interface Props {
   savedListings: SavedListingRow[];
+  sentMessages: Record<string, string[]>;
 }
 
-export default function SavedListingsView({ savedListings: initial }: Props) {
+export default function SavedListingsView({ savedListings: initial, sentMessages }: Props) {
   const [listings, setListings] = useState(initial);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [sentMsgs, setSentMsgs] = useState<Record<string, string[]>>(sentMessages);
 
   async function unsave(propertyId: string) {
     setRemoving(propertyId);
@@ -37,6 +42,24 @@ export default function SavedListingsView({ savedListings: initial }: Props) {
       setListings(listings.filter((l) => l.property_id !== propertyId));
     }
     setRemoving(null);
+  }
+
+  async function sendMessage(propertyId: string, messageType: ActionType, customMessage?: string) {
+    const prev = { ...sentMsgs };
+    setSentMsgs({
+      ...sentMsgs,
+      [propertyId]: [...(sentMsgs[propertyId] || []), messageType],
+    });
+
+    const res = await fetch("/api/listing-messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ propertyId, messageType, customMessage }),
+    });
+
+    if (!res.ok) {
+      setSentMsgs(prev);
+    }
   }
 
   return (
@@ -69,110 +92,210 @@ export default function SavedListingsView({ savedListings: initial }: Props) {
             const property = saved.properties;
             if (!property) return null;
 
-            const photo = property.property_photos
-              ?.sort((a, b) => a.display_order - b.display_order)?.[0];
-
             return (
-              <div
+              <SavedCard
                 key={saved.id}
-                className="bg-card border border-border rounded-2xl overflow-hidden hover:border-muted transition-colors group"
-              >
-                <Link href={`/deals/${property.slug}`} className="block">
-                  <div className="relative aspect-[16/10] bg-background">
-                    {photo ? (
-                      <img src={photo.url} alt={property.street_address} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted">
-                        <Building2 className="w-12 h-12" />
-                      </div>
-                    )}
-                    {property.listing_status && (
-                      <div className="absolute top-3 left-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
-                          property.listing_status === "off_market"
-                            ? "bg-orange-500/80 text-white"
-                            : "bg-blue-500/80 text-white"
-                        }`}>
-                          {property.listing_status === "off_market" ? "Off Market" : "Listed"}
-                        </span>
-                      </div>
-                    )}
-                    {property.asking_price && (
-                      <div className="absolute bottom-3 right-3">
-                        <span className="bg-black/70 backdrop-blur-sm text-white font-bold px-3 py-1 rounded-lg text-lg">
-                          {formatCurrency(property.asking_price)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-
-                <div className="p-4">
-                  <Link href={`/deals/${property.slug}`}>
-                    <h3 className="font-bold text-lg group-hover:text-accent transition-colors truncate">
-                      {property.street_address}
-                    </h3>
-                  </Link>
-                  <p className="text-muted text-sm flex items-center gap-1 mb-3">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {property.city}, {property.state} {property.zip_code}
-                  </p>
-
-                  <div className="flex items-center gap-4 text-sm text-muted">
-                    {property.property_type && (
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5" />
-                        {property.property_type}
-                      </span>
-                    )}
-                    {property.beds != null && (
-                      <span className="flex items-center gap-1">
-                        <Bed className="w-3.5 h-3.5" />
-                        {property.beds}
-                      </span>
-                    )}
-                    {property.baths != null && (
-                      <span className="flex items-center gap-1">
-                        <Bath className="w-3.5 h-3.5" />
-                        {property.baths}
-                      </span>
-                    )}
-                    {property.sqft != null && (
-                      <span className="flex items-center gap-1">
-                        <Maximize className="w-3.5 h-3.5" />
-                        {property.sqft.toLocaleString()}
-                      </span>
-                    )}
-                  </div>
-
-                  {(property.light_rehab_arv || property.arv) && (
-                    <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-sm">
-                      <span className="text-muted">ARV</span>
-                      <span className="font-semibold text-success">
-                        {formatCurrency(property.light_rehab_arv || property.arv)}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-                    <span className="text-xs text-muted">
-                      Saved {new Date(saved.created_at).toLocaleDateString()}
-                    </span>
-                    <button
-                      onClick={() => unsave(property.id)}
-                      disabled={removing === property.id}
-                      className="flex items-center gap-1.5 text-sm text-muted hover:text-danger transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      {removing === property.id ? "Removing..." : "Remove"}
-                    </button>
-                  </div>
-                </div>
-              </div>
+                property={property}
+                savedAt={saved.created_at}
+                sentTypes={sentMsgs[property.id] || []}
+                removing={removing === property.id}
+                onRemove={() => unsave(property.id)}
+                onSendMessage={(type, msg) => sendMessage(property.id, type, msg)}
+              />
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function SavedCard({
+  property,
+  savedAt,
+  sentTypes,
+  removing,
+  onRemove,
+  onSendMessage,
+}: {
+  property: Property & { property_photos: { id: string; url: string; display_order: number }[] };
+  savedAt: string;
+  sentTypes: string[];
+  removing: boolean;
+  onRemove: () => void;
+  onSendMessage: (type: ActionType, customMessage?: string) => void;
+}) {
+  const [askOpen, setAskOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const photo = property.property_photos
+    ?.sort((a, b) => a.display_order - b.display_order)?.[0];
+
+  const hasSentShowing = sentTypes.includes("request_showing");
+  const hasSentOffer = sentTypes.includes("make_offer");
+
+  async function handleAskQuestion() {
+    if (!question.trim()) return;
+    setSending(true);
+    await onSendMessage("ask_question", question);
+    setQuestion("");
+    setAskOpen(false);
+    setSending(false);
+  }
+
+  return (
+    <div className="bg-card border border-border rounded-2xl overflow-hidden hover:border-muted transition-colors group">
+      <Link href={`/deals/${property.slug}`} className="block">
+        <div className="relative aspect-[16/10] bg-background">
+          {photo ? (
+            <img src={photo.url} alt={property.street_address} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted">
+              <Building2 className="w-12 h-12" />
+            </div>
+          )}
+          {property.listing_status && (
+            <div className="absolute top-3 left-3">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
+                property.listing_status === "off_market"
+                  ? "bg-orange-500/80 text-white"
+                  : "bg-blue-500/80 text-white"
+              }`}>
+                {property.listing_status === "off_market" ? "Off Market" : "Listed"}
+              </span>
+            </div>
+          )}
+          {property.asking_price && (
+            <div className="absolute bottom-3 right-3">
+              <span className="bg-black/70 backdrop-blur-sm text-white font-bold px-3 py-1 rounded-lg text-lg">
+                {formatCurrency(property.asking_price)}
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
+
+      <div className="p-4">
+        <Link href={`/deals/${property.slug}`}>
+          <h3 className="font-bold text-lg group-hover:text-accent transition-colors truncate">
+            {property.street_address}
+          </h3>
+        </Link>
+        <p className="text-muted text-sm flex items-center gap-1 mb-3">
+          <MapPin className="w-3.5 h-3.5" />
+          {property.city}, {property.state} {property.zip_code}
+        </p>
+
+        <div className="flex items-center gap-4 text-sm text-muted">
+          {property.property_type && (
+            <span className="flex items-center gap-1">
+              <Building2 className="w-3.5 h-3.5" />
+              {property.property_type}
+            </span>
+          )}
+          {property.beds != null && (
+            <span className="flex items-center gap-1">
+              <Bed className="w-3.5 h-3.5" />
+              {property.beds}
+            </span>
+          )}
+          {property.baths != null && (
+            <span className="flex items-center gap-1">
+              <Bath className="w-3.5 h-3.5" />
+              {property.baths}
+            </span>
+          )}
+          {property.sqft != null && (
+            <span className="flex items-center gap-1">
+              <Maximize className="w-3.5 h-3.5" />
+              {property.sqft.toLocaleString()}
+            </span>
+          )}
+        </div>
+
+        {(property.light_rehab_arv || property.arv) && (
+          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-sm">
+            <span className="text-muted">ARV</span>
+            <span className="font-semibold text-success">
+              {formatCurrency(property.light_rehab_arv || property.arv)}
+            </span>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="mt-3 pt-3 border-t border-border space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => onSendMessage("request_showing")}
+              disabled={hasSentShowing}
+              className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${
+                hasSentShowing
+                  ? "bg-success/20 text-success border border-success/30 cursor-default"
+                  : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              {hasSentShowing ? "Requested" : "Request Showing"}
+            </button>
+            <button
+              onClick={() => onSendMessage("make_offer")}
+              disabled={hasSentOffer}
+              className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${
+                hasSentOffer
+                  ? "bg-success/20 text-success border border-success/30 cursor-default"
+                  : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              {hasSentOffer ? "Sent" : "Make Offer"}
+            </button>
+          </div>
+          {!askOpen ? (
+            <button
+              onClick={() => setAskOpen(true)}
+              className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-muted hover:text-foreground py-2 rounded-lg border border-border hover:border-muted transition-colors"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Ask a Question
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
+                placeholder="Type your question..."
+                className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                autoFocus
+              />
+              <button
+                onClick={handleAskQuestion}
+                disabled={!question.trim() || sending}
+                className="px-3 py-2 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Saved date + Remove */}
+        <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+          <span className="text-xs text-muted">
+            Saved {new Date(savedAt).toLocaleDateString()}
+          </span>
+          <button
+            onClick={onRemove}
+            disabled={removing}
+            className="flex items-center gap-1.5 text-sm text-muted hover:text-danger transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {removing ? "Removing..." : "Remove"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

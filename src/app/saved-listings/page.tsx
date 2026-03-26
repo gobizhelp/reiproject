@@ -18,10 +18,25 @@ export default async function SavedListingsPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
+  // Fetch sent messages so we know which actions were already taken
+  const { data: sentMessages } = await supabase
+    .from("listing_messages")
+    .select("property_id, message_type")
+    .eq("sender_id", user.id);
+
+  const sentMessageMap: Record<string, string[]> = {};
+  (sentMessages as any[] || []).forEach((m: any) => {
+    if (!sentMessageMap[m.property_id]) sentMessageMap[m.property_id] = [];
+    sentMessageMap[m.property_id].push(m.message_type);
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <SavedListingsView savedListings={(savedListings || []) as any} />
+      <SavedListingsView
+        savedListings={(savedListings || []) as any}
+        sentMessages={sentMessageMap}
+      />
     </div>
   );
 }
