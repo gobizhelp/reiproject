@@ -163,12 +163,12 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                 {property.listing_status === "off_market" ? "Off Market" : "Listed"}
               </span>
             )}
-            {property.ideal_investor_strategy && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-accent/20 text-accent">
+            {property.ideal_investor_strategy && property.ideal_investor_strategy.split(", ").filter(Boolean).map((strategy) => (
+              <span key={strategy} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-accent/20 text-accent">
                 <Target className="w-3 h-3" />
-                {property.ideal_investor_strategy}
+                {strategy}
               </span>
-            )}
+            ))}
           </div>
         )}
 
