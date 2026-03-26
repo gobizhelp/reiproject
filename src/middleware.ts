@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protected routes
-  const protectedPaths = ['/dashboard', '/properties', '/buyers', '/marketplace', '/my-buy-boxes', '/settings', '/saved-listings', '/messages'];
+  const protectedPaths = ['/dashboard', '/properties', '/buyers', '/marketplace', '/my-buy-boxes', '/settings', '/saved-listings', '/messages', '/admin'];
   const isProtected = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
@@ -46,6 +46,28 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
+  }
+
+  // Check if user is suspended
+  if (user && isProtected) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin, is_suspended')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.is_suspended && !request.nextUrl.pathname.startsWith('/suspended')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/suspended';
+      return NextResponse.redirect(url);
+    }
+
+    // Admin route protection
+    if (request.nextUrl.pathname.startsWith('/admin') && !profile?.is_admin) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
   }
 
   // Redirect logged-in users away from auth pages
@@ -64,5 +86,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/properties/:path*', '/buyers/:path*', '/marketplace/:path*', '/my-buy-boxes/:path*', '/settings/:path*', '/saved-listings/:path*', '/messages/:path*', '/login', '/signup', '/auth/callback'],
+  matcher: ['/dashboard/:path*', '/properties/:path*', '/buyers/:path*', '/marketplace/:path*', '/my-buy-boxes/:path*', '/settings/:path*', '/saved-listings/:path*', '/messages/:path*', '/admin/:path*', '/login', '/signup', '/auth/callback'],
 };

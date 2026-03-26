@@ -8,6 +8,10 @@ export interface Profile {
   full_name: string | null;
   company_name: string | null;
   phone: string | null;
+  is_admin: boolean;
+  is_suspended: boolean;
+  suspended_at: string | null;
+  suspended_reason: string | null;
   created_at: string;
   updated_at: string;
 }
