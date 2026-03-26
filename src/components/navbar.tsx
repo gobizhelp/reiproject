@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ArrowLeftRight, ShoppingCart, Home,
-  Package, ChevronDown, Heart, MessageCircle
+  Package, ChevronDown, Heart, MessageCircle, Shield
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
 
@@ -197,6 +197,15 @@ export default function Navbar() {
             </>
           )}
 
+          {profile?.is_admin && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 rounded-lg border border-orange-500/20 transition-colors"
+            >
+              <Shield className="w-4 h-4" />
+              <span className="hidden md:inline">Admin Dashboard</span>
+            </Link>
+          )}
           <Link href="/settings" className="text-muted hover:text-foreground transition-colors">
             <Settings className="w-4 h-4" />
           </Link>

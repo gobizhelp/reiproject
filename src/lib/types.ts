@@ -48,6 +48,12 @@ export interface Property {
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
+  // Moderation
+  is_featured: boolean;
+  moderation_status: 'pending' | 'approved' | 'rejected' | 'flagged';
+  moderation_note: string | null;
+  moderated_at: string | null;
+  moderated_by: string | null;
   // Timestamps
   created_at: string;
   updated_at: string;
@@ -87,7 +93,7 @@ export interface DealAnalysis {
   profitFullRehabHigh: number;
 }
 
-export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'photos' | 'comps'>;
+export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by'>;
 
 export interface SavedListing {
   id: string;
