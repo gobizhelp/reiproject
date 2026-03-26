@@ -19,7 +19,15 @@ import {
   CheckSquare,
   Square,
   UserCheck,
+  Plus,
+  Loader2,
 } from "lucide-react";
+import {
+  PROPERTY_TYPE_OPTIONS,
+  FINANCING_TYPE_OPTIONS,
+  PROPERTY_CONDITION_OPTIONS,
+  CLOSING_TIMELINE_OPTIONS,
+} from "@/lib/buy-box-types";
 
 function parseLocations(locations: string | null): string[] {
   if (!locations) return [];
@@ -45,6 +53,7 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showAddBuyer, setShowAddBuyer] = useState(false);
 
   // Build sets for O(1) lookup
   const platformEmailSet = useMemo(() => new Set(platformEmails.map((e) => e.toLowerCase())), [platformEmails]);
@@ -347,6 +356,13 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
             >
               <CheckSquare className="w-4 h-4" />
               Select
+            </button>
+            <button
+              onClick={() => setShowAddBuyer(true)}
+              className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Buyer
             </button>
           </div>
         </div>
@@ -724,6 +740,311 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
           })}
         </div>
       )}
+
+      {/* Add Buyer Modal */}
+      {showAddBuyer && (
+        <AddBuyerModal
+          formId={formId}
+          onClose={() => setShowAddBuyer(false)}
+          onAdded={(sub) => {
+            setSubmissions((prev) => [sub, ...prev]);
+            setShowAddBuyer(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddBuyerModal({
+  formId,
+  onClose,
+  onAdded,
+}: {
+  formId: string;
+  onClose: () => void;
+  onAdded: (sub: BuyBoxSubmission) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState<Record<string, any>>({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    company_name: "",
+    property_types: [] as string[],
+    locations: "",
+    min_price: "",
+    max_price: "",
+    min_beds: "",
+    min_baths: "",
+    min_sqft: "",
+    max_sqft: "",
+    financing_types: [] as string[],
+    proof_of_funds: false,
+    closing_timeline: "",
+    property_conditions: [] as string[],
+    deals_completed: "",
+    years_experience: "",
+    additional_notes: "",
+  });
+
+  function update(field: string, value: any) {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function toggleMulti(field: string, option: string) {
+    setFormData((prev) => {
+      const current: string[] = prev[field] || [];
+      return {
+        ...prev,
+        [field]: current.includes(option)
+          ? current.filter((o: string) => o !== option)
+          : [...current, option],
+      };
+    });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.email.trim()) {
+      setError("First name, last name, and email are required.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+
+    const submission: Record<string, any> = {
+      form_id: formId,
+      first_name: formData.first_name.trim(),
+      last_name: formData.last_name.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim() || null,
+      company_name: formData.company_name.trim() || null,
+      property_types: formData.property_types,
+      locations: formData.locations.trim() || null,
+      min_price: formData.min_price ? parseFloat(formData.min_price) : null,
+      max_price: formData.max_price ? parseFloat(formData.max_price) : null,
+      min_beds: formData.min_beds ? parseInt(formData.min_beds) : null,
+      min_baths: formData.min_baths ? parseInt(formData.min_baths) : null,
+      min_sqft: formData.min_sqft ? parseInt(formData.min_sqft) : null,
+      max_sqft: formData.max_sqft ? parseInt(formData.max_sqft) : null,
+      financing_types: formData.financing_types,
+      proof_of_funds: formData.proof_of_funds,
+      closing_timeline: formData.closing_timeline || null,
+      property_conditions: formData.property_conditions,
+      deals_completed: formData.deals_completed ? parseInt(formData.deals_completed) : null,
+      years_experience: formData.years_experience ? parseInt(formData.years_experience) : null,
+      additional_notes: formData.additional_notes.trim() || null,
+    };
+
+    try {
+      const supabase = createClient();
+      const { data, error: insertError } = await supabase
+        .from("buy_box_submissions")
+        .insert(submission)
+        .select()
+        .single();
+      if (insertError) throw insertError;
+      onAdded(data as BuyBoxSubmission);
+    } catch (err: any) {
+      setError(err.message || "Failed to add buyer.");
+      setSaving(false);
+    }
+  }
+
+  const inputClass =
+    "w-full bg-background border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent text-sm";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-xl">
+        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between rounded-t-2xl">
+          <h2 className="text-lg font-semibold">Add Buyer</h2>
+          <button onClick={onClose} className="text-muted hover:text-foreground transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {error && (
+            <div className="bg-danger/10 border border-danger/30 text-danger rounded-lg px-4 py-3 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Contact Information */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">First Name <span className="text-danger">*</span></label>
+                <input type="text" value={formData.first_name} onChange={(e) => update("first_name", e.target.value)} className={inputClass} placeholder="John" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Last Name <span className="text-danger">*</span></label>
+                <input type="text" value={formData.last_name} onChange={(e) => update("last_name", e.target.value)} className={inputClass} placeholder="Doe" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email <span className="text-danger">*</span></label>
+                <input type="email" value={formData.email} onChange={(e) => update("email", e.target.value)} className={inputClass} placeholder="john@example.com" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone</label>
+                <input type="tel" value={formData.phone} onChange={(e) => update("phone", e.target.value)} className={inputClass} placeholder="(555) 123-4567" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">Company</label>
+                <input type="text" value={formData.company_name} onChange={(e) => update("company_name", e.target.value)} className={inputClass} placeholder="Acme Investments LLC" />
+              </div>
+            </div>
+          </div>
+
+          {/* Investment Criteria */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">Investment Criteria</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Property Types</label>
+                <div className="flex flex-wrap gap-2">
+                  {PROPERTY_TYPE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => toggleMulti("property_types", opt)}
+                      className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+                        formData.property_types.includes(opt)
+                          ? "bg-accent text-white border-accent"
+                          : "bg-background border-border text-foreground hover:border-accent/50"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Target Locations</label>
+                <input type="text" value={formData.locations} onChange={(e) => update("locations", e.target.value)} className={inputClass} placeholder="Miami, Tampa, Orlando..." />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Min Price</label>
+                  <input type="number" value={formData.min_price} onChange={(e) => update("min_price", e.target.value)} className={inputClass} placeholder="$50,000" min="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Max Price</label>
+                  <input type="number" value={formData.max_price} onChange={(e) => update("max_price", e.target.value)} className={inputClass} placeholder="$500,000" min="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Min Beds</label>
+                  <input type="number" value={formData.min_beds} onChange={(e) => update("min_beds", e.target.value)} className={inputClass} placeholder="2" min="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Min Baths</label>
+                  <input type="number" value={formData.min_baths} onChange={(e) => update("min_baths", e.target.value)} className={inputClass} placeholder="1" min="0" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Financing */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">Financing</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Financing Types</label>
+                <div className="flex flex-wrap gap-2">
+                  {FINANCING_TYPE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => toggleMulti("financing_types", opt)}
+                      className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+                        formData.financing_types.includes(opt)
+                          ? "bg-accent text-white border-accent"
+                          : "bg-background border-border text-foreground hover:border-accent/50"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Closing Timeline</label>
+                  <select value={formData.closing_timeline} onChange={(e) => update("closing_timeline", e.target.value)} className={inputClass}>
+                    <option value="">Select...</option>
+                    {CLOSING_TIMELINE_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end pb-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={formData.proof_of_funds} onChange={(e) => update("proof_of_funds", e.target.checked)} className="w-4 h-4 rounded border-border text-accent focus:ring-accent" />
+                    <span className="text-sm">Proof of Funds Available</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Conditions */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">Property Conditions</h3>
+            <div className="flex flex-wrap gap-2">
+              {PROPERTY_CONDITION_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => toggleMulti("property_conditions", opt)}
+                  className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+                    formData.property_conditions.includes(opt)
+                      ? "bg-accent text-white border-accent"
+                      : "bg-background border-border text-foreground hover:border-accent/50"
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Experience & Notes */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">Experience & Notes</h3>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Deals Completed</label>
+                <input type="number" value={formData.deals_completed} onChange={(e) => update("deals_completed", e.target.value)} className={inputClass} placeholder="0" min="0" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Years Experience</label>
+                <input type="number" value={formData.years_experience} onChange={(e) => update("years_experience", e.target.value)} className={inputClass} placeholder="0" min="0" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Notes</label>
+              <textarea value={formData.additional_notes} onChange={(e) => update("additional_notes", e.target.value)} className={`${inputClass} min-h-[80px]`} placeholder="Any additional info about this buyer..." />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-lg border border-border text-foreground hover:border-accent/50 text-sm font-medium transition-colors">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {saving ? "Adding..." : "Add Buyer"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
