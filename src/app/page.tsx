@@ -18,7 +18,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Building2 className="w-7 h-7 text-accent" />
-            <span className="text-xl font-bold">DealPacket</span>
+            <span className="text-xl font-bold">REI Reach</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/pricing" className="text-muted hover:text-foreground transition-colors">
@@ -47,7 +47,7 @@ export default function HomePage() {
           <span className="text-accent">Build Real Wealth.</span>
         </h1>
         <p className="text-muted text-lg md:text-xl max-w-2xl mx-auto mb-10">
-          Stop leaving money on the table. DealPacket connects wholesalers with
+          Stop leaving money on the table. REI Reach connects wholesalers with
           qualified buyers so you move properties faster, earn bigger assignment
           fees, and build the financial security your family deserves.
         </p>

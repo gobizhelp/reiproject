@@ -272,9 +272,9 @@ export default function AdminDemoManager() {
 
   // Static account definitions (same as API)
   const DEMO_ACCOUNTS: DemoAccount[] = [
-    { email: 'demo-buyer@dealpacket.test', password: 'DemoB!2025', role: 'buyer', buyerTier: 'pro', sellerTier: 'free' },
-    { email: 'demo-seller@dealpacket.test', password: 'DemoS!2025', role: 'seller', buyerTier: 'free', sellerTier: 'pro' },
-    { email: 'demo-both@dealpacket.test', password: 'DemoA!2025', role: 'both', buyerTier: 'elite', sellerTier: 'elite' },
+    { email: 'demo-buyer@reireach.test', password: 'DemoB!2025', role: 'buyer', buyerTier: 'pro', sellerTier: 'free' },
+    { email: 'demo-seller@reireach.test', password: 'DemoS!2025', role: 'seller', buyerTier: 'free', sellerTier: 'pro' },
+    { email: 'demo-both@reireach.test', password: 'DemoA!2025', role: 'both', buyerTier: 'elite', sellerTier: 'elite' },
   ];
 
   return (

@@ -8,7 +8,7 @@ export async function GET() {
     // Get all demo auth users
     const { data: authData } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 });
     const demoAuthUsers = authData?.users?.filter((u: any) =>
-      u.email?.endsWith('@dealpacket.test')
+      u.email?.endsWith('@reireach.test')
     ) || [];
 
     if (demoAuthUsers.length === 0) {

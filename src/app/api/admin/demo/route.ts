@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/admin-auth';
 
 const DEMO_ACCOUNTS = [
   {
-    email: 'demo-buyer@dealpacket.test',
+    email: 'demo-buyer@reireach.test',
     password: 'DemoB!2025',
     role: 'buyer' as const,
     name: 'Demo Buyer',
@@ -13,7 +13,7 @@ const DEMO_ACCOUNTS = [
     sellerTier: 'free' as const,
   },
   {
-    email: 'demo-seller@dealpacket.test',
+    email: 'demo-seller@reireach.test',
     password: 'DemoS!2025',
     role: 'seller' as const,
     name: 'Demo Seller',
@@ -23,7 +23,7 @@ const DEMO_ACCOUNTS = [
     sellerTier: 'pro' as const,
   },
   {
-    email: 'demo-both@dealpacket.test',
+    email: 'demo-both@reireach.test',
     password: 'DemoA!2025',
     role: 'both' as const,
     name: 'Demo Power User',
@@ -69,7 +69,7 @@ const DEMO_PROPERTIES = [
     showing_instructions: 'Call to schedule. Lockbox on front door.',
     contact_name: 'Demo Seller',
     contact_phone: '(555) 200-3000',
-    contact_email: 'demo-seller@dealpacket.test',
+    contact_email: 'demo-seller@reireach.test',
     status: 'published',
   },
   {
@@ -108,7 +108,7 @@ const DEMO_PROPERTIES = [
     showing_instructions: 'Drive by only. Occupied units - do not disturb tenants.',
     contact_name: 'Demo Seller',
     contact_phone: '(555) 200-3000',
-    contact_email: 'demo-seller@dealpacket.test',
+    contact_email: 'demo-seller@reireach.test',
     status: 'published',
   },
   {
@@ -145,7 +145,7 @@ const DEMO_PROPERTIES = [
     showing_instructions: 'Vacant property. Access via lockbox - call for code.',
     contact_name: 'Demo Power User',
     contact_phone: '(555) 300-4000',
-    contact_email: 'demo-both@dealpacket.test',
+    contact_email: 'demo-both@reireach.test',
     status: 'published',
   },
   {
@@ -182,7 +182,7 @@ const DEMO_PROPERTIES = [
     showing_instructions: 'Available for showing weekdays. Call ahead.',
     contact_name: 'Demo Seller',
     contact_phone: '(555) 200-3000',
-    contact_email: 'demo-seller@dealpacket.test',
+    contact_email: 'demo-seller@reireach.test',
     status: 'published',
   },
   {
@@ -219,7 +219,7 @@ const DEMO_PROPERTIES = [
     showing_instructions: 'Owner-occupied. Must schedule 24hr in advance.',
     contact_name: 'Demo Power User',
     contact_phone: '(555) 300-4000',
-    contact_email: 'demo-both@dealpacket.test',
+    contact_email: 'demo-both@reireach.test',
     status: 'draft',
   },
 ];
@@ -366,9 +366,9 @@ export async function POST() {
     }
 
     // 2. Create demo properties (assigned to seller and both accounts)
-    const sellerUserId = userIdMap.get('demo-seller@dealpacket.test');
-    const bothUserId = userIdMap.get('demo-both@dealpacket.test');
-    const buyerUserId = userIdMap.get('demo-buyer@dealpacket.test');
+    const sellerUserId = userIdMap.get('demo-seller@reireach.test');
+    const bothUserId = userIdMap.get('demo-both@reireach.test');
+    const buyerUserId = userIdMap.get('demo-buyer@reireach.test');
 
     if (sellerUserId || bothUserId) {
       // Delete existing demo properties first
@@ -376,7 +376,7 @@ export async function POST() {
       await adminSupabase.from('properties').delete().in('user_id', demoUserIds);
 
       for (const prop of DEMO_PROPERTIES) {
-        const ownerId = prop.contact_email === 'demo-both@dealpacket.test' ? bothUserId : sellerUserId;
+        const ownerId = prop.contact_email === 'demo-both@reireach.test' ? bothUserId : sellerUserId;
         if (!ownerId) continue;
 
         const slug = generateSlug(prop.street_address, prop.city);
@@ -524,7 +524,7 @@ export async function DELETE() {
     // Find demo users
     const { data: authData } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 });
     const demoUsers = authData?.users?.filter((u) =>
-      u.email?.endsWith('@dealpacket.test')
+      u.email?.endsWith('@reireach.test')
     ) || [];
 
     const demoUserIds = demoUsers.map((u) => u.id);

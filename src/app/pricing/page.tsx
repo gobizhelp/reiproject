@@ -56,7 +56,7 @@ export default async function PricingPage() {
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               <Building2 className="w-7 h-7 text-accent" />
-              <span className="text-xl font-bold">DealPacket</span>
+              <span className="text-xl font-bold">REI Reach</span>
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/pricing" className="text-muted hover:text-foreground transition-colors font-medium text-foreground">

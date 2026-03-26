@@ -98,7 +98,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
         <div className="bg-card border-b border-border">
           <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-2">
             <Building2 className="w-6 h-6 text-accent" />
-            <span className="font-bold text-lg">DealPacket</span>
+            <span className="font-bold text-lg">REI Reach</span>
           </div>
         </div>
       )}
@@ -660,7 +660,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
               Want to see more {property.contact_name ? `from ${property.contact_name}` : "properties like this"}?
             </h2>
             <p className="text-muted mb-6 max-w-lg mx-auto">
-              Sign up for free to browse more off-market deals and connect with wholesalers on DealPacket.
+              Sign up for free to browse more off-market deals and connect with wholesalers on REI Reach.
             </p>
             <a
               href="/signup"

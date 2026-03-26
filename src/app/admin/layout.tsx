@@ -37,7 +37,7 @@ export default async function AdminLayout({
           <div className="flex items-center gap-3">
             <Link href="/admin" className="flex items-center gap-2">
               <Building2 className="w-7 h-7 text-orange-500" />
-              <span className="text-xl font-bold">DealPacket</span>
+              <span className="text-xl font-bold">REI Reach</span>
             </Link>
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-orange-500/10 border border-orange-500/20">
               <Shield className="w-3.5 h-3.5 text-orange-500" />
