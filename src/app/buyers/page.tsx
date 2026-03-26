@@ -6,7 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import BuyerDirectory from "@/components/buyer-directory";
 import { BuyBoxForm, BuyBoxSubmission } from "@/lib/buy-box-types";
-import { Plus, Settings, Users } from "lucide-react";
+import { Plus, Settings, Users, Upload } from "lucide-react";
 import CopyLinkButtonClient from "@/components/copy-link-button";
 
 export default async function BuyersPage() {
@@ -50,6 +50,13 @@ export default async function BuyersPage() {
           <div className="flex items-center gap-3">
             {form ? (
               <>
+                <Link
+                  href="/buyers/import"
+                  className="flex items-center gap-2 border border-border hover:border-accent/50 text-foreground px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
+                >
+                  <Upload className="w-4 h-4" />
+                  Import CSV
+                </Link>
                 <Link
                   href="/buyers/form/edit"
                   className="flex items-center gap-2 border border-border hover:border-accent/50 text-foreground px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
