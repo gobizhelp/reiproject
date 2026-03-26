@@ -11,6 +11,7 @@ import {
   Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown,
   Lock, ArrowUpDown,
 } from "lucide-react";
+import ProBuyerBadge from "./pro-buyer-badge";
 
 interface PropertyWithPhotos extends Property {
   property_photos: { id: string; url: string; display_order: number }[];
@@ -289,7 +290,10 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Marketplace</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold">Marketplace</h1>
+          <ProBuyerBadge buyerTier={tier} size="md" />
+        </div>
         <p className="text-muted mt-1">Browse off-market deals from wholesalers</p>
       </div>
 
