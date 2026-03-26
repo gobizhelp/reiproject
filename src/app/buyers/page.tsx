@@ -25,6 +25,8 @@ export default async function BuyersPage() {
 
   // Get submissions if form exists
   let submissions: BuyBoxSubmission[] = [];
+  let platformEmails: Set<string> = new Set();
+  let platformPhones: Set<string> = new Set();
   if (form) {
     const { data } = await supabase
       .from("buy_box_submissions")
@@ -32,6 +34,22 @@ export default async function BuyersPage() {
       .eq("form_id", form.id)
       .order("created_at", { ascending: false });
     submissions = (data as BuyBoxSubmission[]) || [];
+
+    // Check which buyers are registered platform users (by email or phone)
+    if (submissions.length > 0) {
+      const emails = submissions.map((s) => s.email).filter(Boolean);
+      const phones = submissions.map((s) => s.phone).filter((p): p is string => !!p && p.trim() !== "");
+      const { data: matches } = await supabase.rpc("check_platform_users", {
+        check_emails: emails,
+        check_phones: phones,
+      });
+      if (matches) {
+        for (const m of matches) {
+          if (m.matched_email) platformEmails.add(m.matched_email.toLowerCase());
+          if (m.matched_phone) platformPhones.add(m.matched_phone);
+        }
+      }
+    }
   }
 
   return (
@@ -82,7 +100,7 @@ export default async function BuyersPage() {
             {/* Form Link Bar */}
             <FormLinkBar slug={form.slug} isActive={form.is_active} />
             {/* Directory */}
-            <BuyerDirectory submissions={submissions} formId={form.id} />
+            <BuyerDirectory submissions={submissions} formId={form.id} platformEmails={[...platformEmails]} platformPhones={[...platformPhones]} />
           </>
         ) : (
           <div className="bg-card border border-border rounded-2xl p-16 text-center">

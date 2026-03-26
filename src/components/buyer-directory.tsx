@@ -16,6 +16,9 @@ import {
   X,
   Download,
   MapPin,
+  CheckSquare,
+  Square,
+  UserCheck,
 } from "lucide-react";
 
 function parseLocations(locations: string | null): string[] {
@@ -30,13 +33,28 @@ function parseLocations(locations: string | null): string[] {
 interface Props {
   submissions: BuyBoxSubmission[];
   formId: string;
+  platformEmails?: string[];
+  platformPhones?: string[];
 }
 
-export default function BuyerDirectory({ submissions: initialSubmissions, formId }: Props) {
+export default function BuyerDirectory({ submissions: initialSubmissions, formId, platformEmails = [], platformPhones = [] }: Props) {
   const [submissions, setSubmissions] = useState(initialSubmissions);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Build sets for O(1) lookup
+  const platformEmailSet = useMemo(() => new Set(platformEmails.map((e) => e.toLowerCase())), [platformEmails]);
+  const platformPhoneSet = useMemo(() => new Set(platformPhones), [platformPhones]);
+
+  function isOnPlatform(sub: BuyBoxSubmission): boolean {
+    if (platformEmailSet.has(sub.email.toLowerCase())) return true;
+    if (sub.phone && platformPhoneSet.has(sub.phone)) return true;
+    return false;
+  }
 
   // Filters
   const [filterPropertyType, setFilterPropertyType] = useState("");
@@ -139,6 +157,40 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
     const { error } = await supabase.from("buy_box_submissions").delete().eq("id", id);
     if (!error) {
       setSubmissions((prev) => prev.filter((s) => s.id !== id));
+    }
+  }
+
+  async function bulkDelete() {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Remove ${selectedIds.size} buyer${selectedIds.size !== 1 ? "s" : ""} from your directory?`)) return;
+    setBulkDeleting(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("buy_box_submissions")
+      .delete()
+      .in("id", [...selectedIds]);
+    if (!error) {
+      setSubmissions((prev) => prev.filter((s) => !selectedIds.has(s.id)));
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+    }
+    setBulkDeleting(false);
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((s) => s.id)));
     }
   }
 
@@ -282,6 +334,20 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
               <Download className="w-4 h-4" />
               Export
             </button>
+            <button
+              onClick={() => {
+                setSelectionMode(!selectionMode);
+                if (selectionMode) setSelectedIds(new Set());
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                selectionMode
+                  ? "border-accent text-accent bg-accent/10"
+                  : "border-border text-foreground hover:border-accent/50"
+              }`}
+            >
+              <CheckSquare className="w-4 h-4" />
+              Select
+            </button>
           </div>
         </div>
 
@@ -382,12 +448,35 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
         )}
       </div>
 
-      {/* Results count */}
+      {/* Results count & bulk actions */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted">
-          {filtered.length} buyer{filtered.length !== 1 ? "s" : ""}{" "}
-          {searchQuery || activeFilterCount > 0 ? "(filtered)" : "total"}
-        </p>
+        <div className="flex items-center gap-3">
+          {selectionMode && (
+            <button
+              onClick={toggleSelectAll}
+              className="text-sm text-accent hover:underline"
+            >
+              {selectedIds.size === filtered.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
+          <p className="text-sm text-muted">
+            {selectionMode && selectedIds.size > 0
+              ? `${selectedIds.size} selected`
+              : `${filtered.length} buyer${filtered.length !== 1 ? "s" : ""} ${
+                  searchQuery || activeFilterCount > 0 ? "(filtered)" : "total"
+                }`}
+          </p>
+        </div>
+        {selectionMode && selectedIds.size > 0 && (
+          <button
+            onClick={bulkDelete}
+            disabled={bulkDeleting}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-danger text-white text-sm font-medium hover:bg-danger/90 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            {bulkDeleting ? "Deleting..." : `Delete ${selectedIds.size}`}
+          </button>
+        )}
       </div>
 
       {/* Submissions List */}
@@ -409,14 +498,40 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                 className="bg-card border border-border rounded-2xl overflow-hidden transition-colors hover:border-border/80"
               >
                 {/* Summary Row */}
-                <button
-                  onClick={() => setExpandedId(isExpanded ? null : sub.id)}
+                <div
                   className="w-full flex items-center gap-4 p-4 md:p-5 text-left"
                 >
+                  {/* Checkbox for selection mode */}
+                  {selectionMode && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(sub.id);
+                      }}
+                      className="flex-shrink-0 text-muted hover:text-accent transition-colors"
+                    >
+                      {selectedIds.has(sub.id) ? (
+                        <CheckSquare className="w-5 h-5 text-accent" />
+                      ) : (
+                        <Square className="w-5 h-5" />
+                      )}
+                    </button>
+                  )}
+
+                  {/* Clickable area */}
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : sub.id)}
+                    className="flex-1 flex items-center gap-4 min-w-0"
+                  >
                   {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-accent/20 text-accent flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-accent/20 text-accent flex items-center justify-center text-sm font-bold flex-shrink-0 relative">
                     {sub.first_name[0]}
                     {sub.last_name[0]}
+                    {isOnPlatform(sub) && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center" title="On DealPacket">
+                        <UserCheck className="w-2.5 h-2.5 text-white" />
+                      </span>
+                    )}
                   </div>
 
                   {/* Info */}
@@ -425,6 +540,12 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                       <span className="font-semibold">
                         {sub.first_name} {sub.last_name}
                       </span>
+                      {isOnPlatform(sub) && (
+                        <span className="px-2 py-0.5 rounded-full bg-success/15 text-success text-xs font-medium flex items-center gap-1">
+                          <UserCheck className="w-3 h-3" />
+                          On Platform
+                        </span>
+                      )}
                       {sub.company_name && (
                         <span className="text-muted text-sm">({sub.company_name})</span>
                       )}
@@ -471,7 +592,8 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                   ) : (
                     <ChevronDown className="w-5 h-5 text-muted flex-shrink-0" />
                   )}
-                </button>
+                  </button>
+                </div>
 
                 {/* Expanded Detail */}
                 {isExpanded && (

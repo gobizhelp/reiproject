@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
-import PropertyCard from "@/components/property-card";
+import PropertyList from "@/components/property-list";
 import { Plus, Upload } from "lucide-react";
 import { Property } from "@/lib/types";
 
@@ -59,11 +59,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.map((property: Property & { property_photos: { id: string; url: string; display_order: number }[] }) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
+          <PropertyList properties={properties as (Property & { property_photos: { id: string; url: string; display_order: number }[] })[]} />
         )}
       </div>
     </div>
