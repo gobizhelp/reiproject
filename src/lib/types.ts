@@ -134,3 +134,12 @@ export interface ConversationMessage {
   is_read: boolean;
   created_at: string;
 }
+
+export interface BuyerNote {
+  id: string;
+  user_id: string;
+  property_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}

@@ -10,6 +10,7 @@ import {
   Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send, X
 } from "lucide-react";
 import Navbar from "@/components/navbar";
+import BuyerNoteEditor from "@/components/buyer-note-editor";
 
 interface Props {
   property: Property;
@@ -20,9 +21,11 @@ interface Props {
   isOwn?: boolean;
   isSaved?: boolean;
   existingConversationId?: string | null;
+  noteContent?: string;
+  hasNotesFeature?: boolean;
 }
 
-export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, existingConversationId }: Props) {
+export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, existingConversationId, noteContent, hasNotesFeature }: Props) {
   const router = useRouter();
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [saved, setSaved] = useState(initialSaved || false);
@@ -580,6 +583,15 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                 <h2 className="text-lg font-bold mb-4">Showing Instructions</h2>
                 <p className="text-muted whitespace-pre-wrap">{property.showing_instructions}</p>
               </section>
+            )}
+
+            {/* Buyer Notes - shown to logged-in non-owners */}
+            {isLoggedIn && !isOwn && hasNotesFeature !== undefined && (
+              <BuyerNoteEditor
+                propertyId={property.id}
+                initialContent={noteContent}
+                hasFeature={!!hasNotesFeature}
+              />
             )}
 
             {/* Quick Summary */}

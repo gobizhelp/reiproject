@@ -6,6 +6,8 @@ import { calculateDealAnalysis, formatCurrency, formatPercent } from "@/lib/calc
 import { Property, PropertyPhoto, Comp } from "@/lib/types";
 import { Metadata } from "next";
 import DealPacketView from "@/components/deal-packet-view";
+import { profileHasBuyerFeature } from "@/lib/membership/feature-gate";
+import type { Profile } from "@/lib/profile-types";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -67,10 +69,12 @@ export default async function DealPacketPage({ params }: Props) {
   // Fetch buyer-specific data if logged in
   let isSaved = false;
   let existingConversationId: string | null = null;
+  let noteContent: string | undefined;
+  let hasNotesFeature: boolean | undefined;
   const isOwn = user?.id === property.user_id;
 
   if (user && !isOwn) {
-    const [savedRes, convRes] = await Promise.all([
+    const [savedRes, convRes, profileRes, noteRes] = await Promise.all([
       supabase
         .from("saved_listings")
         .select("id")
@@ -83,10 +87,24 @@ export default async function DealPacketPage({ params }: Props) {
         .eq("buyer_id", user.id)
         .eq("property_id", property.id)
         .maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single(),
+      supabase
+        .from("buyer_notes")
+        .select("content")
+        .eq("user_id", user.id)
+        .eq("property_id", property.id)
+        .maybeSingle(),
     ]);
 
     isSaved = !!savedRes.data;
     existingConversationId = convRes.data?.id || null;
+    noteContent = noteRes.data?.content || "";
+    const profile = profileRes.data as Profile | null;
+    hasNotesFeature = profile ? profileHasBuyerFeature(profile, "private_notes") : false;
   }
 
   return (
@@ -99,6 +117,8 @@ export default async function DealPacketPage({ params }: Props) {
       isOwn={isOwn}
       isSaved={isSaved}
       existingConversationId={existingConversationId}
+      noteContent={noteContent}
+      hasNotesFeature={hasNotesFeature}
     />
   );
 }
