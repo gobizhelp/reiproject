@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Crown, Star, Zap, ArrowRight } from "lucide-react";
+import { Check, Crown, Star, Zap, ArrowRight, ArrowDown, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   MEMBERSHIP_PLANS,
   BUYER_FEATURES_BY_TIER,
@@ -19,6 +20,13 @@ import {
 } from "@/lib/membership/tier-config";
 
 type RoleTab = "buyer" | "seller";
+
+interface PricingTableProps {
+  isLoggedIn?: boolean;
+  buyerTier?: Tier;
+  sellerTier?: Tier;
+  userRole?: string;
+}
 
 const TIER_ICONS: Record<Tier, typeof Star> = {
   free: Star,
@@ -47,7 +55,8 @@ const TIER_ACCENT: Record<Tier, { border: string; badge: string; icon: string; g
   },
 };
 
-// Key features to highlight on cards (subset of all features)
+const TIER_ORDER: Record<Tier, number> = { free: 0, pro: 1, elite: 2 };
+
 const BUYER_HIGHLIGHTS: Record<Tier, string[]> = {
   free: [
     "1 buy box",
@@ -102,7 +111,6 @@ const SELLER_HIGHLIGHTS: Record<Tier, string[]> = {
   ],
 };
 
-// Exhaustive feature lists for detail sections
 const BUYER_FEATURE_GROUPS: { label: string; features: BuyerFeature[] }[] = [
   {
     label: "Discovery & Search",
@@ -176,26 +184,158 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
   },
 ];
 
+// --- Confirmation Modal ---
+
+function ConfirmModal({
+  open,
+  onClose,
+  onConfirm,
+  loading,
+  planType,
+  fromTier,
+  toTier,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+  planType: RoleTab;
+  fromTier: Tier;
+  toTier: Tier;
+}) {
+  if (!open) return null;
+
+  const isUpgrade = TIER_ORDER[toTier] > TIER_ORDER[fromTier];
+  const isDowngrade = TIER_ORDER[toTier] < TIER_ORDER[fromTier];
+  const label = planType === "buyer" ? "Buyer" : "Seller";
+
+  const fromPlanId = `${fromTier}_${planType}` as PlanId;
+  const toPlanId = `${toTier}_${planType}` as PlanId;
+  const fromPlan = MEMBERSHIP_PLANS[fromPlanId];
+  const toPlan = MEMBERSHIP_PLANS[toPlanId];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-card border border-border rounded-2xl p-6 max-w-md w-full">
+        <h3 className="text-xl font-bold text-foreground mb-2">
+          {isUpgrade ? "Upgrade" : isDowngrade ? "Downgrade" : "Change"} {label} Plan
+        </h3>
+
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 text-center">
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${TIER_ACCENT[fromTier].badge}`}>
+              {(() => { const Icon = TIER_ICONS[fromTier]; return <Icon className="w-4 h-4" />; })()}
+              <span className="font-medium text-sm">{fromPlan.name}</span>
+            </div>
+            <p className="text-muted text-xs mt-1">{formatPricePerMonth(fromPlan.monthlyPriceCents)}</p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-muted shrink-0" />
+          <div className="flex-1 text-center">
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${TIER_ACCENT[toTier].badge}`}>
+              {(() => { const Icon = TIER_ICONS[toTier]; return <Icon className="w-4 h-4" />; })()}
+              <span className="font-medium text-sm">{toPlan.name}</span>
+            </div>
+            <p className="text-muted text-xs mt-1">{formatPricePerMonth(toPlan.monthlyPriceCents)}</p>
+          </div>
+        </div>
+
+        {isDowngrade && (
+          <div className="bg-danger/10 border border-danger/20 rounded-lg p-3 mb-4">
+            <p className="text-sm text-danger/90">
+              Downgrading will remove access to {fromTier === "elite" ? "Elite" : "Pro"}-tier features.
+              Your data will be preserved, but some features may become unavailable.
+            </p>
+          </div>
+        )}
+
+        {isUpgrade && (
+          <div className="bg-success/10 border border-success/20 rounded-lg p-3 mb-4">
+            <p className="text-sm text-success/90">
+              You&apos;ll get immediate access to all {toTier === "elite" ? "Elite" : "Pro"}-tier features.
+            </p>
+          </div>
+        )}
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-lg border border-border text-foreground font-medium transition-colors hover:bg-card-hover disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className={`flex-1 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${
+              isDowngrade
+                ? "bg-danger hover:bg-danger/80 text-white"
+                : "bg-accent hover:bg-accent-hover text-white"
+            }`}
+          >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isUpgrade ? "Upgrade" : isDowngrade ? "Downgrade" : "Switch"} Plan
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Success Toast ---
+
+function SuccessToast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  return (
+    <div className="fixed bottom-6 right-6 z-50 animate-slide-in">
+      <div className="bg-success/10 border border-success/30 rounded-xl px-5 py-3 flex items-center gap-3">
+        <Check className="w-5 h-5 text-success" />
+        <span className="text-sm text-foreground font-medium">{message}</span>
+        <button onClick={onDismiss} className="text-muted hover:text-foreground ml-2">&times;</button>
+      </div>
+    </div>
+  );
+}
+
+// --- Tier Card ---
+
 function TierCard({
   planId,
   highlights,
   popular,
+  currentTier,
+  isLoggedIn,
+  onSelectPlan,
 }: {
   planId: PlanId;
   highlights: string[];
   popular?: boolean;
+  currentTier?: Tier;
+  isLoggedIn?: boolean;
+  onSelectPlan?: (tier: Tier) => void;
 }) {
   const plan = MEMBERSHIP_PLANS[planId];
   const accent = TIER_ACCENT[plan.tier];
   const Icon = TIER_ICONS[plan.tier];
 
+  const isCurrent = currentTier === plan.tier;
+  const isUpgrade = currentTier ? TIER_ORDER[plan.tier] > TIER_ORDER[currentTier] : false;
+  const isDowngrade = currentTier ? TIER_ORDER[plan.tier] < TIER_ORDER[currentTier] : false;
+
   return (
     <div
-      className={`relative bg-card border ${accent.border} rounded-2xl p-6 flex flex-col ${accent.glow} ${
-        popular ? "scale-[1.02]" : ""
+      className={`relative bg-card border ${isCurrent ? "border-success ring-1 ring-success/30" : accent.border} rounded-2xl p-6 flex flex-col ${accent.glow} ${
+        popular && !isCurrent ? "scale-[1.02]" : ""
       }`}
     >
-      {popular && (
+      {isCurrent && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="bg-success text-black text-xs font-semibold px-3 py-1 rounded-full">
+            Current Plan
+          </span>
+        </div>
+      )}
+      {!isCurrent && popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <span className="bg-accent text-white text-xs font-semibold px-3 py-1 rounded-full">
             Most Popular
@@ -207,9 +347,7 @@ function TierCard({
         <div className={`p-2 rounded-lg ${accent.badge}`}>
           <Icon className="w-5 h-5" />
         </div>
-        <div>
-          <h3 className="font-bold text-lg text-foreground">{plan.name}</h3>
-        </div>
+        <h3 className="font-bold text-lg text-foreground">{plan.name}</h3>
       </div>
 
       <div className="mb-4">
@@ -232,21 +370,53 @@ function TierCard({
         ))}
       </ul>
 
-      <Link
-        href="/signup"
-        className={`w-full text-center py-3 rounded-lg font-medium transition-colors ${
-          plan.tier === "free"
-            ? "bg-border text-foreground hover:bg-muted/30"
-            : plan.tier === "pro"
-            ? "bg-accent hover:bg-accent-hover text-white"
-            : "bg-amber-500 hover:bg-amber-600 text-black"
-        }`}
-      >
-        {plan.tier === "free" ? "Get Started" : "Upgrade"}
-      </Link>
+      {/* CTA Button */}
+      {isLoggedIn ? (
+        isCurrent ? (
+          <button
+            disabled
+            className="w-full text-center py-3 rounded-lg font-medium bg-border/50 text-muted cursor-default"
+          >
+            Current Plan
+          </button>
+        ) : isUpgrade ? (
+          <button
+            onClick={() => onSelectPlan?.(plan.tier)}
+            className={`w-full text-center py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+              plan.tier === "pro"
+                ? "bg-accent hover:bg-accent-hover text-white"
+                : "bg-amber-500 hover:bg-amber-600 text-black"
+            }`}
+          >
+            Upgrade <ArrowRight className="w-4 h-4" />
+          </button>
+        ) : (
+          <button
+            onClick={() => onSelectPlan?.(plan.tier)}
+            className="w-full text-center py-3 rounded-lg font-medium transition-colors border border-border text-muted hover:text-foreground hover:bg-card-hover flex items-center justify-center gap-2"
+          >
+            Downgrade <ArrowDown className="w-4 h-4" />
+          </button>
+        )
+      ) : (
+        <Link
+          href="/signup"
+          className={`w-full text-center py-3 rounded-lg font-medium transition-colors block ${
+            plan.tier === "free"
+              ? "bg-border text-foreground hover:bg-muted/30"
+              : plan.tier === "pro"
+              ? "bg-accent hover:bg-accent-hover text-white"
+              : "bg-amber-500 hover:bg-amber-600 text-black"
+          }`}
+        >
+          {plan.tier === "free" ? "Get Started" : "Upgrade"}
+        </Link>
+      )}
     </div>
   );
 }
+
+// --- Feature Comparison Table ---
 
 function FeatureComparisonTable({ role }: { role: RoleTab }) {
   const tiers: Tier[] = ["free", "pro", "elite"];
@@ -285,7 +455,6 @@ function FeatureComparisonTable({ role }: { role: RoleTab }) {
           </tr>
         </thead>
         <tbody>
-          {/* Limits row */}
           <tr className="border-t border-border">
             <td className="p-4 text-sm font-medium text-foreground">
               {role === "buyer" ? "Buy boxes" : "Active listings"}
@@ -313,7 +482,6 @@ function FeatureComparisonTable({ role }: { role: RoleTab }) {
               })}
             </tr>
           )}
-          {/* Feature groups */}
           {featureGroups.map((group) => (
             <>
               <tr key={`header-${group.label}`}>
@@ -354,15 +522,100 @@ function FeatureComparisonTable({ role }: { role: RoleTab }) {
   );
 }
 
-export default function PricingTable() {
-  const [activeTab, setActiveTab] = useState<RoleTab>("buyer");
+// --- Main Component ---
+
+export default function PricingTable({
+  isLoggedIn = false,
+  buyerTier = "free",
+  sellerTier = "free",
+  userRole = "buyer",
+}: PricingTableProps) {
+  const router = useRouter();
+  const defaultTab: RoleTab = userRole === "seller" ? "seller" : "buyer";
+  const [activeTab, setActiveTab] = useState<RoleTab>(defaultTab);
   const [showComparison, setShowComparison] = useState(false);
 
+  // Confirm modal state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingTier, setPendingTier] = useState<Tier>("free");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const currentTier = activeTab === "buyer" ? buyerTier : sellerTier;
   const highlights = activeTab === "buyer" ? BUYER_HIGHLIGHTS : SELLER_HIGHLIGHTS;
   const planIds: PlanId[] =
     activeTab === "buyer"
       ? ["free_buyer", "pro_buyer", "elite_buyer"]
       : ["free_seller", "pro_seller", "elite_seller"];
+
+  function handleSelectPlan(tier: Tier) {
+    setPendingTier(tier);
+    setConfirmOpen(true);
+  }
+
+  async function handleConfirm() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan_type: activeTab,
+          new_tier: pendingTier,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update plan");
+      }
+
+      setConfirmOpen(false);
+
+      const isUp = TIER_ORDER[pendingTier] > TIER_ORDER[currentTier];
+      setToast(
+        isUp
+          ? `Upgraded to ${pendingTier.charAt(0).toUpperCase() + pendingTier.slice(1)}!`
+          : `Plan changed to ${pendingTier.charAt(0).toUpperCase() + pendingTier.slice(1)}.`
+      );
+
+      // Refresh server data
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Combined plan handler
+  async function handleCombinedPlan(tier: Tier) {
+    setPendingTier(tier);
+    // For combined plans we update both tiers sequentially
+    setLoading(true);
+    try {
+      const buyerRes = await fetch("/api/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan_type: "buyer", new_tier: tier }),
+      });
+      if (!buyerRes.ok) throw new Error("Failed to update buyer plan");
+
+      const sellerRes = await fetch("/api/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan_type: "seller", new_tier: tier }),
+      });
+      if (!sellerRes.ok) throw new Error("Failed to update seller plan");
+
+      setToast(`Switched to ${tier.charAt(0).toUpperCase() + tier.slice(1)} Both plan!`);
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-16">
@@ -373,8 +626,9 @@ export default function PricingTable() {
           <span className="text-accent">your deals</span>
         </h1>
         <p className="text-muted text-lg max-w-2xl mx-auto">
-          Start free and upgrade as your real estate business grows.
-          All plans include a 14-day free trial.
+          {isLoggedIn
+            ? "Manage your plan below. Upgrade for more features or downgrade anytime."
+            : "Start free and upgrade as your real estate business grows. All plans include a 14-day free trial."}
         </p>
       </div>
 
@@ -383,37 +637,49 @@ export default function PricingTable() {
         <div className="bg-card border border-border rounded-xl p-1 flex">
           <button
             onClick={() => setActiveTab("buyer")}
-            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-colors relative ${
               activeTab === "buyer"
                 ? "bg-accent text-white"
                 : "text-muted hover:text-foreground"
             }`}
           >
             Buyer Plans
+            {isLoggedIn && activeTab !== "buyer" && (
+              <span className="ml-2 text-xs opacity-70">({buyerTier})</span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab("seller")}
-            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-colors relative ${
               activeTab === "seller"
                 ? "bg-accent text-white"
                 : "text-muted hover:text-foreground"
             }`}
           >
             Seller Plans
+            {isLoggedIn && activeTab !== "seller" && (
+              <span className="ml-2 text-xs opacity-70">({sellerTier})</span>
+            )}
           </button>
         </div>
       </div>
 
       {/* Tier Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 items-start">
-        {planIds.map((id, i) => (
-          <TierCard
-            key={id}
-            planId={id}
-            highlights={highlights[["free", "pro", "elite"][i] as Tier]}
-            popular={i === 1}
-          />
-        ))}
+        {planIds.map((id, i) => {
+          const tier = ["free", "pro", "elite"][i] as Tier;
+          return (
+            <TierCard
+              key={id}
+              planId={id}
+              highlights={highlights[tier]}
+              popular={i === 1}
+              currentTier={isLoggedIn ? currentTier : undefined}
+              isLoggedIn={isLoggedIn}
+              onSelectPlan={handleSelectPlan}
+            />
+          );
+        })}
       </div>
 
       {/* Compare Features Toggle */}
@@ -453,7 +719,6 @@ export default function PricingTable() {
             const accent = TIER_ACCENT[plan.tier];
             const Icon = TIER_ICONS[plan.tier];
 
-            // Calculate savings
             const buyerPlan =
               plan.tier === "pro"
                 ? MEMBERSHIP_PLANS.pro_buyer
@@ -466,11 +731,22 @@ export default function PricingTable() {
               buyerPlan.monthlyPriceCents + sellerPlan.monthlyPriceCents;
             const savings = separateTotal - plan.monthlyPriceCents;
 
+            const isCombinedCurrent =
+              isLoggedIn && buyerTier === plan.tier && sellerTier === plan.tier;
+
             return (
               <div
                 key={planId}
-                className={`bg-card border ${accent.border} rounded-2xl p-6 ${accent.glow}`}
+                className={`bg-card border ${isCombinedCurrent ? "border-success ring-1 ring-success/30" : accent.border} rounded-2xl p-6 ${accent.glow}`}
               >
+                {isCombinedCurrent && (
+                  <div className="mb-3">
+                    <span className="bg-success text-black text-xs font-semibold px-3 py-1 rounded-full">
+                      Current Plan
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <div className={`p-2 rounded-lg ${accent.badge}`}>
@@ -520,16 +796,46 @@ export default function PricingTable() {
                   </li>
                 </ul>
 
-                <Link
-                  href="/signup"
-                  className={`block w-full text-center py-3 rounded-lg font-medium transition-colors ${
-                    plan.tier === "pro"
-                      ? "bg-accent hover:bg-accent-hover text-white"
-                      : "bg-amber-500 hover:bg-amber-600 text-black"
-                  }`}
-                >
-                  Get {plan.name}
-                </Link>
+                {isLoggedIn ? (
+                  isCombinedCurrent ? (
+                    <button
+                      disabled
+                      className="block w-full text-center py-3 rounded-lg font-medium bg-border/50 text-muted cursor-default"
+                    >
+                      Current Plan
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleCombinedPlan(plan.tier)}
+                      disabled={loading}
+                      className={`block w-full text-center py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${
+                        plan.tier === "pro"
+                          ? "bg-accent hover:bg-accent-hover text-white"
+                          : "bg-amber-500 hover:bg-amber-600 text-black"
+                      }`}
+                    >
+                      {loading && pendingTier === plan.tier ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : null}
+                      {isCombinedCurrent
+                        ? "Current Plan"
+                        : buyerTier === plan.tier && sellerTier === plan.tier
+                        ? "Current Plan"
+                        : `Get ${plan.name}`}
+                    </button>
+                  )
+                ) : (
+                  <Link
+                    href="/signup"
+                    className={`block w-full text-center py-3 rounded-lg font-medium transition-colors ${
+                      plan.tier === "pro"
+                        ? "bg-accent hover:bg-accent-hover text-white"
+                        : "bg-amber-500 hover:bg-amber-600 text-black"
+                    }`}
+                  >
+                    Get {plan.name}
+                  </Link>
+                )}
               </div>
             );
           })}
@@ -546,6 +852,22 @@ export default function PricingTable() {
           — we&apos;re happy to help you choose the right plan.
         </p>
       </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleConfirm}
+        loading={loading}
+        planType={activeTab}
+        fromTier={currentTier}
+        toTier={pendingTier}
+      />
+
+      {/* Success Toast */}
+      {toast && (
+        <SuccessToast message={toast} onDismiss={() => setToast(null)} />
+      )}
     </div>
   );
 }

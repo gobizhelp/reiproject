@@ -5,10 +5,29 @@ import Navbar from "@/components/navbar";
 import PricingTable from "@/components/pricing-table";
 import Link from "next/link";
 import { Building2 } from "lucide-react";
+import type { Tier } from "@/lib/membership/tier-config";
 
 export default async function PricingPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  let buyerTier: Tier = "free";
+  let sellerTier: Tier = "free";
+  let userRole: string = "buyer";
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("buyer_tier, seller_tier, user_role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile) {
+      buyerTier = profile.buyer_tier ?? "free";
+      sellerTier = profile.seller_tier ?? "free";
+      userRole = profile.user_role ?? "buyer";
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,7 +53,12 @@ export default async function PricingPage() {
           </div>
         </nav>
       )}
-      <PricingTable />
+      <PricingTable
+        isLoggedIn={!!user}
+        buyerTier={buyerTier}
+        sellerTier={sellerTier}
+        userRole={userRole}
+      />
     </div>
   );
 }
