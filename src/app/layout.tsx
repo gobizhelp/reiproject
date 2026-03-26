@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ImpersonationBanner from "@/components/impersonation-banner";
 
 export const metadata: Metadata = {
   title: "DealPacket - Off Market Real Estate Deals",
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased dark">
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <ImpersonationBanner />
         {children}
       </body>
     </html>

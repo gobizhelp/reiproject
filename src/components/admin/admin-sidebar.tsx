@@ -10,6 +10,7 @@ import {
   BarChart3,
   ClipboardList,
   ArrowLeft,
+  FlaskConical,
 } from 'lucide-react';
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { href: '/admin/messages', label: 'Messages', icon: MessageCircle },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/activity', label: 'Activity Log', icon: ClipboardList },
+  { href: '/admin/demo', label: 'Demo Environment', icon: FlaskConical },
 ];
 
 export default function AdminSidebar() {

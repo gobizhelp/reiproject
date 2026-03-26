@@ -39,6 +39,8 @@ export interface UserWithDetails {
   is_admin: boolean;
   is_suspended: boolean;
   suspended_reason: string | null;
+  buyer_tier: string;
+  seller_tier: string;
   created_at: string;
   property_count: number;
   message_count: number;
