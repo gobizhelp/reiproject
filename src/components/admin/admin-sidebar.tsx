@@ -11,6 +11,7 @@ import {
   ClipboardList,
   ArrowLeft,
   FlaskConical,
+  ListChecks,
 } from 'lucide-react';
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/admin/messages', label: 'Messages', icon: MessageCircle },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/activity', label: 'Activity Log', icon: ClipboardList },
+  { href: '/admin/features', label: 'Feature Checklist', icon: ListChecks },
   { href: '/admin/demo', label: 'Demo Environment', icon: FlaskConical },
 ];
 
