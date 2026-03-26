@@ -9,6 +9,7 @@ DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 
 -- Replace with a policy that allows any authenticated user to view profiles
 -- (needed so sellers can see buyer name/company/phone on messages)
+DROP POLICY IF EXISTS "Authenticated users can view profiles" ON profiles;
 CREATE POLICY "Authenticated users can view profiles"
   ON profiles FOR SELECT
   USING (auth.uid() IS NOT NULL);
