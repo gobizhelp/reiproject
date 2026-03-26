@@ -64,5 +64,40 @@ export default async function DealPacketPage({ params }: Props) {
     property.full_rehab_arv_high,
   );
 
-  return <DealPacketView property={property} photos={photos} comps={comps} analysis={analysis} isLoggedIn={!!user} />;
+  // Fetch buyer-specific data if logged in
+  let isSaved = false;
+  let sentMessageTypes: string[] = [];
+  const isOwn = user?.id === property.user_id;
+
+  if (user && !isOwn) {
+    const [savedRes, msgsRes] = await Promise.all([
+      supabase
+        .from("saved_listings")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("property_id", property.id)
+        .maybeSingle(),
+      supabase
+        .from("listing_messages")
+        .select("message_type")
+        .eq("sender_id", user.id)
+        .eq("property_id", property.id),
+    ]);
+
+    isSaved = !!savedRes.data;
+    sentMessageTypes = (msgsRes.data as any[] || []).map((m: any) => m.message_type as string);
+  }
+
+  return (
+    <DealPacketView
+      property={property}
+      photos={photos}
+      comps={comps}
+      analysis={analysis}
+      isLoggedIn={!!user}
+      isOwn={isOwn}
+      isSaved={isSaved}
+      sentMessageTypes={sentMessageTypes}
+    />
+  );
 }

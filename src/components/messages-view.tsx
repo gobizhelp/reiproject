@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/calculations";
 import {
-  MessageCircle, Heart, Info, Building2, MapPin, Clock,
-  CheckCircle, Circle, Mail, User, Phone, Bed, Bath
+  MessageCircle, Eye, DollarSign, MessageSquare, Building2, MapPin, Clock,
+  CheckCircle, User, Phone, Bed, Bath
 } from "lucide-react";
 
 interface PropertyData {
@@ -47,9 +47,17 @@ interface Props {
   role: "buyer" | "seller";
 }
 
+const TYPE_CONFIG: Record<string, { label: string; icon: typeof Eye; color: string }> = {
+  request_showing: { label: "Showing Request", icon: Eye, color: "bg-accent/20 text-accent" },
+  make_offer: { label: "Make Offer", icon: DollarSign, color: "bg-emerald-500/20 text-emerald-400" },
+  ask_question: { label: "Question", icon: MessageSquare, color: "bg-orange-500/20 text-orange-400" },
+};
+
+type FilterType = "all" | "request_showing" | "make_offer" | "ask_question";
+
 export default function MessagesView({ messages: initial, role }: Props) {
   const [messages, setMessages] = useState(initial);
-  const [filter, setFilter] = useState<"all" | "interested" | "more_info">("all");
+  const [filter, setFilter] = useState<FilterType>("all");
 
   const filtered = filter === "all"
     ? messages
@@ -71,6 +79,13 @@ export default function MessagesView({ messages: initial, role }: Props) {
     }
   }
 
+  const filterTabs: { key: FilterType; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "request_showing", label: "Showings" },
+    { key: "make_offer", label: "Offers" },
+    { key: "ask_question", label: "Questions" },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8">
@@ -87,18 +102,18 @@ export default function MessagesView({ messages: initial, role }: Props) {
 
       {/* Filter tabs */}
       <div className="flex gap-2 mb-6">
-        {(["all", "interested", "more_info"] as const).map((f) => (
+        {filterTabs.map((tab) => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === f
+              filter === tab.key
                 ? "bg-accent text-white"
                 : "bg-card border border-border text-muted hover:text-foreground"
             }`}
           >
-            {f === "all" ? "All" : f === "interested" ? "Interested" : "More Info"}
-            {f === "all" && messages.length > 0 && (
+            {tab.label}
+            {tab.key === "all" && messages.length > 0 && (
               <span className="ml-1.5 text-xs opacity-70">({messages.length})</span>
             )}
           </button>
@@ -127,6 +142,9 @@ export default function MessagesView({ messages: initial, role }: Props) {
 
             const photo = property.property_photos
               ?.sort((a, b) => a.display_order - b.display_order)?.[0];
+
+            const typeConfig = TYPE_CONFIG[msg.message_type] || TYPE_CONFIG.ask_question;
+            const TypeIcon = typeConfig.icon;
 
             return (
               <div
@@ -163,16 +181,9 @@ export default function MessagesView({ messages: initial, role }: Props) {
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div>
                         {/* Message type badge */}
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          msg.message_type === "interested"
-                            ? "bg-accent/20 text-accent"
-                            : "bg-orange-500/20 text-orange-400"
-                        }`}>
-                          {msg.message_type === "interested" ? (
-                            <><Heart className="w-3 h-3" /> Interested</>
-                          ) : (
-                            <><Info className="w-3 h-3" /> More Info</>
-                          )}
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${typeConfig.color}`}>
+                          <TypeIcon className="w-3 h-3" />
+                          {typeConfig.label}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted shrink-0">

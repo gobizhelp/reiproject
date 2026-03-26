@@ -6,12 +6,14 @@ import { Property } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
 import {
   Search, SlidersHorizontal, X, MapPin, Bed, Bath, Maximize,
-  DollarSign, Building2, Tag, ChevronDown, Heart, MessageCircle, Info
+  Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown
 } from "lucide-react";
 
 interface PropertyWithPhotos extends Property {
   property_photos: { id: string; url: string; display_order: number }[];
 }
+
+type ActionType = "request_showing" | "make_offer" | "ask_question";
 
 interface Props {
   properties: PropertyWithPhotos[];
@@ -51,7 +53,6 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
 
   const filtered = useMemo(() => {
     return properties.filter((p) => {
-      // Search query
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const searchable = [
@@ -60,8 +61,6 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
         ].filter(Boolean).join(" ").toLowerCase();
         if (!searchable.includes(q)) return false;
       }
-
-      // Filters
       if (filters.propertyType && p.property_type !== filters.propertyType) return false;
       if (filters.state && p.state !== filters.state) return false;
       if (filters.minPrice && (p.asking_price || 0) < Number(filters.minPrice)) return false;
@@ -69,7 +68,6 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
       if (filters.minBeds && (p.beds || 0) < Number(filters.minBeds)) return false;
       if (filters.minBaths && (p.baths || 0) < Number(filters.minBaths)) return false;
       if (filters.listingStatus && p.listing_status !== filters.listingStatus) return false;
-
       return true;
     });
   }, [properties, searchQuery, filters]);
@@ -83,7 +81,6 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
 
   async function toggleSave(propertyId: string) {
     const isSaved = savedIds.has(propertyId);
-    // Optimistic update
     const next = new Set(savedIds);
     if (isSaved) {
       next.delete(propertyId);
@@ -99,13 +96,11 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
     });
 
     if (!res.ok) {
-      // Revert on failure
       setSavedIds(savedIds);
     }
   }
 
-  async function sendMessage(propertyId: string, messageType: "interested" | "more_info") {
-    // Optimistic update
+  async function sendMessage(propertyId: string, messageType: ActionType, customMessage?: string) {
     const prev = { ...sentMsgs };
     setSentMsgs({
       ...sentMsgs,
@@ -115,7 +110,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
     const res = await fetch("/api/listing-messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ propertyId, messageType }),
+      body: JSON.stringify({ propertyId, messageType, customMessage }),
     });
 
     if (!res.ok) {
@@ -282,7 +277,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
               sentTypes={sentMsgs[property.id] || []}
               isOwn={property.user_id === currentUserId}
               onToggleSave={() => toggleSave(property.id)}
-              onSendMessage={(type) => sendMessage(property.id, type)}
+              onSendMessage={(type, msg) => sendMessage(property.id, type, msg)}
             />
           ))}
         </div>
@@ -304,14 +299,25 @@ function MarketplaceCard({
   sentTypes: string[];
   isOwn: boolean;
   onToggleSave: () => void;
-  onSendMessage: (type: "interested" | "more_info") => void;
+  onSendMessage: (type: ActionType, customMessage?: string) => void;
 }) {
-  const [showActions, setShowActions] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [sending, setSending] = useState(false);
   const photo = property.property_photos
     ?.sort((a, b) => a.display_order - b.display_order)?.[0];
 
-  const hasSentInterested = sentTypes.includes("interested");
-  const hasSentMoreInfo = sentTypes.includes("more_info");
+  const hasSentShowing = sentTypes.includes("request_showing");
+  const hasSentOffer = sentTypes.includes("make_offer");
+
+  async function handleAskQuestion() {
+    if (!question.trim()) return;
+    setSending(true);
+    await onSendMessage("ask_question", question);
+    setQuestion("");
+    setAskOpen(false);
+    setSending(false);
+  }
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden hover:border-muted transition-colors group">
@@ -418,42 +424,60 @@ function MarketplaceCard({
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Action Buttons - always visible for non-own properties */}
         {!isOwn && (
-          <div className="mt-3 pt-3 border-t border-border">
-            {!showActions ? (
+          <div className="mt-3 pt-3 border-t border-border space-y-2">
+            <div className="flex gap-2">
               <button
-                onClick={() => setShowActions(true)}
-                className="w-full flex items-center justify-center gap-2 text-sm text-muted hover:text-foreground py-2 rounded-lg border border-border hover:border-muted transition-colors"
+                onClick={() => onSendMessage("request_showing")}
+                disabled={hasSentShowing}
+                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${
+                  hasSentShowing
+                    ? "bg-success/20 text-success border border-success/30 cursor-default"
+                    : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
+                }`}
               >
-                <MessageCircle className="w-4 h-4" />
-                Contact Seller
+                <Eye className="w-3.5 h-3.5" />
+                {hasSentShowing ? "Requested" : "Request Showing"}
+              </button>
+              <button
+                onClick={() => onSendMessage("make_offer")}
+                disabled={hasSentOffer}
+                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${
+                  hasSentOffer
+                    ? "bg-success/20 text-success border border-success/30 cursor-default"
+                    : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                }`}
+              >
+                <DollarSign className="w-3.5 h-3.5" />
+                {hasSentOffer ? "Sent" : "Make Offer"}
+              </button>
+            </div>
+            {!askOpen ? (
+              <button
+                onClick={() => setAskOpen(true)}
+                className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-muted hover:text-foreground py-2 rounded-lg border border-border hover:border-muted transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Ask a Question
               </button>
             ) : (
               <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
+                  placeholder="Type your question..."
+                  className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                  autoFocus
+                />
                 <button
-                  onClick={() => onSendMessage("interested")}
-                  disabled={hasSentInterested}
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-2 rounded-lg transition-colors ${
-                    hasSentInterested
-                      ? "bg-success/20 text-success border border-success/30 cursor-default"
-                      : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
-                  }`}
+                  onClick={handleAskQuestion}
+                  disabled={!question.trim() || sending}
+                  className="px-3 py-2 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
                 >
-                  <Heart className="w-3.5 h-3.5" />
-                  {hasSentInterested ? "Sent" : "Interested"}
-                </button>
-                <button
-                  onClick={() => onSendMessage("more_info")}
-                  disabled={hasSentMoreInfo}
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-2 rounded-lg transition-colors ${
-                    hasSentMoreInfo
-                      ? "bg-success/20 text-success border border-success/30 cursor-default"
-                      : "bg-orange-500/10 text-orange-400 border border-orange-500/30 hover:bg-orange-500/20"
-                  }`}
-                >
-                  <Info className="w-3.5 h-3.5" />
-                  {hasSentMoreInfo ? "Sent" : "More Info"}
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}

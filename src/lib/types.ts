@@ -96,7 +96,7 @@ export interface SavedListing {
   created_at: string;
 }
 
-export type MessageType = 'interested' | 'more_info';
+export type MessageType = 'request_showing' | 'make_offer' | 'ask_question';
 
 export interface ListingMessage {
   id: string;

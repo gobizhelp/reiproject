@@ -18,7 +18,7 @@ create table if not exists listing_messages (
   sender_id uuid references auth.users(id) on delete cascade not null,
   recipient_id uuid references auth.users(id) on delete cascade not null,
   property_id uuid references properties(id) on delete cascade not null,
-  message_type text not null check (message_type in ('interested', 'more_info')),
+  message_type text not null check (message_type in ('request_showing', 'make_offer', 'ask_question')),
   message text not null,
   is_read boolean default false,
   created_at timestamptz default now()
