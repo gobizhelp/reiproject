@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ArrowLeftRight, ShoppingCart, Home,
-  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX, GripVertical
+  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
 import { useNotifications } from "@/components/notification-provider";
@@ -94,6 +94,12 @@ export default function Navbar() {
                   <span className="flex items-center gap-1.5">
                     <Search className="w-4 h-4" />
                     Marketplace
+                  </span>
+                </Link>
+                <Link href="/matched-listings" className={linkClass("/matched-listings")}>
+                  <span className="flex items-center gap-1.5">
+                    <Target className="w-4 h-4" />
+                    Matched
                   </span>
                 </Link>
                 <Link href="/saved-listings" className={linkClass("/saved-listings")}>
@@ -202,6 +208,9 @@ export default function Navbar() {
             <>
               <Link href="/marketplace" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Search className="w-5 h-5" />
+              </Link>
+              <Link href="/matched-listings" className="md:hidden text-muted hover:text-foreground transition-colors">
+                <Target className="w-5 h-5" />
               </Link>
               <Link href="/saved-listings" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Heart className="w-5 h-5" />
