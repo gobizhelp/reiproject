@@ -52,7 +52,14 @@ export default async function DealPacketPage({ params }: Props) {
     property.arv,
     property.asking_price,
     property.repair_estimate,
-    property.assignment_fee
+    property.assignment_fee,
+    property.light_rehab_budget_low,
+    property.light_rehab_budget_high,
+    property.full_rehab_budget_low,
+    property.full_rehab_budget_high,
+    property.light_rehab_arv,
+    property.full_rehab_arv_low,
+    property.full_rehab_arv_high,
   );
 
   return <DealPacketView property={property} photos={photos} comps={comps} analysis={analysis} />;

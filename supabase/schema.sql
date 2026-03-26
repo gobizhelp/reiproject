@@ -9,24 +9,46 @@ create table if not exists properties (
   user_id uuid references auth.users(id) on delete cascade not null,
   slug text unique not null,
   status text default 'draft' check (status in ('draft', 'published')),
-  -- Address
+  -- Title & Address
+  title text,
   street_address text not null,
   city text not null,
   state text not null,
   zip_code text not null,
-  -- Details
+  -- Property Info
+  listing_status text default 'off_market' check (listing_status in ('off_market', 'listed')),
+  ideal_investor_strategy text,
   property_type text default 'Single Family',
   beds integer,
   baths numeric(3,1),
   sqft integer,
   year_built integer,
   lot_size text,
+  basement_description text,
+  neighborhood_notes text,
+  condition_summary text,
+  comps_summary text,
   -- Financials
   asking_price numeric(12,2),
   arv numeric(12,2),
   repair_estimate numeric(12,2),
   assignment_fee numeric(12,2),
   show_assignment_fee boolean default false,
+  light_rehab_budget_low numeric(12,2),
+  light_rehab_budget_high numeric(12,2),
+  full_rehab_budget_low numeric(12,2),
+  full_rehab_budget_high numeric(12,2),
+  light_rehab_arv numeric(12,2),
+  full_rehab_arv_low numeric(12,2),
+  full_rehab_arv_high numeric(12,2),
+  -- Rental Projections
+  rent_after_reno_low numeric(10,2),
+  rent_after_reno_high numeric(10,2),
+  rent_after_reno_basement_low numeric(10,2),
+  rent_after_reno_basement_high numeric(10,2),
+  -- Deal Narrative
+  renovation_overview text,
+  why_deal_is_strong text,
   -- Contact
   showing_instructions text,
   contact_name text,

@@ -43,6 +43,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         </span>
       </div>
       <div className="p-5">
+        {property.title && <p className="text-xs text-muted font-medium uppercase tracking-wide mb-0.5 truncate">{property.title}</p>}
         <h3 className="font-semibold text-lg truncate">{property.street_address}</h3>
         <p className="text-muted text-sm">{property.city}, {property.state} {property.zip_code}</p>
         <div className="flex items-center gap-4 mt-3 text-sm">

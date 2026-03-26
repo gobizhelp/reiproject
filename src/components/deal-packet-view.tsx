@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Property, PropertyPhoto, Comp, DealAnalysis } from "@/lib/types";
-import { formatCurrency, formatPercent } from "@/lib/calculations";
+import { formatCurrency, formatPercent, formatCurrencyRange } from "@/lib/calculations";
 import {
   Building2, Bed, Bath, Maximize, Calendar, MapPin, Phone, Mail, User,
-  ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info
+  ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info, ArrowRight,
+  Tag, Home, Wrench, Star
 } from "lucide-react";
 
 interface Props {
@@ -17,6 +18,10 @@ interface Props {
 
 export default function DealPacketView({ property, photos, comps, analysis }: Props) {
   const [currentPhoto, setCurrentPhoto] = useState(0);
+
+  const hasLightRehab = property.light_rehab_arv || property.light_rehab_budget_low;
+  const hasFullRehab = property.full_rehab_arv_low || property.full_rehab_budget_low;
+  const hasRentals = property.rent_after_reno_low || property.rent_after_reno_basement_low;
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,6 +73,9 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
               )}
               {/* Address overlay */}
               <div className="absolute bottom-6 left-6 right-6">
+                {property.title && (
+                  <p className="text-white/90 text-sm font-medium mb-1 uppercase tracking-wide">{property.title}</p>
+                )}
                 <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
                   {property.street_address}
                 </h1>
@@ -85,6 +93,9 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
         {/* Address (if no photos) */}
         {photos.length === 0 && (
           <div className="mb-8">
+            {property.title && (
+              <p className="text-muted text-sm font-medium mb-1 uppercase tracking-wide">{property.title}</p>
+            )}
             <h1 className="text-3xl md:text-4xl font-bold mb-1">{property.street_address}</h1>
             <p className="text-muted text-lg flex items-center gap-1">
               <MapPin className="w-4 h-4" />
@@ -93,11 +104,41 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
           </div>
         )}
 
+        {/* Tags Bar */}
+        {(property.listing_status || property.ideal_investor_strategy) && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {property.listing_status && (
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                property.listing_status === "off_market"
+                  ? "bg-orange-500/20 text-orange-400"
+                  : "bg-blue-500/20 text-blue-400"
+              }`}>
+                <Tag className="w-3 h-3" />
+                {property.listing_status === "off_market" ? "Off Market" : "Listed"}
+              </span>
+            )}
+            {property.ideal_investor_strategy && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-accent/20 text-accent">
+                <Target className="w-3 h-3" />
+                {property.ideal_investor_strategy}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Key Metrics Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <MetricCard label="Asking Price" value={formatCurrency(property.asking_price)} icon={<DollarSign className="w-5 h-5" />} color="text-accent" />
-          <MetricCard label="ARV" value={formatCurrency(property.arv)} icon={<TrendingUp className="w-5 h-5" />} color="text-success" />
-          <MetricCard label="Repair Estimate" value={formatCurrency(property.repair_estimate)} icon={<Target className="w-5 h-5" />} color="text-orange-400" />
+          <MetricCard label="Purchase Price" value={formatCurrency(property.asking_price)} icon={<DollarSign className="w-5 h-5" />} color="text-accent" />
+          {property.light_rehab_arv ? (
+            <MetricCard label="Light Rehab ARV" value={formatCurrency(property.light_rehab_arv)} icon={<TrendingUp className="w-5 h-5" />} color="text-success" />
+          ) : (
+            <MetricCard label="ARV" value={formatCurrency(property.arv)} icon={<TrendingUp className="w-5 h-5" />} color="text-success" />
+          )}
+          {property.light_rehab_budget_low ? (
+            <MetricCard label="Light Rehab" value={formatCurrencyRange(property.light_rehab_budget_low, property.light_rehab_budget_high)} icon={<Wrench className="w-5 h-5" />} color="text-orange-400" />
+          ) : (
+            <MetricCard label="Repair Estimate" value={formatCurrency(property.repair_estimate)} icon={<Target className="w-5 h-5" />} color="text-orange-400" />
+          )}
           <MetricCard label="ROI" value={formatPercent(analysis.roi)} icon={<TrendingUp className="w-5 h-5" />} color={analysis.roi >= 0 ? "text-success" : "text-danger"} />
         </div>
 
@@ -111,11 +152,38 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
                 <DetailItem icon={<Building2 className="w-4 h-4" />} label="Type" value={property.property_type} />
                 {property.beds != null && <DetailItem icon={<Bed className="w-4 h-4" />} label="Beds" value={property.beds.toString()} />}
                 {property.baths != null && <DetailItem icon={<Bath className="w-4 h-4" />} label="Baths" value={property.baths.toString()} />}
-                {property.sqft != null && <DetailItem icon={<Maximize className="w-4 h-4" />} label="Sqft" value={property.sqft.toLocaleString()} />}
+                {property.sqft != null && <DetailItem icon={<Maximize className="w-4 h-4" />} label="Above Grade Sqft" value={property.sqft.toLocaleString()} />}
                 {property.year_built != null && <DetailItem icon={<Calendar className="w-4 h-4" />} label="Year Built" value={property.year_built.toString()} />}
                 {property.lot_size && <DetailItem icon={<Maximize className="w-4 h-4" />} label="Lot Size" value={property.lot_size} />}
               </div>
+              {property.basement_description && (
+                <div className="mt-4 p-3 bg-background rounded-lg">
+                  <p className="text-xs text-muted mb-1">Basement</p>
+                  <p className="text-sm">{property.basement_description}</p>
+                </div>
+              )}
             </section>
+
+            {/* Neighborhood & Condition */}
+            {(property.neighborhood_notes || property.condition_summary) && (
+              <section className="bg-card border border-border rounded-2xl p-6">
+                <h2 className="text-xl font-bold mb-4">Property Notes</h2>
+                <div className="space-y-4">
+                  {property.neighborhood_notes && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted mb-2">Neighborhood / Location</h3>
+                      <p className="text-sm whitespace-pre-wrap">{property.neighborhood_notes}</p>
+                    </div>
+                  )}
+                  {property.condition_summary && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted mb-2">Condition</h3>
+                      <p className="text-sm whitespace-pre-wrap">{property.condition_summary}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* Deal Analysis */}
             <section className="bg-card border border-accent/30 rounded-2xl p-6">
@@ -125,18 +193,71 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
                   <span className="text-muted">MAO (70% Rule)</span>
                   <span className="text-xl font-bold text-accent">{formatCurrency(analysis.mao)}</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-background rounded-xl">
-                  <span className="text-muted">Potential Profit</span>
-                  <span className={`text-xl font-bold ${analysis.potentialProfit >= 0 ? "text-success" : "text-danger"}`}>
-                    {formatCurrency(analysis.potentialProfit)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-background rounded-xl">
-                  <span className="text-muted">ROI</span>
-                  <span className={`text-xl font-bold ${analysis.roi >= 0 ? "text-success" : "text-danger"}`}>
-                    {formatPercent(analysis.roi)}
-                  </span>
-                </div>
+
+                {/* Light Rehab Profit */}
+                {hasLightRehab && (
+                  <>
+                    <div className="pt-2">
+                      <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Light Rehab Scenario</h3>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">Rehab Budget</span>
+                      <span className="text-lg font-bold">{formatCurrencyRange(property.light_rehab_budget_low, property.light_rehab_budget_high)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">ARV</span>
+                      <span className="text-lg font-bold text-success">{formatCurrency(property.light_rehab_arv)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">Profit Range</span>
+                      <span className={`text-lg font-bold ${analysis.profitLightRehabLow >= 0 ? "text-success" : "text-danger"}`}>
+                        {formatCurrencyRange(analysis.profitLightRehabLow, analysis.profitLightRehabHigh)}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {/* Full Rehab Profit */}
+                {hasFullRehab && (
+                  <>
+                    <div className="pt-2">
+                      <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Full Rehab Scenario</h3>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">Rehab Budget</span>
+                      <span className="text-lg font-bold">{formatCurrencyRange(property.full_rehab_budget_low, property.full_rehab_budget_high)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">ARV</span>
+                      <span className="text-lg font-bold text-success">{formatCurrencyRange(property.full_rehab_arv_low, property.full_rehab_arv_high)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">Profit Range</span>
+                      <span className={`text-lg font-bold ${analysis.profitFullRehabLow >= 0 ? "text-success" : "text-danger"}`}>
+                        {formatCurrencyRange(analysis.profitFullRehabLow, analysis.profitFullRehabHigh)}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {/* Legacy single-value display (for older deal packets) */}
+                {!hasLightRehab && !hasFullRehab && (
+                  <>
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">Potential Profit</span>
+                      <span className={`text-xl font-bold ${analysis.potentialProfit >= 0 ? "text-success" : "text-danger"}`}>
+                        {formatCurrency(analysis.potentialProfit)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">ROI</span>
+                      <span className={`text-xl font-bold ${analysis.roi >= 0 ? "text-success" : "text-danger"}`}>
+                        {formatPercent(analysis.roi)}
+                      </span>
+                    </div>
+                  </>
+                )}
+
                 {property.show_assignment_fee && property.assignment_fee != null && (
                   <div className="flex items-center justify-between p-4 bg-background rounded-xl">
                     <span className="text-muted">Assignment Fee</span>
@@ -147,11 +268,76 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
                   <Info className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                   <p className="text-sm text-muted">
                     MAO = ARV × 70% − Repairs{property.show_assignment_fee ? " − Assignment Fee" : ""}.
-                    ROI = (ARV − Asking − Repairs) / (Asking + Repairs).
+                    Profit = ARV − Purchase Price − Rehab Budget.
                   </p>
                 </div>
               </div>
             </section>
+
+            {/* Rental Projections */}
+            {hasRentals && (
+              <section className="bg-card border border-border rounded-2xl p-6">
+                <h2 className="text-xl font-bold mb-4">Rental Projections</h2>
+                <div className="space-y-3">
+                  {(property.rent_after_reno_low || property.rent_after_reno_high) && (
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">Rent After Reno (No Basement Finish)</span>
+                      <span className="text-lg font-bold">{formatCurrencyRange(property.rent_after_reno_low, property.rent_after_reno_high)}/mo</span>
+                    </div>
+                  )}
+                  {(property.rent_after_reno_basement_low || property.rent_after_reno_basement_high) && (
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl">
+                      <span className="text-muted">Rent After Reno + Finished Basement</span>
+                      <span className="text-lg font-bold">{formatCurrencyRange(property.rent_after_reno_basement_low, property.rent_after_reno_basement_high)}/mo</span>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Renovation Overview */}
+            {property.renovation_overview && (
+              <section className="bg-card border border-border rounded-2xl p-6">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Wrench className="w-5 h-5 text-muted" />
+                  Renovation Overview
+                </h2>
+                <ul className="space-y-2">
+                  {property.renovation_overview.split("\n").filter(Boolean).map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <span className="text-accent mt-1">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Why This Deal Is Strong */}
+            {property.why_deal_is_strong && (
+              <section className="bg-card border border-accent/30 rounded-2xl p-6">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-accent" />
+                  Why This Deal Is Strong
+                </h2>
+                <ul className="space-y-2">
+                  {property.why_deal_is_strong.split("\n").filter(Boolean).map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <span className="text-success mt-1">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Comps Summary */}
+            {property.comps_summary && (
+              <section className="bg-card border border-border rounded-2xl p-6">
+                <h2 className="text-xl font-bold mb-4">Comps Summary</h2>
+                <p className="text-sm whitespace-pre-wrap">{property.comps_summary}</p>
+              </section>
+            )}
 
             {/* Photo Gallery */}
             {photos.length > 1 && (
@@ -249,28 +435,76 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
               <h2 className="text-lg font-bold mb-4">Quick Summary</h2>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted">Asking</span>
+                  <span className="text-muted">Purchase Price</span>
                   <span className="font-medium">{formatCurrency(property.asking_price)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted">ARV</span>
-                  <span className="font-medium">{formatCurrency(property.arv)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted">Repairs</span>
-                  <span className="font-medium">{formatCurrency(property.repair_estimate)}</span>
-                </div>
+                {hasLightRehab && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted">Light Rehab</span>
+                      <span className="font-medium">{formatCurrencyRange(property.light_rehab_budget_low, property.light_rehab_budget_high)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted">Light ARV</span>
+                      <span className="font-medium">{formatCurrency(property.light_rehab_arv)}</span>
+                    </div>
+                  </>
+                )}
+                {hasFullRehab && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted">Full Rehab</span>
+                      <span className="font-medium">{formatCurrencyRange(property.full_rehab_budget_low, property.full_rehab_budget_high)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted">Full ARV</span>
+                      <span className="font-medium">{formatCurrencyRange(property.full_rehab_arv_low, property.full_rehab_arv_high)}</span>
+                    </div>
+                  </>
+                )}
+                {!hasLightRehab && !hasFullRehab && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted">ARV</span>
+                      <span className="font-medium">{formatCurrency(property.arv)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted">Repairs</span>
+                      <span className="font-medium">{formatCurrency(property.repair_estimate)}</span>
+                    </div>
+                  </>
+                )}
                 <hr className="border-border" />
                 <div className="flex justify-between">
                   <span className="text-muted">Spread</span>
                   <span className="font-bold text-success">
-                    {formatCurrency((property.arv || 0) - (property.asking_price || 0))}
+                    {hasLightRehab
+                      ? formatCurrency((property.light_rehab_arv || 0) - (property.asking_price || 0))
+                      : formatCurrency((property.arv || 0) - (property.asking_price || 0))
+                    }
                   </span>
                 </div>
               </div>
             </section>
           </div>
         </div>
+
+        {/* Sign Up CTA */}
+        <section className="mt-12 bg-accent/10 border border-accent/30 rounded-2xl p-8 text-center">
+          <h2 className="text-2xl font-bold mb-2">
+            Want to see more {property.contact_name ? `from ${property.contact_name}` : "properties like this"}?
+          </h2>
+          <p className="text-muted mb-6 max-w-lg mx-auto">
+            Sign up for free to browse more off-market deals and connect with wholesalers on DealPacket.
+          </p>
+          <a
+            href="/signup"
+            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+          >
+            Sign up here
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </section>
       </div>
     </div>
   );
