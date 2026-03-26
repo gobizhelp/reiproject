@@ -501,7 +501,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
                         <button
                           onClick={() => deleteSavedSearch(search.id)}
                           title="Delete saved search"
-                          className="text-muted hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="text-muted hover:text-red-400 p-1"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
