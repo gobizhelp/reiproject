@@ -45,6 +45,7 @@ export default async function MarketplacePage() {
         properties={properties || []}
         savedPropertyIds={savedPropertyIds}
         sentMessages={sentMessageMap}
+        currentUserId={user.id}
       />
     </div>
   );
