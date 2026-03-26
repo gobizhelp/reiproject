@@ -88,3 +88,23 @@ export interface DealAnalysis {
 }
 
 export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'photos' | 'comps'>;
+
+export interface SavedListing {
+  id: string;
+  user_id: string;
+  property_id: string;
+  created_at: string;
+}
+
+export type MessageType = 'interested' | 'more_info';
+
+export interface ListingMessage {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  property_id: string;
+  message_type: MessageType;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
