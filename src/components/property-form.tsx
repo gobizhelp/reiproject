@@ -107,6 +107,8 @@ export default function PropertyForm({ property }: Props) {
     };
 
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
 
     try {
       if (isEditing) {
@@ -136,7 +138,7 @@ export default function PropertyForm({ property }: Props) {
         const slug = generateSlug(streetAddress, city);
         const { data: newProp, error } = await supabase
           .from("properties")
-          .insert({ ...propertyData, slug })
+          .insert({ ...propertyData, slug, user_id: user.id })
           .select()
           .single();
 
