@@ -79,6 +79,13 @@ export default function Navbar() {
   const isBuyer = profile?.active_view === "buyer";
   const isBoth = profile?.user_role === "both";
 
+  const secondaryLinkClass = (href: string) =>
+    `text-xs font-medium transition-colors px-2.5 py-1 rounded-md ${
+      pathname.startsWith(href)
+        ? "text-foreground bg-card-hover"
+        : "text-muted hover:text-foreground hover:bg-card-hover"
+    }`;
+
   return (
     <nav className="border-b border-border bg-card">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -100,24 +107,6 @@ export default function Navbar() {
                   <span className="flex items-center gap-1.5">
                     <Target className="w-4 h-4" />
                     Matched
-                  </span>
-                </Link>
-                <Link href="/saved-listings" className={linkClass("/saved-listings")}>
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="w-4 h-4" />
-                    Saved
-                  </span>
-                </Link>
-                <Link href="/deal-pipeline" className={linkClass("/deal-pipeline")}>
-                  <span className="flex items-center gap-1.5">
-                    <GripVertical className="w-4 h-4" />
-                    Pipeline
-                  </span>
-                </Link>
-                <Link href="/my-buy-boxes" className={linkClass("/my-buy-boxes")}>
-                  <span className="flex items-center gap-1.5">
-                    <Package className="w-4 h-4" />
-                    My Buy Boxes
                   </span>
                 </Link>
                 <Link href="/messages" className={linkClass("/messages")}>
@@ -212,15 +201,6 @@ export default function Navbar() {
               <Link href="/matched-listings" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Target className="w-5 h-5" />
               </Link>
-              <Link href="/saved-listings" className="md:hidden text-muted hover:text-foreground transition-colors">
-                <Heart className="w-5 h-5" />
-              </Link>
-              <Link href="/deal-pipeline" className="md:hidden text-muted hover:text-foreground transition-colors">
-                <GripVertical className="w-5 h-5" />
-              </Link>
-              <Link href="/my-buy-boxes" className="md:hidden text-muted hover:text-foreground transition-colors">
-                <Package className="w-5 h-5" />
-              </Link>
             </>
           ) : (
             <>
@@ -266,6 +246,32 @@ export default function Navbar() {
           </button>
         </div>
       </div>
+
+      {/* Secondary navigation bar */}
+      {isBuyer && (
+        <div className="border-t border-border">
+          <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center gap-2">
+            <Link href="/saved-listings" className={secondaryLinkClass("/saved-listings")}>
+              <span className="flex items-center gap-1.5">
+                <Heart className="w-3.5 h-3.5" />
+                Saved
+              </span>
+            </Link>
+            <Link href="/deal-pipeline" className={secondaryLinkClass("/deal-pipeline")}>
+              <span className="flex items-center gap-1.5">
+                <GripVertical className="w-3.5 h-3.5" />
+                Pipeline
+              </span>
+            </Link>
+            <Link href="/my-buy-boxes" className={secondaryLinkClass("/my-buy-boxes")}>
+              <span className="flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5" />
+                My Buy Boxes
+              </span>
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
