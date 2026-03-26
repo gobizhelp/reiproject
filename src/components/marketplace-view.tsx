@@ -9,8 +9,9 @@ import type { Tier } from "@/lib/membership/tier-config";
 import {
   Search, SlidersHorizontal, X, MapPin, Bed, Bath, Maximize,
   Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown,
-  Lock, ArrowUpDown, Bookmark, BookmarkPlus, Trash2, Check,
+  Lock, ArrowUpDown, Bookmark, BookmarkPlus, Trash2, Check, Crown,
 } from "lucide-react";
+import ProBuyerBadge from "./pro-buyer-badge";
 
 interface PropertyWithPhotos extends Property {
   property_photos: { id: string; url: string; display_order: number }[];
@@ -39,6 +40,7 @@ interface Props {
   currentUserId: string;
   buyerTier: string;
   initialSavedSearches: SavedSearch[];
+  earlyAccessPropertyIds?: string[];
 }
 
 const PROPERTY_TYPES = [
@@ -115,7 +117,8 @@ function countActive(obj: Record<string, string>, defaults: Record<string, strin
 
 type StringRecord = Record<string, string>;
 
-export default function MarketplaceView({ properties, savedPropertyIds, sentMessages, currentUserId, buyerTier, initialSavedSearches }: Props) {
+export default function MarketplaceView({ properties, savedPropertyIds, sentMessages, currentUserId, buyerTier, initialSavedSearches, earlyAccessPropertyIds = [] }: Props) {
+  const earlyAccessSet = useMemo(() => new Set(earlyAccessPropertyIds), [earlyAccessPropertyIds]);
   const tier = (buyerTier || "free") as Tier;
   const hasAdvancedFilters = hasBuyerFeature(tier, "advanced_filters");
   const hasSavedSearches = hasBuyerFeature(tier, "saved_searches");
@@ -392,7 +395,10 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Marketplace</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold">Marketplace</h1>
+          <ProBuyerBadge buyerTier={tier} size="md" />
+        </div>
         <p className="text-muted mt-1">Browse off-market deals from wholesalers</p>
       </div>
 
@@ -958,6 +964,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
               isSaved={savedIds.has(property.id)}
               sentTypes={sentMsgs[property.id] || []}
               isOwn={property.user_id === currentUserId}
+              isEarlyAccess={earlyAccessSet.has(property.id)}
               onToggleSave={() => toggleSave(property.id)}
               onSendMessage={(type, msg) => sendMessage(property.id, type, msg)}
             />
@@ -973,6 +980,7 @@ function MarketplaceCard({
   isSaved,
   sentTypes,
   isOwn,
+  isEarlyAccess,
   onToggleSave,
   onSendMessage,
 }: {
@@ -980,6 +988,7 @@ function MarketplaceCard({
   isSaved: boolean;
   sentTypes: string[];
   isOwn: boolean;
+  isEarlyAccess?: boolean;
   onToggleSave: () => void;
   onSendMessage: (type: ActionType, customMessage?: string) => void;
 }) {
@@ -1031,6 +1040,12 @@ function MarketplaceCard({
           )}
           {/* Tags overlay */}
           <div className="absolute top-3 left-3 flex gap-2">
+            {isEarlyAccess && (
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/90 text-white backdrop-blur-sm flex items-center gap-1">
+                <Crown className="w-3 h-3" />
+                Early Access
+              </span>
+            )}
             {property.listing_status && (
               <span className={`px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
                 property.listing_status === "off_market"

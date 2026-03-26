@@ -56,7 +56,8 @@ create table if not exists properties (
   contact_email text,
   -- Timestamps
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  published_at timestamptz
 );
 
 -- Property photos

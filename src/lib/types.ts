@@ -57,6 +57,7 @@ export interface Property {
   // Timestamps
   created_at: string;
   updated_at: string;
+  published_at: string | null;
   photos?: PropertyPhoto[];
   comps?: Comp[];
 }
@@ -93,7 +94,7 @@ export interface DealAnalysis {
   profitFullRehabHigh: number;
 }
 
-export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by'>;
+export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'published_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by'>;
 
 export interface SavedListing {
   id: string;
@@ -133,4 +134,26 @@ export interface ConversationMessage {
   message: string;
   is_read: boolean;
   created_at: string;
+}
+
+export interface BuyerNote {
+  id: string;
+  user_id: string;
+  property_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Deal Pipeline Stages
+export type DealStage = 'saved' | 'reviewing' | 'contacted' | 'passed';
+
+export interface DealStageRecord {
+  id: string;
+  user_id: string;
+  property_id: string;
+  stage: DealStage;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }

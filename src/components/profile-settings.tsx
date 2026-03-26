@@ -7,6 +7,7 @@ import { Profile, UserRole } from "@/lib/profile-types";
 import {
   Building2, ShoppingCart, ArrowLeftRight, Loader2, Save, User, Phone, Briefcase
 } from "lucide-react";
+import ProBuyerBadge from "./pro-buyer-badge";
 
 interface Props {
   profile: Profile | null;
@@ -80,7 +81,12 @@ export default function ProfileSettings({ profile, userEmail, userId }: Props) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
+      <div className="flex items-center gap-3 mb-8">
+        <h1 className="text-3xl font-bold">Profile Settings</h1>
+        {profile && (profile.user_role === "buyer" || profile.user_role === "both") && (
+          <ProBuyerBadge buyerTier={profile.buyer_tier} size="md" />
+        )}
+      </div>
 
       {error && (
         <div className="bg-danger/10 border border-danger/30 text-danger rounded-lg px-4 py-3 text-sm mb-6">
