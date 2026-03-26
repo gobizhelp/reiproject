@@ -24,7 +24,7 @@ export default async function MarketplacePage() {
     .select("property_id")
     .eq("user_id", user.id);
 
-  const savedPropertyIds = savedData?.map((s) => s.property_id) || [];
+  const savedPropertyIds = (savedData as any[] || []).map((s: any) => s.property_id as string);
 
   // Fetch user's sent messages to know which properties they already messaged about
   const { data: sentMessages } = await supabase
@@ -33,7 +33,7 @@ export default async function MarketplacePage() {
     .eq("sender_id", user.id);
 
   const sentMessageMap: Record<string, string[]> = {};
-  sentMessages?.forEach((m) => {
+  (sentMessages as any[] || []).forEach((m: any) => {
     if (!sentMessageMap[m.property_id]) sentMessageMap[m.property_id] = [];
     sentMessageMap[m.property_id].push(m.message_type);
   });

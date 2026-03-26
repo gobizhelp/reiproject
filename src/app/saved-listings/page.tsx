@@ -21,7 +21,7 @@ export default async function SavedListingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <SavedListingsView savedListings={savedListings || []} />
+      <SavedListingsView savedListings={(savedListings || []) as any} />
     </div>
   );
 }

@@ -31,7 +31,7 @@ export default async function MessagesPage() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <MessagesView messages={messages || []} role="buyer" />
+        <MessagesView messages={(messages || []) as any} role="buyer" />
       </div>
     );
   }
@@ -46,7 +46,7 @@ export default async function MessagesPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <MessagesView messages={messages || []} role="seller" />
+      <MessagesView messages={(messages || []) as any} role="seller" />
     </div>
   );
 }
