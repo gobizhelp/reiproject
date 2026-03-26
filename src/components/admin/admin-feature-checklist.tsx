@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   CheckCircle2,
   Circle,
@@ -8,6 +8,9 @@ import {
   ChevronDown,
   ChevronRight,
   RotateCcw,
+  Loader2,
+  Cloud,
+  CloudOff,
 } from 'lucide-react';
 import {
   BUYER_FEATURE_LABELS,
@@ -109,22 +112,8 @@ const TIER_COLORS: Record<Tier, { bg: string; text: string; badge: string }> = {
   elite: { bg: 'bg-purple-500/10', text: 'text-purple-500', badge: 'bg-purple-500/20 text-purple-400' },
 };
 
-const STORAGE_KEY = 'admin_feature_checklist';
-const NOTES_KEY = 'admin_feature_notes';
-const FLAGGED_KEY = 'admin_feature_flagged';
-
 type ChecklistState = Record<string, boolean>;
 type NotesState = Record<string, string>;
-
-function loadState<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') return fallback;
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 type Filter = 'all' | 'done' | 'pending' | 'flagged';
 
@@ -143,25 +132,56 @@ export default function AdminFeatureChecklist() {
   });
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Load state from server on mount
   useEffect(() => {
-    setChecked(loadState(STORAGE_KEY, {}));
-    setNotes(loadState(NOTES_KEY, {}));
-    setFlagged(loadState(FLAGGED_KEY, {}));
-    setLoaded(true);
+    async function load() {
+      try {
+        const res = await fetch('/api/admin/feature-checklist');
+        if (res.ok) {
+          const data = await res.json();
+          setChecked(data.checked ?? {});
+          setNotes(data.notes ?? {});
+          setFlagged(data.flagged ?? {});
+        }
+      } catch {
+        // fall through — start with empty state
+      }
+      setLoaded(true);
+    }
+    load();
   }, []);
 
-  useEffect(() => {
-    if (loaded) localStorage.setItem(STORAGE_KEY, JSON.stringify(checked));
-  }, [checked, loaded]);
+  // Debounced save to server
+  const persistToServer = useCallback(
+    (nextChecked: ChecklistState, nextNotes: NotesState, nextFlagged: ChecklistState) => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      setSaveError(false);
+      saveTimer.current = setTimeout(async () => {
+        setSaving(true);
+        try {
+          const res = await fetch('/api/admin/feature-checklist', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checked: nextChecked, notes: nextNotes, flagged: nextFlagged }),
+          });
+          if (!res.ok) setSaveError(true);
+        } catch {
+          setSaveError(true);
+        }
+        setSaving(false);
+      }, 600);
+    },
+    [],
+  );
 
+  // Auto-save whenever state changes (after initial load)
   useEffect(() => {
-    if (loaded) localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-  }, [notes, loaded]);
-
-  useEffect(() => {
-    if (loaded) localStorage.setItem(FLAGGED_KEY, JSON.stringify(flagged));
-  }, [flagged, loaded]);
+    if (loaded) persistToServer(checked, notes, flagged);
+  }, [checked, notes, flagged, loaded, persistToServer]);
 
   const toggle = (key: string) => setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
   const toggleFlag = (key: string) => setFlagged((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -234,7 +254,24 @@ export default function AdminFeatureChecklist() {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-2xl font-bold">Feature Launch Checklist</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">Feature Launch Checklist</h1>
+          {saving && (
+            <span className="flex items-center gap-1 text-xs text-muted">
+              <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+            </span>
+          )}
+          {!saving && !saveError && loaded && (
+            <span className="flex items-center gap-1 text-xs text-muted">
+              <Cloud className="w-3 h-3" /> Saved
+            </span>
+          )}
+          {saveError && (
+            <span className="flex items-center gap-1 text-xs text-red-400">
+              <CloudOff className="w-3 h-3" /> Save failed
+            </span>
+          )}
+        </div>
         <button
           onClick={resetAll}
           className="flex items-center gap-2 px-3 py-2 text-sm text-muted hover:text-danger transition-colors"
