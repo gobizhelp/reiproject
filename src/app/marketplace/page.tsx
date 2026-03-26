@@ -11,6 +11,15 @@ export default async function MarketplacePage() {
 
   if (!user) redirect("/login");
 
+  // Fetch user profile for tier gating
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("buyer_tier")
+    .eq("id", user.id)
+    .single();
+
+  const buyerTier = profile?.buyer_tier ?? "free";
+
   // Fetch all published properties with photos
   const { data: properties } = await supabase
     .from("properties")
@@ -46,6 +55,7 @@ export default async function MarketplacePage() {
         savedPropertyIds={savedPropertyIds}
         sentMessages={sentMessageMap}
         currentUserId={user.id}
+        buyerTier={buyerTier}
       />
     </div>
   );
