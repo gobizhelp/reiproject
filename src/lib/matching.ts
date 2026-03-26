@@ -119,8 +119,8 @@ function scoreBuyBox(
     }
   }
 
-  // If the buy box has no criteria set, there's nothing to match against
-  if (totalWeight === 0) return { score: 0, reasons: [] };
+  // If the buy box has no criteria set, it matches everything
+  if (totalWeight === 0) return { score: 100, reasons: ['No filters'] };
 
   const score = Math.round((earned / totalWeight) * 100);
   return { score, reasons };
