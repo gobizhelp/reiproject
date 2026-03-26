@@ -7,9 +7,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ArrowLeftRight, ShoppingCart, Home,
-  Package, ChevronDown, Heart, MessageCircle, Shield
+  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
+import { useNotifications } from "@/components/notification-provider";
 
 export default function Navbar() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [switching, setSwitching] = useState(false);
   const [showViewMenu, setShowViewMenu] = useState(false);
+  const { unreadCount, soundEnabled, toggleSound } = useNotifications();
 
   useEffect(() => {
     async function loadProfile() {
@@ -107,9 +109,14 @@ export default function Navbar() {
                   </span>
                 </Link>
                 <Link href="/messages" className={linkClass("/messages")}>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 relative">
                     <MessageCircle className="w-4 h-4" />
                     Messages
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                   </span>
                 </Link>
               </>
@@ -119,9 +126,14 @@ export default function Navbar() {
                   Properties
                 </Link>
                 <Link href="/messages" className={linkClass("/messages")}>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 relative">
                     <MessageCircle className="w-4 h-4" />
                     Messages
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                   </span>
                 </Link>
                 <Link href="/buyers" className={linkClass("/buyers")}>
@@ -194,8 +206,13 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/messages" className="md:hidden text-muted hover:text-foreground transition-colors">
+              <Link href="/messages" className="md:hidden text-muted hover:text-foreground transition-colors relative">
                 <MessageCircle className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[9px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-0.5">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
               <Link href="/buyers" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Users className="w-5 h-5" />
@@ -212,6 +229,13 @@ export default function Navbar() {
               <span className="hidden md:inline">Admin Dashboard</span>
             </Link>
           )}
+          <button
+            onClick={toggleSound}
+            className="text-muted hover:text-foreground transition-colors"
+            title={soundEnabled ? "Mute notification sounds" : "Enable notification sounds"}
+          >
+            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
           <Link href="/settings" className="text-muted hover:text-foreground transition-colors">
             <Settings className="w-4 h-4" />
           </Link>

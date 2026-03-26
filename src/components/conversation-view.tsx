@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/calculations";
+import { createClient } from "@/lib/supabase/client";
 import {
   ArrowLeft, Send, Building2, MapPin, Eye, DollarSign, MessageSquare,
   Phone, Mail, User, Share2, CheckCircle
@@ -91,6 +92,43 @@ export default function ConversationView({
       body: JSON.stringify({ conversationId: conversation.id, action: "mark_read" }),
     });
   }, [conversation.id]);
+
+  // Real-time: subscribe to new messages in this conversation
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`conversation-${conversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "conversation_messages",
+          filter: `conversation_id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          const newMsg = payload.new as MessageRow;
+          // Skip if it's our own message (already handled by optimistic update)
+          if (newMsg.sender_id === currentUserId) return;
+          setMessages((prev) => {
+            // Avoid duplicates
+            if (prev.some((m) => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+          // Mark as read since we're viewing this conversation
+          fetch("/api/conversations", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversationId: conversation.id, action: "mark_read" }),
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversation.id, currentUserId]);
 
   async function handleSend() {
     if (!newMessage.trim() || sending) return;
