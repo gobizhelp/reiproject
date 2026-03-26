@@ -114,3 +114,23 @@ export interface ListingMessage {
   is_read: boolean;
   created_at: string;
 }
+
+export interface Conversation {
+  id: string;
+  property_id: string;
+  buyer_id: string;
+  seller_id: string;
+  buyer_shared_contact: boolean;
+  initial_action: MessageType;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}

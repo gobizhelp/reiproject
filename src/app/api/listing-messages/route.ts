@@ -144,6 +144,47 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
+  // Also create/update a conversation so this appears in the DM system
+  const { data: existingConv } = await supabase
+    .from("conversations")
+    .select("id")
+    .eq("buyer_id", user.id)
+    .eq("property_id", propertyId)
+    .maybeSingle();
+
+  let conversationId: string | null = null;
+
+  if (existingConv) {
+    conversationId = existingConv.id;
+    await supabase
+      .from("conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", conversationId);
+  } else {
+    const { data: newConv } = await supabase
+      .from("conversations")
+      .insert({
+        property_id: propertyId,
+        buyer_id: user.id,
+        seller_id: property.user_id,
+        initial_action: messageType,
+        buyer_shared_contact: false,
+      })
+      .select("id")
+      .single();
+    if (newConv) conversationId = newConv.id;
+  }
+
+  if (conversationId) {
+    await supabase
+      .from("conversation_messages")
+      .insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        message,
+      });
+  }
+
   return Response.json({ message: "Sent" });
 }
 

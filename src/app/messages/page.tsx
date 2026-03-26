@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/navbar";
-import MessagesView from "@/components/messages-view";
+import ConversationsList from "@/components/conversations-list";
 
 export default async function MessagesPage() {
   const supabase = await createClient();
@@ -20,51 +20,69 @@ export default async function MessagesPage() {
 
   const isBuyer = profile?.active_view === "buyer";
 
-  if (isBuyer) {
-    // Buyer: fetch sent messages with property info
-    const { data: messages } = await supabase
-      .from("listing_messages")
-      .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_type, beds, baths, sqft, property_photos(id, url, display_order))")
-      .eq("sender_id", user.id)
-      .order("created_at", { ascending: false });
+  // Fetch conversations where user is buyer or seller
+  const { data: conversations } = await supabase
+    .from("conversations")
+    .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_photos(id, url, display_order))")
+    .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+    .order("updated_at", { ascending: false });
 
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <MessagesView messages={(messages || []) as any} role="buyer" />
-      </div>
-    );
-  }
+  // Fetch profiles for the other party
+  const otherUserIds = [...new Set((conversations || []).map((c: any) =>
+    c.buyer_id === user.id ? c.seller_id : c.buyer_id
+  ))];
 
-  // Seller: fetch received messages with property info
-  const { data: rawMessages } = await supabase
-    .from("listing_messages")
-    .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_type, beds, baths, sqft, property_photos(id, url, display_order))")
-    .eq("recipient_id", user.id)
-    .order("created_at", { ascending: false });
-
-  // Fetch sender profiles separately (profiles RLS + indirect FK prevents embedded join)
-  const senderIds = [...new Set((rawMessages || []).map((m: any) => m.sender_id))];
-  let profileMap: Record<string, { full_name: string | null; company_name: string | null; phone: string | null }> = {};
-  if (senderIds.length > 0) {
+  let profileMap: Record<string, any> = {};
+  if (otherUserIds.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, full_name, company_name, phone")
-      .in("id", senderIds);
+      .in("id", otherUserIds);
     (profiles || []).forEach((p: any) => {
-      profileMap[p.id] = { full_name: p.full_name, company_name: p.company_name, phone: p.phone };
+      profileMap[p.id] = p;
     });
   }
 
-  const messages = (rawMessages || []).map((m: any) => ({
-    ...m,
-    sender: profileMap[m.sender_id] || null,
+  // Enrich conversations with last message, unread count, and other user info
+  const enriched = await Promise.all((conversations || []).map(async (conv: any) => {
+    const { data: lastMsg } = await supabase
+      .from("conversation_messages")
+      .select("message, sender_id, created_at")
+      .eq("conversation_id", conv.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { count: unreadCount } = await supabase
+      .from("conversation_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("conversation_id", conv.id)
+      .neq("sender_id", user.id)
+      .eq("is_read", false);
+
+    const otherUserId = conv.buyer_id === user.id ? conv.seller_id : conv.buyer_id;
+    const otherProfile = profileMap[otherUserId] || null;
+
+    return {
+      ...conv,
+      other_user: {
+        id: otherUserId,
+        full_name: otherProfile?.full_name || "Unknown",
+        ...(conv.buyer_shared_contact ? { company_name: otherProfile?.company_name, phone: otherProfile?.phone } : {}),
+      },
+      last_message: lastMsg,
+      unread_count: unreadCount || 0,
+      is_buyer: conv.buyer_id === user.id,
+    };
   }));
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <MessagesView messages={(messages || []) as any} role="seller" />
+      <ConversationsList
+        conversations={enriched as any}
+        role={isBuyer ? "buyer" : "seller"}
+      />
     </div>
   );
 }

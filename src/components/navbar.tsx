@@ -106,6 +106,12 @@ export default function Navbar() {
                     My Buy Boxes
                   </span>
                 </Link>
+                <Link href="/messages" className={linkClass("/messages")}>
+                  <span className="flex items-center gap-1.5">
+                    <MessageCircle className="w-4 h-4" />
+                    Messages
+                  </span>
+                </Link>
               </>
             ) : (
               <>
