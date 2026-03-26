@@ -342,11 +342,11 @@ function MarketplaceCard({
                 {property.listing_status === "off_market" ? "Off Market" : "Listed"}
               </span>
             )}
-            {property.ideal_investor_strategy && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/80 text-white backdrop-blur-sm">
-                {property.ideal_investor_strategy}
+            {property.ideal_investor_strategy && property.ideal_investor_strategy.split(", ").filter(Boolean).map((strategy) => (
+              <span key={strategy} className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/80 text-white backdrop-blur-sm">
+                {strategy}
               </span>
-            )}
+            ))}
           </div>
           {/* Save button overlay */}
           <button

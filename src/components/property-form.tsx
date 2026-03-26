@@ -20,6 +20,11 @@ const US_STATES = [
   "VA","WA","WV","WI","WY","DC"
 ];
 
+const INVESTOR_STRATEGIES = [
+  "Fix & Flip", "BRRRR", "Buy & Hold", "Wholesale", "Creative Finance",
+  "Section 8", "Short-Term Rental", "Owner Finance", "Subject To", "Land Development"
+];
+
 const PROPERTY_TYPES = [
   "Single Family", "Multi Family", "Townhouse", "Condo", "Duplex",
   "Triplex", "Fourplex", "Mobile Home", "Land", "Commercial", "Other"
@@ -41,7 +46,9 @@ export default function PropertyForm({ property }: Props) {
 
   // Property Info
   const [listingStatus, setListingStatus] = useState(property?.listing_status || "off_market");
-  const [idealInvestorStrategy, setIdealInvestorStrategy] = useState(property?.ideal_investor_strategy || "");
+  const [selectedStrategies, setSelectedStrategies] = useState<string[]>(
+    property?.ideal_investor_strategy ? property.ideal_investor_strategy.split(", ").filter(Boolean) : []
+  );
   const [propertyType, setPropertyType] = useState(property?.property_type || "Single Family");
   const [beds, setBeds] = useState(property?.beds?.toString() || "");
   const [baths, setBaths] = useState(property?.baths?.toString() || "");
@@ -133,7 +140,7 @@ export default function PropertyForm({ property }: Props) {
       state,
       zip_code: zipCode,
       listing_status: listingStatus,
-      ideal_investor_strategy: idealInvestorStrategy || null,
+      ideal_investor_strategy: selectedStrategies.length > 0 ? selectedStrategies.join(", ") : null,
       property_type: propertyType,
       beds: beds ? parseInt(beds) : null,
       baths: baths ? parseFloat(baths) : null,
@@ -293,7 +300,29 @@ export default function PropertyForm({ property }: Props) {
             </div>
             <div>
               <label className={labelClass}>Ideal Investors / Strategy</label>
-              <input type="text" value={idealInvestorStrategy} onChange={(e) => setIdealInvestorStrategy(e.target.value)} className={inputClass} placeholder="e.g. Fix & Flip, BRRRR, Buy & Hold" />
+              <div className="flex flex-wrap gap-2 mt-1">
+                {INVESTOR_STRATEGIES.map((strategy) => {
+                  const isSelected = selectedStrategies.includes(strategy);
+                  return (
+                    <button
+                      key={strategy}
+                      type="button"
+                      onClick={() =>
+                        setSelectedStrategies((prev) =>
+                          isSelected ? prev.filter((s) => s !== strategy) : [...prev, strategy]
+                        )
+                      }
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                        isSelected
+                          ? "bg-accent text-white border-accent"
+                          : "bg-muted/50 text-muted-foreground border-border hover:border-accent/50"
+                      }`}
+                    >
+                      {strategy}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
