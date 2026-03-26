@@ -355,12 +355,14 @@ export async function POST() {
       }
 
       // Try to set tier columns (may not exist if migration hasn't been run)
-      await adminSupabase
-        .from('profiles')
-        .update({ buyer_tier: account.buyerTier, seller_tier: account.sellerTier })
-        .eq('id', userId)
-        .then(() => {})
-        .catch(() => {});
+      try {
+        await adminSupabase
+          .from('profiles')
+          .update({ buyer_tier: account.buyerTier, seller_tier: account.sellerTier })
+          .eq('id', userId);
+      } catch {
+        // Tier columns don't exist yet - that's fine
+      }
     }
 
     // 2. Create demo properties (assigned to seller and both accounts)
