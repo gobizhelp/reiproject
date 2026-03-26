@@ -38,7 +38,7 @@ export default async function MessagesPage() {
     if (otherUserIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name, company_name, phone")
+        .select("id, full_name, company_name, phone, buyer_tier")
         .in("id", otherUserIds);
       (profiles || []).forEach((p: any) => {
         profileMap[p.id] = p;
@@ -70,6 +70,7 @@ export default async function MessagesPage() {
         other_user: {
           id: otherUserId,
           full_name: otherProfile?.full_name || "Unknown",
+          buyer_tier: otherProfile?.buyer_tier || "free",
           ...(conv.buyer_shared_contact ? { company_name: otherProfile?.company_name, phone: otherProfile?.phone } : {}),
         },
         last_message: lastMsg,
