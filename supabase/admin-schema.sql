@@ -35,9 +35,6 @@ CREATE INDEX IF NOT EXISTS idx_profiles_admin ON profiles(is_admin) WHERE is_adm
 CREATE INDEX IF NOT EXISTS idx_profiles_suspended ON profiles(is_suspended) WHERE is_suspended = true;
 CREATE INDEX IF NOT EXISTS idx_admin_activity_created ON admin_activity_log(created_at DESC);
 
--- RLS policy: allow admins to read all profiles
-CREATE POLICY "Admins can view all profiles"
-  ON profiles FOR SELECT
-  USING (
-    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_admin = true)
-  );
+-- Note: No admin-specific RLS policies needed on profiles.
+-- All admin operations use the service role client which bypasses RLS.
+-- Adding a SELECT policy on profiles that queries profiles causes infinite recursion.
