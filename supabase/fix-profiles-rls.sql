@@ -4,17 +4,11 @@
 -- Run this in your Supabase SQL Editor
 -- ============================================
 
--- Add policy to allow any authenticated user to view profiles
--- (The existing "Users can view own profile" policy is too restrictive
--- and prevents sellers from seeing buyer sender info on messages)
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'profiles'
-    AND policyname = 'Authenticated users can view profiles'
-  ) THEN
-    CREATE POLICY "Authenticated users can view profiles"
-      ON profiles FOR SELECT
-      USING (auth.uid() IS NOT NULL);
-  END IF;
-END $$;
+-- Drop the old restrictive policy (only allowed viewing own profile)
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+
+-- Replace with a policy that allows any authenticated user to view profiles
+-- (needed so sellers can see buyer name/company/phone on messages)
+CREATE POLICY "Authenticated users can view profiles"
+  ON profiles FOR SELECT
+  USING (auth.uid() IS NOT NULL);
