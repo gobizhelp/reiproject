@@ -3,30 +3,22 @@ export const dynamic = 'force-dynamic';
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/navbar";
-import MarketplaceView from "@/components/marketplace-view";
+import SavedListingsView from "@/components/saved-listings-view";
 
-export default async function MarketplacePage() {
+export default async function SavedListingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
 
-  // Fetch all published properties with photos
-  const { data: properties } = await supabase
-    .from("properties")
-    .select("*, property_photos(id, url, display_order)")
-    .eq("status", "published")
+  // Fetch saved listings with full property + photo data
+  const { data: savedListings } = await supabase
+    .from("saved_listings")
+    .select("id, property_id, created_at, properties(*, property_photos(id, url, display_order))")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  // Fetch user's saved listing property IDs
-  const { data: savedData } = await supabase
-    .from("saved_listings")
-    .select("property_id")
-    .eq("user_id", user.id);
-
-  const savedPropertyIds = (savedData as any[] || []).map((s: any) => s.property_id as string);
-
-  // Fetch user's sent messages to know which properties they already messaged about
+  // Fetch sent messages so we know which actions were already taken
   const { data: sentMessages } = await supabase
     .from("listing_messages")
     .select("property_id, message_type")
@@ -41,11 +33,9 @@ export default async function MarketplacePage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <MarketplaceView
-        properties={properties || []}
-        savedPropertyIds={savedPropertyIds}
+      <SavedListingsView
+        savedListings={(savedListings || []) as any}
         sentMessages={sentMessageMap}
-        currentUserId={user.id}
       />
     </div>
   );

@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ArrowLeftRight, ShoppingCart, Home,
-  Package, ChevronDown
+  Package, ChevronDown, Heart, MessageCircle
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
 
@@ -94,6 +94,12 @@ export default function Navbar() {
                     Marketplace
                   </span>
                 </Link>
+                <Link href="/saved-listings" className={linkClass("/saved-listings")}>
+                  <span className="flex items-center gap-1.5">
+                    <Heart className="w-4 h-4" />
+                    Saved
+                  </span>
+                </Link>
                 <Link href="/my-buy-boxes" className={linkClass("/my-buy-boxes")}>
                   <span className="flex items-center gap-1.5">
                     <Package className="w-4 h-4" />
@@ -105,6 +111,12 @@ export default function Navbar() {
               <>
                 <Link href="/dashboard" className={linkClass("/dashboard")}>
                   Properties
+                </Link>
+                <Link href="/messages" className={linkClass("/messages")}>
+                  <span className="flex items-center gap-1.5">
+                    <MessageCircle className="w-4 h-4" />
+                    Messages
+                  </span>
                 </Link>
                 <Link href="/buyers" className={linkClass("/buyers")}>
                   <span className="flex items-center gap-1.5">
@@ -167,14 +179,22 @@ export default function Navbar() {
               <Link href="/marketplace" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Search className="w-5 h-5" />
               </Link>
+              <Link href="/saved-listings" className="md:hidden text-muted hover:text-foreground transition-colors">
+                <Heart className="w-5 h-5" />
+              </Link>
               <Link href="/my-buy-boxes" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Package className="w-5 h-5" />
               </Link>
             </>
           ) : (
-            <Link href="/buyers" className="md:hidden text-muted hover:text-foreground transition-colors">
-              <Users className="w-5 h-5" />
-            </Link>
+            <>
+              <Link href="/messages" className="md:hidden text-muted hover:text-foreground transition-colors">
+                <MessageCircle className="w-5 h-5" />
+              </Link>
+              <Link href="/buyers" className="md:hidden text-muted hover:text-foreground transition-colors">
+                <Users className="w-5 h-5" />
+              </Link>
+            </>
           )}
 
           <Link href="/settings" className="text-muted hover:text-foreground transition-colors">

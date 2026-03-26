@@ -6,32 +6,78 @@ import { formatCurrency, formatPercent, formatCurrencyRange } from "@/lib/calcul
 import {
   Building2, Bed, Bath, Maximize, Calendar, MapPin, Phone, Mail, User,
   ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info, ArrowRight,
-  Tag, Home, Wrench, Star
+  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send
 } from "lucide-react";
+import Navbar from "@/components/navbar";
 
 interface Props {
   property: Property;
   photos: PropertyPhoto[];
   comps: Comp[];
   analysis: DealAnalysis;
+  isLoggedIn?: boolean;
+  isOwn?: boolean;
+  isSaved?: boolean;
+  sentMessageTypes?: string[];
 }
 
-export default function DealPacketView({ property, photos, comps, analysis }: Props) {
+export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, sentMessageTypes: initialSent }: Props) {
   const [currentPhoto, setCurrentPhoto] = useState(0);
+  const [saved, setSaved] = useState(initialSaved || false);
+  const [sentTypes, setSentTypes] = useState<string[]>(initialSent || []);
+  const [askOpen, setAskOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [sending, setSending] = useState(false);
 
   const hasLightRehab = property.light_rehab_arv || property.light_rehab_budget_low;
   const hasFullRehab = property.full_rehab_arv_low || property.full_rehab_budget_low;
   const hasRentals = property.rent_after_reno_low || property.rent_after_reno_basement_low;
+  const showActions = isLoggedIn && !isOwn;
+
+  async function toggleSave() {
+    const wasSaved = saved;
+    setSaved(!wasSaved);
+    const res = await fetch("/api/saved-listings", {
+      method: wasSaved ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ propertyId: property.id }),
+    });
+    if (!res.ok) setSaved(wasSaved);
+  }
+
+  async function sendMessage(type: string, customMessage?: string) {
+    const prev = [...sentTypes];
+    setSentTypes([...sentTypes, type]);
+    const res = await fetch("/api/listing-messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ propertyId: property.id, messageType: type, customMessage }),
+    });
+    if (!res.ok) setSentTypes(prev);
+  }
+
+  async function handleAskQuestion() {
+    if (!question.trim()) return;
+    setSending(true);
+    await sendMessage("ask_question", question);
+    setQuestion("");
+    setAskOpen(false);
+    setSending(false);
+  }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-card border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-2">
-          <Building2 className="w-6 h-6 text-accent" />
-          <span className="font-bold text-lg">DealPacket</span>
+      {isLoggedIn ? (
+        <Navbar />
+      ) : (
+        <div className="bg-card border-b border-border">
+          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-2">
+            <Building2 className="w-6 h-6 text-accent" />
+            <span className="font-bold text-lg">DealPacket</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Hero - Photo Carousel */}
       {photos.length > 0 && (
@@ -122,6 +168,77 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
                 <Target className="w-3 h-3" />
                 {property.ideal_investor_strategy}
               </span>
+            )}
+          </div>
+        )}
+
+        {/* Buyer Action Bar */}
+        {showActions && (
+          <div className="bg-card border border-border rounded-2xl p-4 mb-8">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={toggleSave}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                  saved
+                    ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                    : "bg-card border border-border text-muted hover:text-foreground hover:border-muted"
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
+                {saved ? "Saved" : "Save"}
+              </button>
+              <button
+                onClick={() => sendMessage("request_showing")}
+                disabled={sentTypes.includes("request_showing")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                  sentTypes.includes("request_showing")
+                    ? "bg-success/20 text-success border border-success/30 cursor-default"
+                    : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
+                }`}
+              >
+                <Eye className="w-4 h-4" />
+                {sentTypes.includes("request_showing") ? "Showing Requested" : "Request Showing"}
+              </button>
+              <button
+                onClick={() => sendMessage("make_offer")}
+                disabled={sentTypes.includes("make_offer")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                  sentTypes.includes("make_offer")
+                    ? "bg-success/20 text-success border border-success/30 cursor-default"
+                    : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                }`}
+              >
+                <DollarSign className="w-4 h-4" />
+                {sentTypes.includes("make_offer") ? "Offer Sent" : "Make Offer"}
+              </button>
+            </div>
+            {!askOpen ? (
+              <button
+                onClick={() => setAskOpen(true)}
+                className="w-full mt-3 flex items-center justify-center gap-2 text-sm text-muted hover:text-foreground py-2.5 rounded-lg border border-border hover:border-muted transition-colors"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Ask a Question
+              </button>
+            ) : (
+              <div className="flex gap-2 mt-3">
+                <input
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
+                  placeholder="Type your question..."
+                  className="flex-1 bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                  autoFocus
+                />
+                <button
+                  onClick={handleAskQuestion}
+                  disabled={!question.trim() || sending}
+                  className="px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -489,22 +606,24 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
           </div>
         </div>
 
-        {/* Sign Up CTA */}
-        <section className="mt-12 bg-accent/10 border border-accent/30 rounded-2xl p-8 text-center">
-          <h2 className="text-2xl font-bold mb-2">
-            Want to see more {property.contact_name ? `from ${property.contact_name}` : "properties like this"}?
-          </h2>
-          <p className="text-muted mb-6 max-w-lg mx-auto">
-            Sign up for free to browse more off-market deals and connect with wholesalers on DealPacket.
-          </p>
-          <a
-            href="/signup"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors"
-          >
-            Sign up here
-            <ArrowRight className="w-4 h-4" />
-          </a>
-        </section>
+        {/* Sign Up CTA - only show for non-logged-in visitors */}
+        {!isLoggedIn && (
+          <section className="mt-12 bg-accent/10 border border-accent/30 rounded-2xl p-8 text-center">
+            <h2 className="text-2xl font-bold mb-2">
+              Want to see more {property.contact_name ? `from ${property.contact_name}` : "properties like this"}?
+            </h2>
+            <p className="text-muted mb-6 max-w-lg mx-auto">
+              Sign up for free to browse more off-market deals and connect with wholesalers on DealPacket.
+            </p>
+            <a
+              href="/signup"
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+            >
+              Sign up here
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </section>
+        )}
       </div>
     </div>
   );

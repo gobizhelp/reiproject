@@ -6,15 +6,20 @@ import { Property } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
 import {
   Search, SlidersHorizontal, X, MapPin, Bed, Bath, Maximize,
-  DollarSign, Building2, Tag, ChevronDown
+  Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown
 } from "lucide-react";
 
 interface PropertyWithPhotos extends Property {
   property_photos: { id: string; url: string; display_order: number }[];
 }
 
+type ActionType = "request_showing" | "make_offer" | "ask_question";
+
 interface Props {
   properties: PropertyWithPhotos[];
+  savedPropertyIds: string[];
+  sentMessages: Record<string, string[]>;
+  currentUserId: string;
 }
 
 const PROPERTY_TYPES = [
@@ -29,7 +34,7 @@ const STATES = [
   "VA","WA","WV","WI","WY","DC",
 ];
 
-export default function MarketplaceView({ properties }: Props) {
+export default function MarketplaceView({ properties, savedPropertyIds, sentMessages, currentUserId }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -41,12 +46,13 @@ export default function MarketplaceView({ properties }: Props) {
     minBaths: "",
     listingStatus: "",
   });
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set(savedPropertyIds));
+  const [sentMsgs, setSentMsgs] = useState<Record<string, string[]>>(sentMessages);
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   const filtered = useMemo(() => {
     return properties.filter((p) => {
-      // Search query
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const searchable = [
@@ -55,8 +61,6 @@ export default function MarketplaceView({ properties }: Props) {
         ].filter(Boolean).join(" ").toLowerCase();
         if (!searchable.includes(q)) return false;
       }
-
-      // Filters
       if (filters.propertyType && p.property_type !== filters.propertyType) return false;
       if (filters.state && p.state !== filters.state) return false;
       if (filters.minPrice && (p.asking_price || 0) < Number(filters.minPrice)) return false;
@@ -64,7 +68,6 @@ export default function MarketplaceView({ properties }: Props) {
       if (filters.minBeds && (p.beds || 0) < Number(filters.minBeds)) return false;
       if (filters.minBaths && (p.baths || 0) < Number(filters.minBaths)) return false;
       if (filters.listingStatus && p.listing_status !== filters.listingStatus) return false;
-
       return true;
     });
   }, [properties, searchQuery, filters]);
@@ -74,6 +77,45 @@ export default function MarketplaceView({ properties }: Props) {
       propertyType: "", state: "", minPrice: "", maxPrice: "",
       minBeds: "", minBaths: "", listingStatus: "",
     });
+  }
+
+  async function toggleSave(propertyId: string) {
+    const isSaved = savedIds.has(propertyId);
+    const next = new Set(savedIds);
+    if (isSaved) {
+      next.delete(propertyId);
+    } else {
+      next.add(propertyId);
+    }
+    setSavedIds(next);
+
+    const res = await fetch("/api/saved-listings", {
+      method: isSaved ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ propertyId }),
+    });
+
+    if (!res.ok) {
+      setSavedIds(savedIds);
+    }
+  }
+
+  async function sendMessage(propertyId: string, messageType: ActionType, customMessage?: string) {
+    const prev = { ...sentMsgs };
+    setSentMsgs({
+      ...sentMsgs,
+      [propertyId]: [...(sentMsgs[propertyId] || []), messageType],
+    });
+
+    const res = await fetch("/api/listing-messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ propertyId, messageType, customMessage }),
+    });
+
+    if (!res.ok) {
+      setSentMsgs(prev);
+    }
   }
 
   return (
@@ -228,7 +270,15 @@ export default function MarketplaceView({ properties }: Props) {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((property) => (
-            <MarketplaceCard key={property.id} property={property} />
+            <MarketplaceCard
+              key={property.id}
+              property={property}
+              isSaved={savedIds.has(property.id)}
+              sentTypes={sentMsgs[property.id] || []}
+              isOwn={property.user_id === currentUserId}
+              onToggleSave={() => toggleSave(property.id)}
+              onSendMessage={(type, msg) => sendMessage(property.id, type, msg)}
+            />
           ))}
         </div>
       )}
@@ -236,56 +286,102 @@ export default function MarketplaceView({ properties }: Props) {
   );
 }
 
-function MarketplaceCard({ property }: { property: PropertyWithPhotos }) {
+function MarketplaceCard({
+  property,
+  isSaved,
+  sentTypes,
+  isOwn,
+  onToggleSave,
+  onSendMessage,
+}: {
+  property: PropertyWithPhotos;
+  isSaved: boolean;
+  sentTypes: string[];
+  isOwn: boolean;
+  onToggleSave: () => void;
+  onSendMessage: (type: ActionType, customMessage?: string) => void;
+}) {
+  const [askOpen, setAskOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [sending, setSending] = useState(false);
   const photo = property.property_photos
     ?.sort((a, b) => a.display_order - b.display_order)?.[0];
 
+  const hasSentShowing = sentTypes.includes("request_showing");
+  const hasSentOffer = sentTypes.includes("make_offer");
+
+  async function handleAskQuestion() {
+    if (!question.trim()) return;
+    setSending(true);
+    await onSendMessage("ask_question", question);
+    setQuestion("");
+    setAskOpen(false);
+    setSending(false);
+  }
+
   return (
-    <Link
-      href={`/deals/${property.slug}`}
-      className="bg-card border border-border rounded-2xl overflow-hidden hover:border-muted transition-colors group"
-    >
+    <div className="bg-card border border-border rounded-2xl overflow-hidden hover:border-muted transition-colors group">
       {/* Photo */}
-      <div className="relative aspect-[16/10] bg-background">
-        {photo ? (
-          <img src={photo.url} alt={property.street_address} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted">
-            <Building2 className="w-12 h-12" />
-          </div>
-        )}
-        {/* Tags overlay */}
-        <div className="absolute top-3 left-3 flex gap-2">
-          {property.listing_status && (
-            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
-              property.listing_status === "off_market"
-                ? "bg-orange-500/80 text-white"
-                : "bg-blue-500/80 text-white"
-            }`}>
-              {property.listing_status === "off_market" ? "Off Market" : "Listed"}
-            </span>
+      <Link href={`/deals/${property.slug}`} className="block">
+        <div className="relative aspect-[16/10] bg-background">
+          {photo ? (
+            <img src={photo.url} alt={property.street_address} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted">
+              <Building2 className="w-12 h-12" />
+            </div>
           )}
-          {property.ideal_investor_strategy && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/80 text-white backdrop-blur-sm">
-              {property.ideal_investor_strategy}
-            </span>
+          {/* Tags overlay */}
+          <div className="absolute top-3 left-3 flex gap-2">
+            {property.listing_status && (
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
+                property.listing_status === "off_market"
+                  ? "bg-orange-500/80 text-white"
+                  : "bg-blue-500/80 text-white"
+              }`}>
+                {property.listing_status === "off_market" ? "Off Market" : "Listed"}
+              </span>
+            )}
+            {property.ideal_investor_strategy && (
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/80 text-white backdrop-blur-sm">
+                {property.ideal_investor_strategy}
+              </span>
+            )}
+          </div>
+          {/* Save button overlay */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleSave();
+            }}
+            className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-colors ${
+              isSaved
+                ? "bg-red-500/80 text-white"
+                : "bg-black/40 text-white/80 hover:bg-black/60 hover:text-white"
+            }`}
+            title={isSaved ? "Unsave listing" : "Save listing"}
+          >
+            <Heart className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
+          </button>
+          {/* Price overlay */}
+          {property.asking_price && (
+            <div className="absolute bottom-3 right-3">
+              <span className="bg-black/70 backdrop-blur-sm text-white font-bold px-3 py-1 rounded-lg text-lg">
+                {formatCurrency(property.asking_price)}
+              </span>
+            </div>
           )}
         </div>
-        {/* Price overlay */}
-        {property.asking_price && (
-          <div className="absolute bottom-3 right-3">
-            <span className="bg-black/70 backdrop-blur-sm text-white font-bold px-3 py-1 rounded-lg text-lg">
-              {formatCurrency(property.asking_price)}
-            </span>
-          </div>
-        )}
-      </div>
+      </Link>
 
       {/* Details */}
       <div className="p-4">
-        <h3 className="font-bold text-lg group-hover:text-accent transition-colors truncate">
-          {property.street_address}
-        </h3>
+        <Link href={`/deals/${property.slug}`}>
+          <h3 className="font-bold text-lg group-hover:text-accent transition-colors truncate">
+            {property.street_address}
+          </h3>
+        </Link>
         <p className="text-muted text-sm flex items-center gap-1 mb-3">
           <MapPin className="w-3.5 h-3.5" />
           {property.city}, {property.state} {property.zip_code}
@@ -327,7 +423,67 @@ function MarketplaceCard({ property }: { property: PropertyWithPhotos }) {
             </span>
           </div>
         )}
+
+        {/* Action Buttons */}
+        {!isOwn && (
+          <div className="mt-3 pt-3 border-t border-border space-y-2">
+            <div className="flex gap-2">
+              <button
+                onClick={() => onSendMessage("request_showing")}
+                disabled={hasSentShowing}
+                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${
+                  hasSentShowing
+                    ? "bg-success/20 text-success border border-success/30 cursor-default"
+                    : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                {hasSentShowing ? "Requested" : "Request Showing"}
+              </button>
+              <button
+                onClick={() => onSendMessage("make_offer")}
+                disabled={hasSentOffer}
+                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${
+                  hasSentOffer
+                    ? "bg-success/20 text-success border border-success/30 cursor-default"
+                    : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                }`}
+              >
+                <DollarSign className="w-3.5 h-3.5" />
+                {hasSentOffer ? "Sent" : "Make Offer"}
+              </button>
+            </div>
+            {!askOpen ? (
+              <button
+                onClick={() => setAskOpen(true)}
+                className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-muted hover:text-foreground py-2 rounded-lg border border-border hover:border-muted transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Ask a Question
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
+                  placeholder="Type your question..."
+                  className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                  autoFocus
+                />
+                <button
+                  onClick={handleAskQuestion}
+                  disabled={!question.trim() || sending}
+                  className="px-3 py-2 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }
