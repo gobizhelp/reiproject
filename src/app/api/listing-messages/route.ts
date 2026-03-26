@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // Seller view: messages received
     const { data, error } = await supabase
       .from("listing_messages")
-      .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_type, beds, baths, sqft, property_photos(id, url, display_order)), sender:profiles!listing_messages_sender_id_fkey(full_name, company_name, phone)")
+      .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_type, beds, baths, sqft, property_photos(id, url, display_order))")
       .eq("recipient_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -36,7 +36,25 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: error.message }, { status: 500 });
     }
 
-    return Response.json({ messages: data });
+    // Fetch sender profiles separately (profiles RLS + indirect FK prevents embedded join)
+    const senderIds = [...new Set((data || []).map((m: any) => m.sender_id))];
+    let profileMap: Record<string, any> = {};
+    if (senderIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, company_name, phone")
+        .in("id", senderIds);
+      (profiles || []).forEach((p: any) => {
+        profileMap[p.id] = { full_name: p.full_name, company_name: p.company_name, phone: p.phone };
+      });
+    }
+
+    const messages = (data || []).map((m: any) => ({
+      ...m,
+      sender: profileMap[m.sender_id] || null,
+    }));
+
+    return Response.json({ messages });
   }
 
   // Buyer view: messages sent

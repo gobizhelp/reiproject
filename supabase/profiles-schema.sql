@@ -62,6 +62,11 @@ create policy "Users can update own profile"
   on profiles for update
   using (auth.uid() = id);
 
+-- Allow authenticated users to view other profiles (needed for messaging sender info)
+create policy "Authenticated users can view profiles"
+  on profiles for select
+  using (auth.uid() is not null);
+
 -- Buyer buy boxes: users can manage their own
 create policy "Users can view own buy boxes"
   on buyer_buy_boxes for select

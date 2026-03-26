@@ -36,12 +36,30 @@ export default async function MessagesPage() {
     );
   }
 
-  // Seller: fetch received messages with property + sender info
-  const { data: messages } = await supabase
+  // Seller: fetch received messages with property info
+  const { data: rawMessages } = await supabase
     .from("listing_messages")
-    .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_type, beds, baths, sqft, property_photos(id, url, display_order)), sender:profiles!listing_messages_sender_id_fkey(full_name, company_name, phone)")
+    .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_type, beds, baths, sqft, property_photos(id, url, display_order))")
     .eq("recipient_id", user.id)
     .order("created_at", { ascending: false });
+
+  // Fetch sender profiles separately (profiles RLS + indirect FK prevents embedded join)
+  const senderIds = [...new Set((rawMessages || []).map((m: any) => m.sender_id))];
+  let profileMap: Record<string, { full_name: string | null; company_name: string | null; phone: string | null }> = {};
+  if (senderIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, company_name, phone")
+      .in("id", senderIds);
+    (profiles || []).forEach((p: any) => {
+      profileMap[p.id] = { full_name: p.full_name, company_name: p.company_name, phone: p.phone };
+    });
+  }
+
+  const messages = (rawMessages || []).map((m: any) => ({
+    ...m,
+    sender: profileMap[m.sender_id] || null,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
