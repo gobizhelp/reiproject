@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
 
     // Get target user's email to verify it's a demo account
     const { data: authData } = await adminSupabase.auth.admin.getUserById(userId);
-    if (!authData?.user?.email?.endsWith('@dealpacket.test')) {
+    if (!authData?.user?.email?.endsWith('@reireach.test')) {
       return NextResponse.json(
-        { error: 'Can only impersonate demo accounts (@dealpacket.test)' },
+        { error: 'Can only impersonate demo accounts (@reireach.test)' },
         { status: 403 }
       );
     }

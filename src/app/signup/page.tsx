@@ -107,7 +107,7 @@ export default function SignupPage() {
         <div className="w-full max-w-2xl">
           <div className="text-center mb-8">
             <Building2 className="w-10 h-10 text-accent mx-auto mb-4" />
-            <h1 className="text-3xl font-bold mb-2">How will you use DealPacket?</h1>
+            <h1 className="text-3xl font-bold mb-2">How will you use REI Reach?</h1>
             <p className="text-muted">You can change this anytime in your profile settings</p>
           </div>
 
@@ -156,7 +156,7 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <Building2 className="w-8 h-8 text-accent" />
-            <span className="text-2xl font-bold">DealPacket</span>
+            <span className="text-2xl font-bold">REI Reach</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2">Create your account</h1>
           <p className="text-muted">Start sharing professional deal packets</p>

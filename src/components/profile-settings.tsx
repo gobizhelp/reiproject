@@ -145,7 +145,7 @@ export default function ProfileSettings({ profile, userEmail, userId }: Props) {
         {/* Role Selection */}
         <section className="bg-card border border-border rounded-2xl p-6">
           <h2 className="text-xl font-bold mb-2">Account Type</h2>
-          <p className="text-muted text-sm mb-4">Choose how you want to use DealPacket</p>
+          <p className="text-muted text-sm mb-4">Choose how you want to use REI Reach</p>
 
           <div className="grid md:grid-cols-3 gap-3">
             {roles.map((role) => (

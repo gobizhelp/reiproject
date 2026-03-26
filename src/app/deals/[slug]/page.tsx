@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!property) return { title: "Deal Not Found" };
 
   return {
-    title: `${property.street_address}, ${property.city} ${property.state} - Deal Packet`,
+    title: `${property.street_address}, ${property.city} ${property.state} - REI Reach`,
     description: `Off-market deal: ${property.street_address}. Asking ${formatCurrency(property.asking_price)}.`,
   };
 }

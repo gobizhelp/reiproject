@@ -1,5 +1,5 @@
 -- ============================================
--- DealPacket Database Schema
+-- REI Reach Database Schema
 -- Run this in your Supabase SQL Editor
 -- ============================================
 

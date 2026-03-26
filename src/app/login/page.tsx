@@ -51,10 +51,10 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <Building2 className="w-8 h-8 text-accent" />
-            <span className="text-2xl font-bold">DealPacket</span>
+            <span className="text-2xl font-bold">REI Reach</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
-          <p className="text-muted">Sign in to manage your deal packets</p>
+          <p className="text-muted">Sign in to manage your deals</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-8 space-y-5">

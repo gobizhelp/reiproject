@@ -544,7 +544,7 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                     {sub.first_name[0]}
                     {sub.last_name[0]}
                     {isOnPlatform(sub) && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center" title="On DealPacket">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center" title="On REI Reach">
                         <UserCheck className="w-2.5 h-2.5 text-white" />
                       </span>
                     )}

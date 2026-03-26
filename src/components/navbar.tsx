@@ -92,7 +92,7 @@ export default function Navbar() {
         <div className="flex items-center gap-6">
           <Link href={isBuyer ? "/marketplace" : "/dashboard"} className="flex items-center gap-2">
             <Building2 className="w-7 h-7 text-accent" />
-            <span className="text-xl font-bold">DealPacket</span>
+            <span className="text-xl font-bold">REI Reach</span>
           </Link>
           <div className="hidden md:flex items-center gap-4">
             {isBuyer ? (
