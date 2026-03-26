@@ -1,3 +1,5 @@
+import type { Tier } from './membership/tier-config';
+
 export type UserRole = 'seller' | 'buyer' | 'both';
 export type ActiveView = 'seller' | 'buyer';
 
@@ -12,6 +14,8 @@ export interface Profile {
   is_suspended: boolean;
   suspended_at: string | null;
   suspended_reason: string | null;
+  buyer_tier: Tier;
+  seller_tier: Tier;
   created_at: string;
   updated_at: string;
 }
