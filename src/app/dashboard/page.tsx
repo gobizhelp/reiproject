@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import PropertyCard from "@/components/property-card";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { Property } from "@/lib/types";
 
 export default async function DashboardPage() {
@@ -29,13 +29,22 @@ export default async function DashboardPage() {
             <h1 className="text-3xl font-bold">Your Properties</h1>
             <p className="text-muted mt-1">Manage your off-market deal packets</p>
           </div>
-          <Link
-            href="/properties/new"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            New Property
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/properties/import"
+              className="inline-flex items-center gap-2 border border-border hover:border-accent/50 text-foreground px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
+            >
+              <Upload className="w-4 h-4" />
+              Import CSV
+            </Link>
+            <Link
+              href="/properties/new"
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              New Property
+            </Link>
+          </div>
         </div>
 
         {(!properties || properties.length === 0) ? (
