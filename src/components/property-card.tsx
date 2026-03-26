@@ -3,16 +3,17 @@
 import { Property } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
 import Link from "next/link";
-import { Copy, ExternalLink, Pencil } from "lucide-react";
+import { Copy, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 interface PropertyCardProps {
   property: Property & {
     property_photos: { id: string; url: string; display_order: number }[];
   };
+  onDelete?: () => void;
 }
 
-export default function PropertyCard({ property }: PropertyCardProps) {
+export default function PropertyCard({ property, onDelete }: PropertyCardProps) {
   const [copied, setCopied] = useState(false);
   const thumbnail = property.property_photos
     ?.sort((a, b) => a.display_order - b.display_order)[0]?.url;
@@ -77,6 +78,15 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                 <ExternalLink className="w-4 h-4" />
               </Link>
             </>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="flex items-center justify-center bg-border/50 hover:bg-danger/20 hover:text-danger p-2 rounded-lg transition-colors"
+              title="Delete property"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           )}
         </div>
       </div>
