@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic';
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/navbar";
 import PricingTable from "@/components/pricing-table";
+import Link from "next/link";
+import { Building2 } from "lucide-react";
 
 export default async function PricingPage() {
   const supabase = await createClient();
@@ -12,8 +14,24 @@ export default async function PricingPage() {
     <div className="min-h-screen bg-background">
       {user && <Navbar />}
       {!user && (
-        <nav className="border-b border-border bg-card px-6 py-4">
-          <span className="text-xl font-bold">DealPacket</span>
+        <nav className="border-b border-border">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <Building2 className="w-7 h-7 text-accent" />
+              <span className="text-xl font-bold">DealPacket</span>
+            </Link>
+            <div className="flex items-center gap-4">
+              <Link href="/login" className="text-muted hover:text-foreground transition-colors">
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Sign up free
+              </Link>
+            </div>
+          </div>
         </nav>
       )}
       <PricingTable />
