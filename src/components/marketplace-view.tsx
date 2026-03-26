@@ -19,7 +19,6 @@ interface Props {
   properties: PropertyWithPhotos[];
   savedPropertyIds: string[];
   sentMessages: Record<string, string[]>;
-  currentUserId: string;
 }
 
 const PROPERTY_TYPES = [
@@ -34,7 +33,7 @@ const STATES = [
   "VA","WA","WV","WI","WY","DC",
 ];
 
-export default function MarketplaceView({ properties, savedPropertyIds, sentMessages, currentUserId }: Props) {
+export default function MarketplaceView({ properties, savedPropertyIds, sentMessages }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -275,7 +274,6 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
               property={property}
               isSaved={savedIds.has(property.id)}
               sentTypes={sentMsgs[property.id] || []}
-              isOwn={property.user_id === currentUserId}
               onToggleSave={() => toggleSave(property.id)}
               onSendMessage={(type, msg) => sendMessage(property.id, type, msg)}
             />
@@ -290,14 +288,12 @@ function MarketplaceCard({
   property,
   isSaved,
   sentTypes,
-  isOwn,
   onToggleSave,
   onSendMessage,
 }: {
   property: PropertyWithPhotos;
   isSaved: boolean;
   sentTypes: string[];
-  isOwn: boolean;
   onToggleSave: () => void;
   onSendMessage: (type: ActionType, customMessage?: string) => void;
 }) {
@@ -425,8 +421,7 @@ function MarketplaceCard({
         )}
 
         {/* Action Buttons - always visible for non-own properties */}
-        {!isOwn && (
-          <div className="mt-3 pt-3 border-t border-border space-y-2">
+        <div className="mt-3 pt-3 border-t border-border space-y-2">
             <div className="flex gap-2">
               <button
                 onClick={() => onSendMessage("request_showing")}
@@ -482,7 +477,6 @@ function MarketplaceCard({
               </div>
             )}
           </div>
-        )}
       </div>
     </div>
   );

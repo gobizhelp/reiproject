@@ -89,10 +89,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Property not found" }, { status: 404 });
   }
 
-  if (property.user_id === user.id) {
-    return Response.json({ error: "Cannot message your own property" }, { status: 400 });
-  }
-
   // For request_showing and make_offer, check if already sent
   if (messageType !== "ask_question") {
     const { data: existing } = await supabase

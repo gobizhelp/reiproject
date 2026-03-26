@@ -16,12 +16,11 @@ interface Props {
   comps: Comp[];
   analysis: DealAnalysis;
   isLoggedIn?: boolean;
-  isOwn?: boolean;
   isSaved?: boolean;
   sentMessageTypes?: string[];
 }
 
-export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, sentMessageTypes: initialSent }: Props) {
+export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isSaved: initialSaved, sentMessageTypes: initialSent }: Props) {
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [saved, setSaved] = useState(initialSaved || false);
   const [sentTypes, setSentTypes] = useState<string[]>(initialSent || []);
@@ -32,7 +31,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
   const hasLightRehab = property.light_rehab_arv || property.light_rehab_budget_low;
   const hasFullRehab = property.full_rehab_arv_low || property.full_rehab_budget_low;
   const hasRentals = property.rent_after_reno_low || property.rent_after_reno_basement_low;
-  const showActions = isLoggedIn && !isOwn;
+  const showActions = isLoggedIn;
 
   async function toggleSave() {
     const wasSaved = saved;

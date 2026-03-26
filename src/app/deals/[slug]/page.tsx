@@ -67,9 +67,8 @@ export default async function DealPacketPage({ params }: Props) {
   // Fetch buyer-specific data if logged in
   let isSaved = false;
   let sentMessageTypes: string[] = [];
-  const isOwn = user?.id === property.user_id;
 
-  if (user && !isOwn) {
+  if (user) {
     const [savedRes, msgsRes] = await Promise.all([
       supabase
         .from("saved_listings")
@@ -95,7 +94,6 @@ export default async function DealPacketPage({ params }: Props) {
       comps={comps}
       analysis={analysis}
       isLoggedIn={!!user}
-      isOwn={isOwn}
       isSaved={isSaved}
       sentMessageTypes={sentMessageTypes}
     />
