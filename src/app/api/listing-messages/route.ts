@@ -145,44 +145,60 @@ export async function POST(request: NextRequest) {
   }
 
   // Also create/update a conversation so this appears in the DM system
-  const { data: existingConv } = await supabase
-    .from("conversations")
-    .select("id")
-    .eq("buyer_id", user.id)
-    .eq("property_id", propertyId)
-    .maybeSingle();
-
-  let conversationId: string | null = null;
-
-  if (existingConv) {
-    conversationId = existingConv.id;
-    await supabase
+  try {
+    const { data: existingConv, error: convQueryErr } = await supabase
       .from("conversations")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", conversationId);
-  } else {
-    const { data: newConv } = await supabase
-      .from("conversations")
-      .insert({
-        property_id: propertyId,
-        buyer_id: user.id,
-        seller_id: property.user_id,
-        initial_action: messageType,
-        buyer_shared_contact: false,
-      })
       .select("id")
-      .single();
-    if (newConv) conversationId = newConv.id;
-  }
+      .eq("buyer_id", user.id)
+      .eq("property_id", propertyId)
+      .maybeSingle();
 
-  if (conversationId) {
-    await supabase
-      .from("conversation_messages")
-      .insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        message,
-      });
+    if (convQueryErr) {
+      console.error("Conversation query error:", convQueryErr.message);
+    }
+
+    let conversationId: string | null = null;
+
+    if (existingConv) {
+      conversationId = existingConv.id;
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+    } else if (!convQueryErr) {
+      const { data: newConv, error: convInsertErr } = await supabase
+        .from("conversations")
+        .insert({
+          property_id: propertyId,
+          buyer_id: user.id,
+          seller_id: property.user_id,
+          initial_action: messageType,
+          buyer_shared_contact: false,
+        })
+        .select("id")
+        .single();
+
+      if (convInsertErr) {
+        console.error("Conversation insert error:", convInsertErr.message);
+      }
+      if (newConv) conversationId = newConv.id;
+    }
+
+    if (conversationId) {
+      const { error: msgInsertErr } = await supabase
+        .from("conversation_messages")
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          message,
+        });
+
+      if (msgInsertErr) {
+        console.error("Conversation message insert error:", msgInsertErr.message);
+      }
+    }
+  } catch (e) {
+    console.error("Conversation bridge error:", e);
   }
 
   return Response.json({ message: "Sent" });
