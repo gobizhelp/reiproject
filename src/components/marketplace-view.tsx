@@ -304,11 +304,27 @@ function MarketplaceCard({
   const [askOpen, setAskOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [sending, setSending] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ActionType | null>(null);
   const photo = property.property_photos
     ?.sort((a, b) => a.display_order - b.display_order)?.[0];
 
   const hasSentShowing = sentTypes.includes("request_showing");
   const hasSentOffer = sentTypes.includes("make_offer");
+
+  function handleActionClick(type: ActionType) {
+    if ((type === "request_showing" && hasSentShowing) || (type === "make_offer" && hasSentOffer)) {
+      setConfirmAction(type);
+    } else {
+      doSend(type);
+    }
+  }
+
+  async function doSend(type: ActionType, customMessage?: string) {
+    setSending(true);
+    setConfirmAction(null);
+    await onSendMessage(type, customMessage);
+    setSending(false);
+  }
 
   async function handleAskQuestion() {
     if (!question.trim()) return;
@@ -429,30 +445,38 @@ function MarketplaceCard({
           <div className="mt-3 pt-3 border-t border-border space-y-2">
             <div className="flex gap-2">
               <button
-                onClick={() => onSendMessage("request_showing")}
-                disabled={hasSentShowing}
-                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${
-                  hasSentShowing
-                    ? "bg-success/20 text-success border border-success/30 cursor-default"
-                    : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
-                }`}
+                onClick={() => handleActionClick("request_showing")}
+                disabled={sending}
+                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 disabled:opacity-50"
               >
                 <Eye className="w-3.5 h-3.5" />
-                {hasSentShowing ? "Requested" : "Request Showing"}
+                Request Showing
               </button>
               <button
-                onClick={() => onSendMessage("make_offer")}
-                disabled={hasSentOffer}
-                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${
-                  hasSentOffer
-                    ? "bg-success/20 text-success border border-success/30 cursor-default"
-                    : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
-                }`}
+                onClick={() => handleActionClick("make_offer")}
+                disabled={sending}
+                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 disabled:opacity-50"
               >
                 <DollarSign className="w-3.5 h-3.5" />
-                {hasSentOffer ? "Sent" : "Make Offer"}
+                Make Offer
               </button>
             </div>
+            {/* Confirm re-send */}
+            {confirmAction && (
+              <div className="bg-background border border-border rounded-lg p-3 space-y-2">
+                <p className="text-xs text-muted">
+                  You&apos;ve already {confirmAction === "request_showing" ? "requested a showing" : "sent an offer"}. Send again?
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => setConfirmAction(null)} className="flex-1 text-xs py-1.5 rounded-lg border border-border text-muted hover:text-foreground transition-colors">
+                    Cancel
+                  </button>
+                  <button onClick={() => doSend(confirmAction)} disabled={sending} className="flex-1 text-xs py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50">
+                    {sending ? "Sending..." : "Send Again"}
+                  </button>
+                </div>
+              </div>
+            )}
             {!askOpen ? (
               <button
                 onClick={() => setAskOpen(true)}

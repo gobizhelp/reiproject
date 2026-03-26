@@ -111,21 +111,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Cannot message your own property" }, { status: 400 });
   }
 
-  // For request_showing and make_offer, check if already sent
-  if (messageType !== "ask_question") {
-    const { data: existing } = await supabase
-      .from("listing_messages")
-      .select("id")
-      .eq("sender_id", user.id)
-      .eq("property_id", propertyId)
-      .eq("message_type", messageType)
-      .maybeSingle();
-
-    if (existing) {
-      return Response.json({ message: "Already sent" });
-    }
-  }
-
   const message = messageType === "ask_question"
     ? customMessage.trim()
     : DEFAULT_MESSAGES[messageType];

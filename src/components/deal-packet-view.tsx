@@ -7,7 +7,7 @@ import { formatCurrency, formatPercent, formatCurrencyRange } from "@/lib/calcul
 import {
   Building2, Bed, Bath, Maximize, Calendar, MapPin, Phone, Mail, User,
   ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info, ArrowRight,
-  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send
+  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send, X
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 
@@ -30,6 +30,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
   const [question, setQuestion] = useState("");
   const [sending, setSending] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(!!existingConversationId);
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
 
   const hasLightRehab = property.light_rehab_arv || property.light_rehab_budget_low;
   const hasFullRehab = property.full_rehab_arv_low || property.full_rehab_budget_low;
@@ -51,6 +52,12 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
   async function handleAction(type: string, customMessage?: string) {
     if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
     if (type === "ask_question" && !customMessage) { setAskOpen(true); return; }
+    // If conversation already exists for showing/offer, confirm first
+    if (conversationStarted && (type === "request_showing" || type === "make_offer") && !confirmAction) {
+      setConfirmAction(type);
+      return;
+    }
+    setConfirmAction(null);
     setSending(true);
     const res = await fetch("/api/conversations", {
       method: "POST",
@@ -205,15 +212,16 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
               )}
               <button
                 onClick={() => handleAction("request_showing")}
-                disabled={conversationStarted && !askOpen}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 disabled:opacity-50 disabled:cursor-default"
+                disabled={sending}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 disabled:opacity-50"
               >
                 <Eye className="w-4 h-4" />
                 Request Showing
               </button>
               <button
                 onClick={() => handleAction("make_offer")}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                disabled={sending}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 disabled:opacity-50"
               >
                 <DollarSign className="w-4 h-4" />
                 Make Offer
@@ -260,6 +268,40 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                 View Conversation
               </button>
             )}
+          </div>
+        )}
+
+        {/* Confirm re-send modal */}
+        {confirmAction && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setConfirmAction(null)}>
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold">
+                  {confirmAction === "request_showing" ? "Request Another Showing?" : "Send Another Offer?"}
+                </h3>
+                <button onClick={() => setConfirmAction(null)} className="text-muted hover:text-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm text-muted mb-6">
+                You&apos;ve already {confirmAction === "request_showing" ? "requested a showing" : "sent an offer"} for this property. Would you like to send again?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmAction(null)}
+                  className="flex-1 px-4 py-2.5 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-background transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleAction(confirmAction)}
+                  disabled={sending}
+                  className="flex-1 px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                >
+                  {sending ? "Sending..." : "Send Again"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
