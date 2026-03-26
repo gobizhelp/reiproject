@@ -102,9 +102,23 @@ export default async function MatchedListingsPage() {
     sentMessageMap[m.property_id].push(m.message_type);
   });
 
+  const debugInfo = {
+    buyerTier: typedProfile?.buyer_tier ?? 'not set',
+    buyBoxCount: buyBoxes?.length ?? 0,
+    publishedPropertyCount: properties?.length ?? 0,
+    buyBoxNames: (buyBoxes || []).map((b: any) => b.name),
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      {/* DEBUG BANNER — remove after troubleshooting */}
+      <div className="max-w-6xl mx-auto px-4 pt-4">
+        <details className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-sm">
+          <summary className="font-semibold text-yellow-400 cursor-pointer">Debug Info (click to expand)</summary>
+          <pre className="mt-2 text-xs text-muted whitespace-pre-wrap">{JSON.stringify(debugInfo, null, 2)}</pre>
+        </details>
+      </div>
       <MatchedListingsView
         properties={properties || []}
         buyBoxes={buyBoxes || []}
