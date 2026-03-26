@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ArrowLeftRight, ShoppingCart, Home,
-  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX
+  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX, GripVertical
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
 import { useNotifications } from "@/components/notification-provider";
@@ -100,6 +100,12 @@ export default function Navbar() {
                   <span className="flex items-center gap-1.5">
                     <Heart className="w-4 h-4" />
                     Saved
+                  </span>
+                </Link>
+                <Link href="/deal-pipeline" className={linkClass("/deal-pipeline")}>
+                  <span className="flex items-center gap-1.5">
+                    <GripVertical className="w-4 h-4" />
+                    Pipeline
                   </span>
                 </Link>
                 <Link href="/my-buy-boxes" className={linkClass("/my-buy-boxes")}>
@@ -199,6 +205,9 @@ export default function Navbar() {
               </Link>
               <Link href="/saved-listings" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Heart className="w-5 h-5" />
+              </Link>
+              <Link href="/deal-pipeline" className="md:hidden text-muted hover:text-foreground transition-colors">
+                <GripVertical className="w-5 h-5" />
               </Link>
               <Link href="/my-buy-boxes" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Package className="w-5 h-5" />

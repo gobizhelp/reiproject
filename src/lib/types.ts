@@ -134,3 +134,16 @@ export interface ConversationMessage {
   is_read: boolean;
   created_at: string;
 }
+
+// Deal Pipeline Stages
+export type DealStage = 'saved' | 'reviewing' | 'contacted' | 'passed';
+
+export interface DealStageRecord {
+  id: string;
+  user_id: string;
+  property_id: string;
+  stage: DealStage;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
