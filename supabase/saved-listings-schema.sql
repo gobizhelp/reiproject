@@ -12,7 +12,7 @@ create table if not exists saved_listings (
   unique(user_id, property_id)
 );
 
--- Listing messages (interested / more info inquiries)
+-- Listing messages (showing requests, offers, questions)
 create table if not exists listing_messages (
   id uuid primary key default gen_random_uuid(),
   sender_id uuid references auth.users(id) on delete cascade not null,
@@ -32,35 +32,33 @@ alter table saved_listings enable row level security;
 alter table listing_messages enable row level security;
 
 -- Saved listings: users can manage their own
-create policy "Users can view own saved listings"
-  on saved_listings for select
-  using (auth.uid() = user_id);
-
-create policy "Users can save listings"
-  on saved_listings for insert
-  with check (auth.uid() = user_id);
-
-create policy "Users can unsave listings"
-  on saved_listings for delete
-  using (auth.uid() = user_id);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'saved_listings' AND policyname = 'Users can view own saved listings') THEN
+    CREATE POLICY "Users can view own saved listings" ON saved_listings FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'saved_listings' AND policyname = 'Users can save listings') THEN
+    CREATE POLICY "Users can save listings" ON saved_listings FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'saved_listings' AND policyname = 'Users can unsave listings') THEN
+    CREATE POLICY "Users can unsave listings" ON saved_listings FOR DELETE USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
 -- Listing messages: senders can create, both parties can view
-create policy "Users can send messages"
-  on listing_messages for insert
-  with check (auth.uid() = sender_id);
-
-create policy "Senders can view own sent messages"
-  on listing_messages for select
-  using (auth.uid() = sender_id);
-
-create policy "Recipients can view received messages"
-  on listing_messages for select
-  using (auth.uid() = recipient_id);
-
-create policy "Recipients can mark messages as read"
-  on listing_messages for update
-  using (auth.uid() = recipient_id)
-  with check (auth.uid() = recipient_id);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'listing_messages' AND policyname = 'Users can send messages') THEN
+    CREATE POLICY "Users can send messages" ON listing_messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'listing_messages' AND policyname = 'Senders can view own sent messages') THEN
+    CREATE POLICY "Senders can view own sent messages" ON listing_messages FOR SELECT USING (auth.uid() = sender_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'listing_messages' AND policyname = 'Recipients can view received messages') THEN
+    CREATE POLICY "Recipients can view received messages" ON listing_messages FOR SELECT USING (auth.uid() = recipient_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'listing_messages' AND policyname = 'Recipients can mark messages as read') THEN
+    CREATE POLICY "Recipients can mark messages as read" ON listing_messages FOR UPDATE USING (auth.uid() = recipient_id) WITH CHECK (auth.uid() = recipient_id);
+  END IF;
+END $$;
 
 -- ============================================
 -- Indexes
