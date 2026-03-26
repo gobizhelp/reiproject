@@ -8,15 +8,17 @@ import {
   ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info, ArrowRight,
   Tag, Home, Wrench, Star
 } from "lucide-react";
+import Navbar from "@/components/navbar";
 
 interface Props {
   property: Property;
   photos: PropertyPhoto[];
   comps: Comp[];
   analysis: DealAnalysis;
+  isLoggedIn?: boolean;
 }
 
-export default function DealPacketView({ property, photos, comps, analysis }: Props) {
+export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn }: Props) {
   const [currentPhoto, setCurrentPhoto] = useState(0);
 
   const hasLightRehab = property.light_rehab_arv || property.light_rehab_budget_low;
@@ -26,12 +28,16 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-card border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-2">
-          <Building2 className="w-6 h-6 text-accent" />
-          <span className="font-bold text-lg">DealPacket</span>
+      {isLoggedIn ? (
+        <Navbar />
+      ) : (
+        <div className="bg-card border-b border-border">
+          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-2">
+            <Building2 className="w-6 h-6 text-accent" />
+            <span className="font-bold text-lg">DealPacket</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Hero - Photo Carousel */}
       {photos.length > 0 && (
@@ -489,22 +495,24 @@ export default function DealPacketView({ property, photos, comps, analysis }: Pr
           </div>
         </div>
 
-        {/* Sign Up CTA */}
-        <section className="mt-12 bg-accent/10 border border-accent/30 rounded-2xl p-8 text-center">
-          <h2 className="text-2xl font-bold mb-2">
-            Want to see more {property.contact_name ? `from ${property.contact_name}` : "properties like this"}?
-          </h2>
-          <p className="text-muted mb-6 max-w-lg mx-auto">
-            Sign up for free to browse more off-market deals and connect with wholesalers on DealPacket.
-          </p>
-          <a
-            href="/signup"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors"
-          >
-            Sign up here
-            <ArrowRight className="w-4 h-4" />
-          </a>
-        </section>
+        {/* Sign Up CTA - only show for non-logged-in visitors */}
+        {!isLoggedIn && (
+          <section className="mt-12 bg-accent/10 border border-accent/30 rounded-2xl p-8 text-center">
+            <h2 className="text-2xl font-bold mb-2">
+              Want to see more {property.contact_name ? `from ${property.contact_name}` : "properties like this"}?
+            </h2>
+            <p className="text-muted mb-6 max-w-lg mx-auto">
+              Sign up for free to browse more off-market deals and connect with wholesalers on DealPacket.
+            </p>
+            <a
+              href="/signup"
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+            >
+              Sign up here
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </section>
+        )}
       </div>
     </div>
   );

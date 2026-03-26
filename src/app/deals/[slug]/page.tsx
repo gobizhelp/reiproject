@@ -33,6 +33,8 @@ export default async function DealPacketPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
 
+  const { data: { user } } = await supabase.auth.getUser();
+
   const { data: property } = await supabase
     .from("properties")
     .select("*, property_photos(*), comps(*)")
@@ -62,5 +64,5 @@ export default async function DealPacketPage({ params }: Props) {
     property.full_rehab_arv_high,
   );
 
-  return <DealPacketView property={property} photos={photos} comps={comps} analysis={analysis} />;
+  return <DealPacketView property={property} photos={photos} comps={comps} analysis={analysis} isLoggedIn={!!user} />;
 }
