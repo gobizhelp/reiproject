@@ -25,7 +25,22 @@ export default function LoginPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      // Check profile to route based on role
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("active_view")
+          .eq("id", user.id)
+          .single();
+        if (profile?.active_view === "buyer") {
+          router.push("/marketplace");
+        } else {
+          router.push("/dashboard");
+        }
+      } else {
+        router.push("/dashboard");
+      }
       router.refresh();
     }
   }
