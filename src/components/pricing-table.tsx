@@ -26,7 +26,83 @@ interface PricingTableProps {
   buyerTier?: Tier;
   sellerTier?: Tier;
   userRole?: string;
+  completedFeatures?: Record<string, boolean>;
 }
+
+// "Coming Soon" badge component
+function ComingSoonBadge() {
+  return (
+    <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">
+      Coming Soon
+    </span>
+  );
+}
+
+// Helper to check if a feature is marked complete in the admin checklist
+// Admin keys are formatted as: buyer_<feature> or seller_<feature>
+function isFeatureReady(
+  completedFeatures: Record<string, boolean>,
+  role: RoleTab,
+  featureKey: string,
+): boolean {
+  return !!completedFeatures[`${role}_${featureKey}`];
+}
+
+// Map card highlight strings to their primary feature key(s)
+// If ANY mapped feature is incomplete, the highlight shows "Coming Soon"
+const BUYER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
+  free: [
+    ["basic_search"],           // "1 buy box" (limit, always ready)
+    ["browse_listings"],        // "Browse all listings"
+    ["basic_search", "basic_filters"], // "Basic search & filters"
+    ["save_listings"],          // "Save listings"
+    ["contact_seller"],         // "Contact sellers"
+    ["daily_digest_alerts"],    // "Daily digest alerts"
+  ],
+  pro: [
+    ["basic_search"],           // "Up to 5 buy boxes" (limit, always ready)
+    ["instant_email_alerts"],   // "Instant email alerts"
+    ["advanced_filters", "match_feed"], // "Advanced filters & match feed"
+    ["saved_searches", "map_view"], // "Saved searches & map view"
+    ["basic_deal_pipeline"],    // "Deal pipeline"
+    ["pro_buyer_badge"],        // "Pro buyer badge"
+  ],
+  elite: [
+    ["basic_search"],           // "Unlimited buy boxes" (limit, always ready)
+    ["first_look_access"],      // "First-look access"
+    ["premium_inventory"],      // "Premium-only inventory"
+    ["sms_alerts", "push_notifications"], // "SMS & push notifications"
+    ["team_seats", "shared_team_pipeline"], // "Team seats & shared pipeline"
+    ["advanced_buyer_analytics"], // "Advanced analytics"
+  ],
+};
+
+const SELLER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
+  free: [
+    ["create_listing"],         // "1 active listing" (limit, always ready)
+    ["upload_photos"],          // "Upload photos"
+    ["receive_inquiries"],      // "Receive inquiries"
+    ["basic_dashboard"],        // "Basic dashboard"
+    ["manual_share_link"],      // "Manual share link"
+    ["inquiry_count"],          // "Inquiry count"
+  ],
+  pro: [
+    ["create_listing"],         // "Up to 10 listings" (limit, always ready)
+    ["email_blast"],            // "Email blast to matched buyers"
+    ["listing_analytics", "views_count"], // "Listing analytics & views"
+    ["featured_listing_badge"], // "Featured listing badge"
+    ["branded_seller_profile", "branded_listing_page"], // "Branded profile & pages"
+    ["basic_dispo_pipeline"],   // "Dispo pipeline"
+  ],
+  elite: [
+    ["create_listing"],         // "Unlimited listings" (limit, always ready)
+    ["sms_blast", "audience_segmentation"], // "SMS blast & audience segmentation"
+    ["vip_first_release"],      // "VIP first release"
+    ["private_listings", "premium_only_listings"], // "Private & premium-only listings"
+    ["shared_team_inbox", "team_dispo_pipeline"], // "Team inbox & dispo pipeline"
+    ["deal_room", "offer_collection_tools"], // "Deal room & offer tools"
+  ],
+};
 
 const TIER_ICONS: Record<Tier, typeof Star> = {
   free: Star,
@@ -302,17 +378,23 @@ function SuccessToast({ message, onDismiss }: { message: string; onDismiss: () =
 function TierCard({
   planId,
   highlights,
+  highlightFeatureKeys,
   popular,
   currentTier,
   isLoggedIn,
   onSelectPlan,
+  completedFeatures,
+  role,
 }: {
   planId: PlanId;
   highlights: string[];
+  highlightFeatureKeys: string[][];
   popular?: boolean;
   currentTier?: Tier;
   isLoggedIn?: boolean;
   onSelectPlan?: (tier: Tier) => void;
+  completedFeatures: Record<string, boolean>;
+  role: RoleTab;
 }) {
   const plan = MEMBERSHIP_PLANS[planId];
   const accent = TIER_ACCENT[plan.tier];
@@ -362,12 +444,19 @@ function TierCard({
       <p className="text-muted text-sm mb-6">{plan.description}</p>
 
       <ul className="space-y-3 mb-8 flex-1">
-        {highlights.map((feature) => (
-          <li key={feature} className="flex items-start gap-2">
-            <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-            <span className="text-sm text-foreground">{feature}</span>
-          </li>
-        ))}
+        {highlights.map((feature, idx) => {
+          const featureKeys = highlightFeatureKeys[idx] || [];
+          const allReady = featureKeys.every((k) => isFeatureReady(completedFeatures, role, k));
+          return (
+            <li key={feature} className="flex items-start gap-2">
+              <Check className={`w-4 h-4 mt-0.5 shrink-0 ${allReady ? "text-success" : "text-muted/50"}`} />
+              <span className={`text-sm ${allReady ? "text-foreground" : "text-muted"}`}>
+                {feature}
+                {!allReady && <ComingSoonBadge />}
+              </span>
+            </li>
+          );
+        })}
       </ul>
 
       {/* CTA Button */}
@@ -418,7 +507,7 @@ function TierCard({
 
 // --- Feature Comparison Table ---
 
-function FeatureComparisonTable({ role }: { role: RoleTab }) {
+function FeatureComparisonTable({ role, completedFeatures }: { role: RoleTab; completedFeatures: Record<string, boolean> }) {
   const tiers: Tier[] = ["free", "pro", "elite"];
   const planIds: PlanId[] =
     role === "buyer"
@@ -492,28 +581,38 @@ function FeatureComparisonTable({ role }: { role: RoleTab }) {
                   {group.label}
                 </td>
               </tr>
-              {group.features.map((feature, i) => (
-                <tr
-                  key={feature}
-                  className={`border-t border-border/30 ${i % 2 === 0 ? "" : "bg-card/30"}`}
-                >
-                  <td className="p-3 pl-4 text-sm text-foreground/80">
-                    {featureLabels[feature as keyof typeof featureLabels]}
-                  </td>
-                  {tiers.map((tier) => {
-                    const included = (featureSets[tier] as ReadonlySet<string>).has(feature);
-                    return (
-                      <td key={tier} className="p-3 text-center">
-                        {included ? (
-                          <Check className="w-4 h-4 text-success mx-auto" />
-                        ) : (
-                          <span className="text-border">—</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {group.features.map((feature, i) => {
+                const ready = isFeatureReady(completedFeatures, role, feature);
+                return (
+                  <tr
+                    key={feature}
+                    className={`border-t border-border/30 ${i % 2 === 0 ? "" : "bg-card/30"}`}
+                  >
+                    <td className="p-3 pl-4 text-sm text-foreground/80">
+                      <span className={ready ? "" : "text-muted"}>
+                        {featureLabels[feature as keyof typeof featureLabels]}
+                      </span>
+                      {!ready && <ComingSoonBadge />}
+                    </td>
+                    {tiers.map((tier) => {
+                      const included = (featureSets[tier] as ReadonlySet<string>).has(feature);
+                      return (
+                        <td key={tier} className="p-3 text-center">
+                          {included ? (
+                            ready ? (
+                              <Check className="w-4 h-4 text-success mx-auto" />
+                            ) : (
+                              <Check className="w-4 h-4 text-muted/40 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-border">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </>
           ))}
         </tbody>
@@ -529,6 +628,7 @@ export default function PricingTable({
   buyerTier = "free",
   sellerTier = "free",
   userRole = "buyer",
+  completedFeatures = {},
 }: PricingTableProps) {
   const router = useRouter();
   const defaultTab: RoleTab = userRole === "seller" ? "seller" : "buyer";
@@ -543,6 +643,7 @@ export default function PricingTable({
 
   const currentTier = activeTab === "buyer" ? buyerTier : sellerTier;
   const highlights = activeTab === "buyer" ? BUYER_HIGHLIGHTS : SELLER_HIGHLIGHTS;
+  const highlightFeatures = activeTab === "buyer" ? BUYER_HIGHLIGHT_FEATURES : SELLER_HIGHLIGHT_FEATURES;
   const planIds: PlanId[] =
     activeTab === "buyer"
       ? ["free_buyer", "pro_buyer", "elite_buyer"]
@@ -673,10 +774,13 @@ export default function PricingTable({
               key={id}
               planId={id}
               highlights={highlights[tier]}
+              highlightFeatureKeys={highlightFeatures[tier]}
               popular={i === 1}
               currentTier={isLoggedIn ? currentTier : undefined}
               isLoggedIn={isLoggedIn}
               onSelectPlan={handleSelectPlan}
+              completedFeatures={completedFeatures}
+              role={activeTab}
             />
           );
         })}
@@ -698,7 +802,7 @@ export default function PricingTable({
       {/* Full Feature Comparison */}
       {showComparison && (
         <div className="bg-card border border-border rounded-2xl p-6 mb-16">
-          <FeatureComparisonTable role={activeTab} />
+          <FeatureComparisonTable role={activeTab} completedFeatures={completedFeatures} />
         </div>
       )}
 

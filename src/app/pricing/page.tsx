@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import Navbar from "@/components/navbar";
 import PricingTable from "@/components/pricing-table";
 import Link from "next/link";
@@ -27,6 +28,24 @@ export default async function PricingPage() {
       sellerTier = profile.seller_tier ?? "free";
       userRole = profile.user_role ?? "buyer";
     }
+  }
+
+  // Fetch feature checklist status from admin settings
+  let completedFeatures: Record<string, boolean> = {};
+  try {
+    const adminSupabase = createAdminClient();
+    const { data } = await adminSupabase
+      .from("admin_settings")
+      .select("value")
+      .eq("key", "feature_checklist")
+      .single();
+
+    if (data?.value && typeof data.value === "object") {
+      const val = data.value as { checked?: Record<string, boolean> };
+      completedFeatures = val.checked ?? {};
+    }
+  } catch {
+    // If admin settings not available, treat all features as not yet verified
   }
 
   return (
@@ -58,6 +77,7 @@ export default async function PricingPage() {
         buyerTier={buyerTier}
         sellerTier={sellerTier}
         userRole={userRole}
+        completedFeatures={completedFeatures}
       />
     </div>
   );
