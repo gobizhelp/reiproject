@@ -4,9 +4,12 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Property } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
+import { hasBuyerFeature } from "@/lib/membership/feature-gate";
+import type { Tier } from "@/lib/membership/tier-config";
 import {
   Search, SlidersHorizontal, X, MapPin, Bed, Bath, Maximize,
-  Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown
+  Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown,
+  Lock, ArrowUpDown,
 } from "lucide-react";
 
 interface PropertyWithPhotos extends Property {
@@ -15,11 +18,14 @@ interface PropertyWithPhotos extends Property {
 
 type ActionType = "request_showing" | "make_offer" | "ask_question";
 
+type SortOption = "newest" | "oldest" | "price_asc" | "price_desc";
+
 interface Props {
   properties: PropertyWithPhotos[];
   savedPropertyIds: string[];
   sentMessages: Record<string, string[]>;
   currentUserId: string;
+  buyerTier: string;
 }
 
 const PROPERTY_TYPES = [
@@ -34,25 +40,96 @@ const STATES = [
   "VA","WA","WV","WI","WY","DC",
 ];
 
-export default function MarketplaceView({ properties, savedPropertyIds, sentMessages, currentUserId }: Props) {
+const STRATEGY_OPTIONS = [
+  "Fix & Flip", "BRRRR", "Buy & Hold", "Wholesale", "Creative Finance",
+  "Section 8", "Short-Term Rental", "Owner Finance", "Subject To", "Land Development",
+];
+
+const DEAL_TYPE_OPTIONS = [
+  { value: "wholesale_assignment", label: "Wholesale Assignment" },
+  { value: "owner_sale", label: "Owner Sale" },
+  { value: "off_market", label: "Off-Market" },
+];
+
+interface BasicFilters {
+  state: string;
+  city: string;
+  zipCode: string;
+  propertyType: string;
+  minPrice: string;
+  maxPrice: string;
+  minBeds: string;
+  minBaths: string;
+  minSqft: string;
+  maxSqft: string;
+  listingStatus: string;
+  sortBy: SortOption;
+}
+
+interface AdvancedFilters {
+  arvMin: string;
+  arvMax: string;
+  repairMin: string;
+  repairMax: string;
+  rentMin: string;
+  rentMax: string;
+  dealType: string;
+  strategyFit: string;
+  lotSizeMin: string;
+  lotSizeMax: string;
+  daysOnPlatform: string;
+  hasPhotos: string;
+  savedOnly: string;
+  keywordSearch: string;
+}
+
+const EMPTY_BASIC: BasicFilters = {
+  state: "", city: "", zipCode: "", propertyType: "",
+  minPrice: "", maxPrice: "", minBeds: "", minBaths: "",
+  minSqft: "", maxSqft: "", listingStatus: "", sortBy: "newest",
+};
+
+const EMPTY_ADVANCED: AdvancedFilters = {
+  arvMin: "", arvMax: "", repairMin: "", repairMax: "",
+  rentMin: "", rentMax: "", dealType: "", strategyFit: "",
+  lotSizeMin: "", lotSizeMax: "", daysOnPlatform: "",
+  hasPhotos: "", savedOnly: "", keywordSearch: "",
+};
+
+function countActive(obj: Record<string, string>, defaults: Record<string, string>): number {
+  return Object.entries(obj).filter(([k, v]) => v && v !== (defaults as Record<string, string>)[k]).length;
+}
+
+type StringRecord = Record<string, string>;
+
+export default function MarketplaceView({ properties, savedPropertyIds, sentMessages, currentUserId, buyerTier }: Props) {
+  const tier = (buyerTier || "free") as Tier;
+  const hasAdvancedFilters = hasBuyerFeature(tier, "advanced_filters");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    propertyType: "",
-    state: "",
-    minPrice: "",
-    maxPrice: "",
-    minBeds: "",
-    minBaths: "",
-    listingStatus: "",
-  });
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [basic, setBasic] = useState<BasicFilters>({ ...EMPTY_BASIC });
+  const [advanced, setAdvanced] = useState<AdvancedFilters>({ ...EMPTY_ADVANCED });
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set(savedPropertyIds));
   const [sentMsgs, setSentMsgs] = useState<Record<string, string[]>>(sentMessages);
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const activeBasicCount = countActive(basic as unknown as StringRecord, EMPTY_BASIC as unknown as StringRecord);
+  const activeAdvancedCount = countActive(advanced as unknown as StringRecord, EMPTY_ADVANCED as unknown as StringRecord);
+  const totalActiveFilters = activeBasicCount + activeAdvancedCount;
+
+  // Derive unique cities from properties for the city filter
+  const availableCities = useMemo(() => {
+    const cities = new Set<string>();
+    for (const p of properties) {
+      if (p.city) cities.add(p.city);
+    }
+    return Array.from(cities).sort();
+  }, [properties]);
 
   const filtered = useMemo(() => {
-    return properties.filter((p) => {
+    let result = properties.filter((p) => {
+      // Text search
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const searchable = [
@@ -61,22 +138,110 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
         ].filter(Boolean).join(" ").toLowerCase();
         if (!searchable.includes(q)) return false;
       }
-      if (filters.propertyType && p.property_type !== filters.propertyType) return false;
-      if (filters.state && p.state !== filters.state) return false;
-      if (filters.minPrice && (p.asking_price || 0) < Number(filters.minPrice)) return false;
-      if (filters.maxPrice && (p.asking_price || 0) > Number(filters.maxPrice)) return false;
-      if (filters.minBeds && (p.beds || 0) < Number(filters.minBeds)) return false;
-      if (filters.minBaths && (p.baths || 0) < Number(filters.minBaths)) return false;
-      if (filters.listingStatus && p.listing_status !== filters.listingStatus) return false;
+
+      // --- Basic Filters ---
+      if (basic.propertyType && p.property_type !== basic.propertyType) return false;
+      if (basic.state && p.state !== basic.state) return false;
+      if (basic.city && p.city !== basic.city) return false;
+      if (basic.zipCode && p.zip_code !== basic.zipCode) return false;
+      if (basic.minPrice && (p.asking_price || 0) < Number(basic.minPrice)) return false;
+      if (basic.maxPrice && (p.asking_price || 0) > Number(basic.maxPrice)) return false;
+      if (basic.minBeds && (p.beds || 0) < Number(basic.minBeds)) return false;
+      if (basic.minBaths && (p.baths || 0) < Number(basic.minBaths)) return false;
+      if (basic.minSqft && (p.sqft || 0) < Number(basic.minSqft)) return false;
+      if (basic.maxSqft && (p.sqft || 0) > Number(basic.maxSqft)) return false;
+      if (basic.listingStatus && p.listing_status !== basic.listingStatus) return false;
+
+      // --- Advanced Filters (only apply when user has access) ---
+      if (hasAdvancedFilters) {
+        const arv = p.light_rehab_arv || p.arv || 0;
+        if (advanced.arvMin && arv < Number(advanced.arvMin)) return false;
+        if (advanced.arvMax && arv > Number(advanced.arvMax)) return false;
+
+        const repair = p.repair_estimate || 0;
+        if (advanced.repairMin && repair < Number(advanced.repairMin)) return false;
+        if (advanced.repairMax && repair > Number(advanced.repairMax)) return false;
+
+        const rentEst = p.rent_after_reno_high || p.rent_after_reno_low || 0;
+        if (advanced.rentMin && rentEst < Number(advanced.rentMin)) return false;
+        if (advanced.rentMax && rentEst > Number(advanced.rentMax)) return false;
+
+        if (advanced.dealType) {
+          if (advanced.dealType === "off_market" && p.listing_status !== "off_market") return false;
+          if (advanced.dealType === "wholesale_assignment" && !p.assignment_fee) return false;
+          if (advanced.dealType === "owner_sale" && p.assignment_fee) return false;
+        }
+
+        if (advanced.strategyFit) {
+          const strategies = (p.ideal_investor_strategy || "").toLowerCase();
+          if (!strategies.includes(advanced.strategyFit.toLowerCase())) return false;
+        }
+
+        if (advanced.lotSizeMin || advanced.lotSizeMax) {
+          const lotNum = parseFloat(p.lot_size || "0");
+          if (advanced.lotSizeMin && lotNum < Number(advanced.lotSizeMin)) return false;
+          if (advanced.lotSizeMax && lotNum > Number(advanced.lotSizeMax)) return false;
+        }
+
+        if (advanced.daysOnPlatform) {
+          const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / (1000 * 60 * 60 * 24));
+          if (days > Number(advanced.daysOnPlatform)) return false;
+        }
+
+        if (advanced.hasPhotos === "yes") {
+          if (!p.property_photos || p.property_photos.length === 0) return false;
+        }
+        if (advanced.hasPhotos === "no") {
+          if (p.property_photos && p.property_photos.length > 0) return false;
+        }
+
+        if (advanced.savedOnly === "saved" && !savedIds.has(p.id)) return false;
+        if (advanced.savedOnly === "unsaved" && savedIds.has(p.id)) return false;
+
+        if (advanced.keywordSearch) {
+          const kw = advanced.keywordSearch.toLowerCase();
+          const text = [
+            p.renovation_overview, p.why_deal_is_strong,
+            p.neighborhood_notes, p.condition_summary,
+          ].filter(Boolean).join(" ").toLowerCase();
+          if (!text.includes(kw)) return false;
+        }
+      }
+
       return true;
     });
-  }, [properties, searchQuery, filters]);
 
-  function clearFilters() {
-    setFilters({
-      propertyType: "", state: "", minPrice: "", maxPrice: "",
-      minBeds: "", minBaths: "", listingStatus: "",
-    });
+    // Sort
+    switch (basic.sortBy) {
+      case "oldest":
+        result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case "price_asc":
+        result.sort((a, b) => (a.asking_price || 0) - (b.asking_price || 0));
+        break;
+      case "price_desc":
+        result.sort((a, b) => (b.asking_price || 0) - (a.asking_price || 0));
+        break;
+      case "newest":
+      default:
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+    }
+
+    return result;
+  }, [properties, searchQuery, basic, advanced, hasAdvancedFilters, savedIds]);
+
+  function clearBasicFilters() {
+    setBasic({ ...EMPTY_BASIC });
+  }
+
+  function clearAdvancedFilters() {
+    setAdvanced({ ...EMPTY_ADVANCED });
+  }
+
+  function clearAllFilters() {
+    clearBasicFilters();
+    clearAdvancedFilters();
   }
 
   async function toggleSave(propertyId: string) {
@@ -118,6 +283,9 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
     }
   }
 
+  const selectClass = "w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground";
+  const inputClass = "w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted";
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
@@ -148,16 +316,16 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors font-medium text-sm ${
-            showFilters || activeFilterCount > 0
+            showFilters || totalActiveFilters > 0
               ? "border-accent bg-accent/10 text-accent"
               : "border-border bg-card text-muted hover:text-foreground"
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
           Filters
-          {activeFilterCount > 0 && (
+          {totalActiveFilters > 0 && (
             <span className="bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {activeFilterCount}
+              {totalActiveFilters}
             </span>
           )}
         </button>
@@ -165,64 +333,88 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Filters</h2>
-            {activeFilterCount > 0 && (
-              <button onClick={clearFilters} className="text-sm text-accent hover:underline">
+        <div className="bg-card border border-border rounded-2xl p-6 mb-6 space-y-6">
+          {/* Basic Filters Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Basic Filters</h2>
+            {totalActiveFilters > 0 && (
+              <button onClick={clearAllFilters} className="text-sm text-accent hover:underline">
                 Clear all
               </button>
             )}
           </div>
+
+          {/* Basic Filters Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-xs text-muted mb-1">Property Type</label>
-              <select
-                value={filters.propertyType}
-                onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">All Types</option>
-                {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
             <div>
               <label className="block text-xs text-muted mb-1">State</label>
               <select
-                value={filters.state}
-                onChange={(e) => setFilters({ ...filters, state: e.target.value })}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                value={basic.state}
+                onChange={(e) => setBasic({ ...basic, state: e.target.value })}
+                className={selectClass}
               >
                 <option value="">All States</option>
                 {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
+              <label className="block text-xs text-muted mb-1">City</label>
+              <select
+                value={basic.city}
+                onChange={(e) => setBasic({ ...basic, city: e.target.value })}
+                className={selectClass}
+              >
+                <option value="">All Cities</option>
+                {availableCities.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted mb-1">Zip Code</label>
+              <input
+                type="text"
+                value={basic.zipCode}
+                onChange={(e) => setBasic({ ...basic, zipCode: e.target.value })}
+                placeholder="e.g. 33101"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-muted mb-1">Property Type</label>
+              <select
+                value={basic.propertyType}
+                onChange={(e) => setBasic({ ...basic, propertyType: e.target.value })}
+                className={selectClass}
+              >
+                <option value="">All Types</option>
+                {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
               <label className="block text-xs text-muted mb-1">Min Price</label>
               <input
                 type="number"
-                value={filters.minPrice}
-                onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
+                value={basic.minPrice}
+                onChange={(e) => setBasic({ ...basic, minPrice: e.target.value })}
                 placeholder="$0"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted"
+                className={inputClass}
               />
             </div>
             <div>
               <label className="block text-xs text-muted mb-1">Max Price</label>
               <input
                 type="number"
-                value={filters.maxPrice}
-                onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+                value={basic.maxPrice}
+                onChange={(e) => setBasic({ ...basic, maxPrice: e.target.value })}
                 placeholder="No max"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted"
+                className={inputClass}
               />
             </div>
             <div>
               <label className="block text-xs text-muted mb-1">Min Beds</label>
               <select
-                value={filters.minBeds}
-                onChange={(e) => setFilters({ ...filters, minBeds: e.target.value })}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                value={basic.minBeds}
+                onChange={(e) => setBasic({ ...basic, minBeds: e.target.value })}
+                className={selectClass}
               >
                 <option value="">Any</option>
                 {[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}+</option>)}
@@ -231,34 +423,288 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
             <div>
               <label className="block text-xs text-muted mb-1">Min Baths</label>
               <select
-                value={filters.minBaths}
-                onChange={(e) => setFilters({ ...filters, minBaths: e.target.value })}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                value={basic.minBaths}
+                onChange={(e) => setBasic({ ...basic, minBaths: e.target.value })}
+                className={selectClass}
               >
                 <option value="">Any</option>
                 {[1,2,3,4].map((n) => <option key={n} value={n}>{n}+</option>)}
               </select>
             </div>
             <div>
+              <label className="block text-xs text-muted mb-1">Min Sqft</label>
+              <input
+                type="number"
+                value={basic.minSqft}
+                onChange={(e) => setBasic({ ...basic, minSqft: e.target.value })}
+                placeholder="No min"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-muted mb-1">Max Sqft</label>
+              <input
+                type="number"
+                value={basic.maxSqft}
+                onChange={(e) => setBasic({ ...basic, maxSqft: e.target.value })}
+                placeholder="No max"
+                className={inputClass}
+              />
+            </div>
+            <div>
               <label className="block text-xs text-muted mb-1">Listing Status</label>
               <select
-                value={filters.listingStatus}
-                onChange={(e) => setFilters({ ...filters, listingStatus: e.target.value })}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                value={basic.listingStatus}
+                onChange={(e) => setBasic({ ...basic, listingStatus: e.target.value })}
+                className={selectClass}
               >
                 <option value="">All</option>
                 <option value="off_market">Off Market</option>
                 <option value="listed">Listed</option>
               </select>
             </div>
+            <div>
+              <label className="block text-xs text-muted mb-1">Sort By</label>
+              <select
+                value={basic.sortBy}
+                onChange={(e) => setBasic({ ...basic, sortBy: e.target.value as SortOption })}
+                className={selectClass}
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Advanced Filters Section */}
+          <div className="border-t border-border pt-4">
+            <button
+              onClick={() => {
+                if (hasAdvancedFilters) setShowAdvanced(!showAdvanced);
+              }}
+              className={`flex items-center justify-between w-full text-left ${
+                hasAdvancedFilters ? "cursor-pointer" : "cursor-default"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold">Advanced Filters</h2>
+                {!hasAdvancedFilters && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                    <Lock className="w-3 h-3" />
+                    Pro
+                  </span>
+                )}
+                {hasAdvancedFilters && activeAdvancedCount > 0 && (
+                  <span className="bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {activeAdvancedCount}
+                  </span>
+                )}
+              </div>
+              {hasAdvancedFilters && (
+                <div className="flex items-center gap-2">
+                  {activeAdvancedCount > 0 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); clearAdvancedFilters(); }}
+                      className="text-sm text-accent hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <ChevronDown className={`w-4 h-4 text-muted transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
+                </div>
+              )}
+            </button>
+
+            {!hasAdvancedFilters && (
+              <p className="text-xs text-muted mt-2">
+                Upgrade to <span className="text-amber-400 font-medium">Pro</span> to unlock investor-specific filters like ARV, repair estimates, rent projections, strategy fit, and more.
+              </p>
+            )}
+
+            {hasAdvancedFilters && showAdvanced && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                <div>
+                  <label className="block text-xs text-muted mb-1">ARV Min</label>
+                  <input
+                    type="number"
+                    value={advanced.arvMin}
+                    onChange={(e) => setAdvanced({ ...advanced, arvMin: e.target.value })}
+                    placeholder="$0"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">ARV Max</label>
+                  <input
+                    type="number"
+                    value={advanced.arvMax}
+                    onChange={(e) => setAdvanced({ ...advanced, arvMax: e.target.value })}
+                    placeholder="No max"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Repair Estimate Min</label>
+                  <input
+                    type="number"
+                    value={advanced.repairMin}
+                    onChange={(e) => setAdvanced({ ...advanced, repairMin: e.target.value })}
+                    placeholder="$0"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Repair Estimate Max</label>
+                  <input
+                    type="number"
+                    value={advanced.repairMax}
+                    onChange={(e) => setAdvanced({ ...advanced, repairMax: e.target.value })}
+                    placeholder="No max"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Rent Estimate Min</label>
+                  <input
+                    type="number"
+                    value={advanced.rentMin}
+                    onChange={(e) => setAdvanced({ ...advanced, rentMin: e.target.value })}
+                    placeholder="$/mo"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Rent Estimate Max</label>
+                  <input
+                    type="number"
+                    value={advanced.rentMax}
+                    onChange={(e) => setAdvanced({ ...advanced, rentMax: e.target.value })}
+                    placeholder="No max"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Deal Type</label>
+                  <select
+                    value={advanced.dealType}
+                    onChange={(e) => setAdvanced({ ...advanced, dealType: e.target.value })}
+                    className={selectClass}
+                  >
+                    <option value="">All</option>
+                    {DEAL_TYPE_OPTIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Strategy Fit</label>
+                  <select
+                    value={advanced.strategyFit}
+                    onChange={(e) => setAdvanced({ ...advanced, strategyFit: e.target.value })}
+                    className={selectClass}
+                  >
+                    <option value="">All Strategies</option>
+                    {STRATEGY_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Lot Size Min (acres)</label>
+                  <input
+                    type="number"
+                    value={advanced.lotSizeMin}
+                    onChange={(e) => setAdvanced({ ...advanced, lotSizeMin: e.target.value })}
+                    placeholder="No min"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Lot Size Max (acres)</label>
+                  <input
+                    type="number"
+                    value={advanced.lotSizeMax}
+                    onChange={(e) => setAdvanced({ ...advanced, lotSizeMax: e.target.value })}
+                    placeholder="No max"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Days on Platform</label>
+                  <select
+                    value={advanced.daysOnPlatform}
+                    onChange={(e) => setAdvanced({ ...advanced, daysOnPlatform: e.target.value })}
+                    className={selectClass}
+                  >
+                    <option value="">Any</option>
+                    <option value="1">Last 24 hours</option>
+                    <option value="3">Last 3 days</option>
+                    <option value="7">Last 7 days</option>
+                    <option value="14">Last 14 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="60">Last 60 days</option>
+                    <option value="90">Last 90 days</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Has Photos</label>
+                  <select
+                    value={advanced.hasPhotos}
+                    onChange={(e) => setAdvanced({ ...advanced, hasPhotos: e.target.value })}
+                    className={selectClass}
+                  >
+                    <option value="">Any</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Saved / Not Saved</label>
+                  <select
+                    value={advanced.savedOnly}
+                    onChange={(e) => setAdvanced({ ...advanced, savedOnly: e.target.value })}
+                    className={selectClass}
+                  >
+                    <option value="">All</option>
+                    <option value="saved">Saved Only</option>
+                    <option value="unsaved">Not Saved</option>
+                  </select>
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-xs text-muted mb-1">Keyword Search in Description</label>
+                  <input
+                    type="text"
+                    value={advanced.keywordSearch}
+                    onChange={(e) => setAdvanced({ ...advanced, keywordSearch: e.target.value })}
+                    placeholder="Search renovation notes, deal narrative..."
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* Results count */}
-      <div className="text-sm text-muted mb-4">
-        {filtered.length} {filtered.length === 1 ? "deal" : "deals"} found
-        {searchQuery && <span> for &quot;{searchQuery}&quot;</span>}
+      <div className="flex items-center justify-between text-sm text-muted mb-4">
+        <div>
+          {filtered.length} {filtered.length === 1 ? "deal" : "deals"} found
+          {searchQuery && <span> for &quot;{searchQuery}&quot;</span>}
+        </div>
+        {!showFilters && (
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            <select
+              value={basic.sortBy}
+              onChange={(e) => setBasic({ ...basic, sortBy: e.target.value as SortOption })}
+              className="bg-transparent border-none text-sm text-muted focus:outline-none cursor-pointer"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="price_asc">Price: Low</option>
+              <option value="price_desc">Price: High</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Property Grid */}
