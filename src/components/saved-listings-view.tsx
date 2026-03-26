@@ -8,6 +8,7 @@ import {
   Heart, MapPin, Bed, Bath, Maximize, Building2, Trash2,
   Eye, DollarSign, MessageSquare, Send
 } from "lucide-react";
+import BuyerNoteEditor from "@/components/buyer-note-editor";
 
 interface SavedListingRow {
   id: string;
@@ -23,9 +24,11 @@ type ActionType = "request_showing" | "make_offer" | "ask_question";
 interface Props {
   savedListings: SavedListingRow[];
   sentMessages: Record<string, string[]>;
+  notesMap: Record<string, string>;
+  hasNotesFeature: boolean;
 }
 
-export default function SavedListingsView({ savedListings: initial, sentMessages }: Props) {
+export default function SavedListingsView({ savedListings: initial, sentMessages, notesMap, hasNotesFeature }: Props) {
   const [listings, setListings] = useState(initial);
   const [removing, setRemoving] = useState<string | null>(null);
   const [sentMsgs, setSentMsgs] = useState<Record<string, string[]>>(sentMessages);
@@ -101,6 +104,8 @@ export default function SavedListingsView({ savedListings: initial, sentMessages
                 removing={removing === property.id}
                 onRemove={() => unsave(property.id)}
                 onSendMessage={(type, msg) => sendMessage(property.id, type, msg)}
+                noteContent={notesMap[property.id] || ""}
+                hasNotesFeature={hasNotesFeature}
               />
             );
           })}
@@ -117,6 +122,8 @@ function SavedCard({
   removing,
   onRemove,
   onSendMessage,
+  noteContent,
+  hasNotesFeature,
 }: {
   property: Property & { property_photos: { id: string; url: string; display_order: number }[] };
   savedAt: string;
@@ -124,6 +131,8 @@ function SavedCard({
   removing: boolean;
   onRemove: () => void;
   onSendMessage: (type: ActionType, customMessage?: string) => void;
+  noteContent: string;
+  hasNotesFeature: boolean;
 }) {
   const [askOpen, setAskOpen] = useState(false);
   const [question, setQuestion] = useState("");
@@ -303,6 +312,14 @@ function SavedCard({
             </div>
           )}
         </div>
+
+        {/* Buyer Note */}
+        <BuyerNoteEditor
+          propertyId={property.id}
+          initialContent={noteContent}
+          hasFeature={hasNotesFeature}
+          compact
+        />
 
         {/* Saved date + Remove */}
         <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
