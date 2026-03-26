@@ -55,6 +55,8 @@ export async function GET() {
       is_admin: p.is_admin || false,
       is_suspended: p.is_suspended || false,
       suspended_reason: p.suspended_reason,
+      buyer_tier: p.buyer_tier || 'free',
+      seller_tier: p.seller_tier || 'free',
       created_at: p.created_at,
       property_count: propCountMap.get(p.id) || 0,
       message_count: msgCountMap.get(p.id) || 0,
@@ -112,6 +114,25 @@ export async function PATCH(request: NextRequest) {
           suspended_reason: null,
         };
         break;
+
+      case 'update_tier': {
+        const validTiers = ['free', 'pro', 'elite'];
+        if (data.buyer_tier && !validTiers.includes(data.buyer_tier)) {
+          return NextResponse.json({ error: 'Invalid buyer tier' }, { status: 400 });
+        }
+        if (data.seller_tier && !validTiers.includes(data.seller_tier)) {
+          return NextResponse.json({ error: 'Invalid seller tier' }, { status: 400 });
+        }
+        if (data.buyer_tier) {
+          updateData.buyer_tier = data.buyer_tier;
+          details.buyer_tier = data.buyer_tier;
+        }
+        if (data.seller_tier) {
+          updateData.seller_tier = data.seller_tier;
+          details.seller_tier = data.seller_tier;
+        }
+        break;
+      }
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
