@@ -7,7 +7,7 @@ import { formatCurrency, formatPercent, formatCurrencyRange } from "@/lib/calcul
 import {
   Building2, Bed, Bath, Maximize, Calendar, MapPin, Phone, Mail, User,
   ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info, ArrowRight,
-  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send, Share2, X
+  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 
@@ -29,7 +29,6 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
   const [askOpen, setAskOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [sending, setSending] = useState(false);
-  const [showContactPrompt, setShowContactPrompt] = useState<string | null>(null);
   const [conversationStarted, setConversationStarted] = useState(!!existingConversationId);
 
   const hasLightRehab = property.light_rehab_arv || property.light_rehab_budget_low;
@@ -49,33 +48,26 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
     if (!res.ok) setSaved(wasSaved);
   }
 
-  function handleAction(type: string) {
+  async function handleAction(type: string, customMessage?: string) {
     if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
-    if (type === "ask_question") { setAskOpen(true); return; }
-    // Show contact sharing prompt
-    setShowContactPrompt(type);
-  }
-
-  async function startConversation(action: string, shareContact: boolean, customMessage?: string) {
+    if (type === "ask_question" && !customMessage) { setAskOpen(true); return; }
     setSending(true);
     const res = await fetch("/api/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         propertyId: property.id,
-        action,
+        action: type,
         customMessage,
-        shareContact,
+        shareContact: false,
       }),
     });
 
     if (res.ok) {
       const data = await res.json();
       setConversationStarted(true);
-      setShowContactPrompt(null);
       setAskOpen(false);
       setQuestion("");
-      // Navigate to the conversation
       router.push(`/messages/${data.conversationId}`);
     }
     setSending(false);
@@ -84,8 +76,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
   async function handleAskQuestion() {
     if (!question.trim()) return;
     if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
-    // Show contact sharing prompt for questions too
-    setShowContactPrompt("ask_question");
+    await handleAction("ask_question", question);
   }
 
   return (
@@ -269,41 +260,6 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                 View Conversation
               </button>
             )}
-          </div>
-        )}
-
-        {/* Contact Sharing Prompt Modal */}
-        {showContactPrompt && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => { setShowContactPrompt(null); setSending(false); }}>
-            <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold">Send Message</h3>
-                <button onClick={() => { setShowContactPrompt(null); setSending(false); }} className="text-muted hover:text-foreground">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <p className="text-sm text-muted mb-6">
-                Would you like to share your contact details with the seller? This allows them to reach you directly.
-              </p>
-              <div className="space-y-3">
-                <button
-                  onClick={() => startConversation(showContactPrompt, true, showContactPrompt === "ask_question" ? question : undefined)}
-                  disabled={sending}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
-                >
-                  <Share2 className="w-4 h-4" />
-                  {sending ? "Sending..." : "Send & Share Contact Details"}
-                </button>
-                <button
-                  onClick={() => startConversation(showContactPrompt, false, showContactPrompt === "ask_question" ? question : undefined)}
-                  disabled={sending}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-background transition-colors disabled:opacity-50"
-                >
-                  <Send className="w-4 h-4" />
-                  {sending ? "Sending..." : "Send Without Sharing"}
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
