@@ -136,6 +136,15 @@ export interface ConversationMessage {
   created_at: string;
 }
 
+export interface BuyerNote {
+  id: string;
+  user_id: string;
+  property_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Deal Pipeline Stages
 export type DealStage = 'saved' | 'reviewing' | 'contacted' | 'passed';
 
