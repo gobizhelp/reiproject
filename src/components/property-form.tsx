@@ -182,9 +182,14 @@ export default function PropertyForm({ property }: Props) {
 
     try {
       if (isEditing) {
+        const updateData: Record<string, unknown> = { ...propertyData, updated_at: new Date().toISOString() };
+        // Set published_at when first publishing
+        if (status === "published" && !property.published_at) {
+          updateData.published_at = new Date().toISOString();
+        }
         const { error } = await supabase
           .from("properties")
-          .update({ ...propertyData, updated_at: new Date().toISOString() })
+          .update(updateData)
           .eq("id", property.id);
 
         if (error) throw error;
@@ -206,9 +211,13 @@ export default function PropertyForm({ property }: Props) {
         }
       } else {
         const slug = generateSlug(streetAddress, city);
+        const insertData: Record<string, unknown> = { ...propertyData, slug, user_id: user.id };
+        if (status === "published") {
+          insertData.published_at = new Date().toISOString();
+        }
         const { data: newProp, error } = await supabase
           .from("properties")
-          .insert({ ...propertyData, slug, user_id: user.id })
+          .insert(insertData)
           .select()
           .single();
 

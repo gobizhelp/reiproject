@@ -57,6 +57,7 @@ export interface Property {
   // Timestamps
   created_at: string;
   updated_at: string;
+  published_at: string | null;
   photos?: PropertyPhoto[];
   comps?: Comp[];
 }
@@ -93,7 +94,7 @@ export interface DealAnalysis {
   profitFullRehabHigh: number;
 }
 
-export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by'>;
+export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'published_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by'>;
 
 export interface SavedListing {
   id: string;
