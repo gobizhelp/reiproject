@@ -11,6 +11,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -19,14 +20,19 @@ export default function SignupPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error, data } = await supabase.auth.signUp({ email, password });
 
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
+    } else if (data.session) {
+      // Email confirmation is disabled — user is immediately logged in
       router.push("/dashboard");
       router.refresh();
+    } else {
+      // Email confirmation required — show message
+      setEmailSent(true);
+      setLoading(false);
     }
   }
 
@@ -42,6 +48,21 @@ export default function SignupPage() {
           <p className="text-muted">Start sharing professional deal packets</p>
         </div>
 
+        {emailSent ? (
+          <div className="bg-card border border-border rounded-2xl p-8 text-center">
+            <div className="bg-accent/10 border border-accent/30 rounded-lg px-4 py-6 mb-4">
+              <h2 className="text-lg font-semibold mb-2">Check your email</h2>
+              <p className="text-muted">
+                We sent a confirmation link to <span className="text-foreground font-medium">{email}</span>.
+                Click the link in the email to activate your account.
+              </p>
+            </div>
+            <p className="text-muted text-sm">
+              Didn&apos;t get the email? Check your spam folder or{" "}
+              <button onClick={() => setEmailSent(false)} className="text-accent hover:underline">try again</button>.
+            </p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-8 space-y-5">
           {error && (
             <div className="bg-danger/10 border border-danger/30 text-danger rounded-lg px-4 py-3 text-sm">
@@ -90,6 +111,7 @@ export default function SignupPage() {
             <Link href="/login" className="text-accent hover:underline">Sign in</Link>
           </p>
         </form>
+        )}
       </div>
     </div>
   );
