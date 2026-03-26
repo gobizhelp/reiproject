@@ -4,8 +4,8 @@ import ImpersonationBanner from "@/components/impersonation-banner";
 import NotificationProvider from "@/components/notification-provider";
 
 export const metadata: Metadata = {
-  title: "DealPacket - Off Market Real Estate Deals",
-  description: "Create and share off-market real estate deal packets with investors and buyers.",
+  title: "DealPacket - Off-Market Real Estate Wholesale Marketplace",
+  description: "Close more off-market deals faster. DealPacket connects wholesalers with qualified buyers through professional deal packets, instant matching, and built-in deal analysis.",
 };
 
 export default function RootLayout({

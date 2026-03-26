@@ -59,6 +59,9 @@ export default async function PricingPage() {
               <span className="text-xl font-bold">DealPacket</span>
             </Link>
             <div className="flex items-center gap-4">
+              <Link href="/pricing" className="text-muted hover:text-foreground transition-colors font-medium text-foreground">
+                Pricing
+              </Link>
               <Link href="/login" className="text-muted hover:text-foreground transition-colors">
                 Log in
               </Link>
