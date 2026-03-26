@@ -1,12 +1,26 @@
+export type BuyBoxFieldType = 'text' | 'number' | 'email' | 'tel' | 'textarea' | 'select' | 'multi-select' | 'checkbox';
+
+export const FIELD_TYPE_LABELS: Record<BuyBoxFieldType, string> = {
+  text: 'Short Text',
+  number: 'Number',
+  email: 'Email',
+  tel: 'Phone',
+  textarea: 'Long Text',
+  select: 'Dropdown',
+  'multi-select': 'Multi Select',
+  checkbox: 'Checkbox',
+};
+
 export interface BuyBoxField {
   id: string;
   label: string;
   enabled: boolean;
   required: boolean;
   section: string;
-  type: 'text' | 'number' | 'email' | 'tel' | 'textarea' | 'select' | 'multi-select' | 'checkbox';
+  type: BuyBoxFieldType;
   options?: string[];
   placeholder?: string;
+  isCustom?: boolean;
 }
 
 export interface BuyBoxForm {
@@ -44,8 +58,19 @@ export interface BuyBoxSubmission {
   deals_completed: number | null;
   years_experience: number | null;
   additional_notes: string | null;
+  custom_fields: Record<string, any> | null;
   created_at: string;
 }
+
+// Known DB column field IDs - these map to real columns in buy_box_submissions
+export const DB_COLUMN_FIELD_IDS = new Set([
+  'first_name', 'last_name', 'email', 'phone', 'company_name',
+  'property_types', 'locations', 'min_price', 'max_price',
+  'min_beds', 'min_baths', 'min_sqft', 'max_sqft',
+  'financing_types', 'proof_of_funds', 'closing_timeline',
+  'property_conditions', 'deals_completed', 'years_experience',
+  'additional_notes',
+]);
 
 export const PROPERTY_TYPE_OPTIONS = [
   'Single Family',

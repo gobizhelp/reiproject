@@ -50,6 +50,11 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
       // Search
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
+        const customVals = s.custom_fields
+          ? Object.values(s.custom_fields).map((cf: any) =>
+              Array.isArray(cf.value) ? cf.value.join(" ") : String(cf.value ?? "")
+            )
+          : [];
         const searchable = [
           s.first_name,
           s.last_name,
@@ -59,6 +64,7 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
           s.locations,
           ...(s.property_types || []),
           ...(s.financing_types || []),
+          ...customVals,
         ]
           .filter(Boolean)
           .join(" ")
@@ -151,29 +157,60 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
       "Submitted",
     ];
 
-    const rows = filtered.map((s) => [
-      s.first_name,
-      s.last_name,
-      s.email,
-      s.phone || "",
-      s.company_name || "",
-      (s.property_types || []).join("; "),
-      s.locations || "",
-      s.min_price ?? "",
-      s.max_price ?? "",
-      s.min_beds ?? "",
-      s.min_baths ?? "",
-      s.min_sqft ?? "",
-      s.max_sqft ?? "",
-      (s.financing_types || []).join("; "),
-      s.proof_of_funds ? "Yes" : "No",
-      s.closing_timeline || "",
-      (s.property_conditions || []).join("; "),
-      s.deals_completed ?? "",
-      s.years_experience ?? "",
-      s.additional_notes || "",
-      new Date(s.created_at).toLocaleDateString(),
-    ]);
+    // Collect all custom field labels across submissions
+    const customFieldLabels: string[] = [];
+    filtered.forEach((s) => {
+      if (s.custom_fields) {
+        Object.values(s.custom_fields).forEach((cf: any) => {
+          if (cf.label && !customFieldLabels.includes(cf.label)) {
+            customFieldLabels.push(cf.label);
+          }
+        });
+      }
+    });
+
+    headers.push(...customFieldLabels);
+
+    const rows = filtered.map((s) => {
+      const row = [
+        s.first_name,
+        s.last_name,
+        s.email,
+        s.phone || "",
+        s.company_name || "",
+        (s.property_types || []).join("; "),
+        s.locations || "",
+        s.min_price ?? "",
+        s.max_price ?? "",
+        s.min_beds ?? "",
+        s.min_baths ?? "",
+        s.min_sqft ?? "",
+        s.max_sqft ?? "",
+        (s.financing_types || []).join("; "),
+        s.proof_of_funds ? "Yes" : "No",
+        s.closing_timeline || "",
+        (s.property_conditions || []).join("; "),
+        s.deals_completed ?? "",
+        s.years_experience ?? "",
+        s.additional_notes || "",
+        new Date(s.created_at).toLocaleDateString(),
+      ];
+
+      // Add custom field values
+      customFieldLabels.forEach((label) => {
+        const cf = s.custom_fields
+          ? Object.values(s.custom_fields).find((c: any) => c.label === label)
+          : null;
+        if (cf) {
+          const val = (cf as any).value;
+          row.push(Array.isArray(val) ? val.join("; ") : String(val ?? ""));
+        } else {
+          row.push("");
+        }
+      });
+
+      return row;
+    });
 
     const csv = [headers, ...rows]
       .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
@@ -490,6 +527,28 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                       <div className="mt-4 p-3 bg-background rounded-lg">
                         <p className="text-xs text-muted mb-1">Notes</p>
                         <p className="text-sm">{sub.additional_notes}</p>
+                      </div>
+                    )}
+
+                    {/* Custom fields */}
+                    {sub.custom_fields && Object.keys(sub.custom_fields).length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-xs text-muted uppercase tracking-wider font-semibold mb-2">Additional Info</h4>
+                        <div className="space-y-1.5">
+                          {Object.entries(sub.custom_fields).map(([key, cf]: [string, any]) => (
+                            <DetailRow
+                              key={key}
+                              label={cf.label || key}
+                              value={
+                                Array.isArray(cf.value)
+                                  ? cf.value.join(", ")
+                                  : typeof cf.value === "boolean"
+                                  ? cf.value ? "Yes" : "No"
+                                  : String(cf.value)
+                              }
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
 

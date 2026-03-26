@@ -5,10 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   BuyBoxForm,
   BuyBoxField,
-  PROPERTY_TYPE_OPTIONS,
-  FINANCING_TYPE_OPTIONS,
-  PROPERTY_CONDITION_OPTIONS,
-  CLOSING_TIMELINE_OPTIONS,
+  DB_COLUMN_FIELD_IDS,
 } from "@/lib/buy-box-types";
 import { Loader2, Send, CheckCircle } from "lucide-react";
 
@@ -23,17 +20,6 @@ export default function BuyBoxPublicForm({ form }: Props) {
   const [formData, setFormData] = useState<Record<string, any>>({});
 
   const enabledFields = form.fields.filter((f) => f.enabled);
-
-  function getOptions(field: BuyBoxField): string[] {
-    if (field.options) return field.options;
-    switch (field.id) {
-      case "property_types": return PROPERTY_TYPE_OPTIONS;
-      case "financing_types": return FINANCING_TYPE_OPTIONS;
-      case "property_conditions": return PROPERTY_CONDITION_OPTIONS;
-      case "closing_timeline": return CLOSING_TIMELINE_OPTIONS;
-      default: return [];
-    }
-  }
 
   function updateField(id: string, value: any) {
     setFormData((prev) => ({ ...prev, [id]: value }));
@@ -62,6 +48,10 @@ export default function BuyBoxPublicForm({ form }: Props) {
           setError(`${field.label} is required.`);
           return;
         }
+        if (Array.isArray(val) && val.length === 0) {
+          setError(`${field.label} is required.`);
+          return;
+        }
       }
     }
 
@@ -71,29 +61,62 @@ export default function BuyBoxPublicForm({ form }: Props) {
     try {
       const supabase = createClient();
 
+      // Separate known DB columns from custom fields
+      const customFields: Record<string, any> = {};
       const submission: Record<string, any> = {
         form_id: form.id,
         first_name: formData.first_name || "",
         last_name: formData.last_name || "",
         email: formData.email || "",
-        phone: formData.phone || null,
-        company_name: formData.company_name || null,
-        property_types: formData.property_types || [],
-        locations: formData.locations || null,
-        min_price: formData.min_price ? parseFloat(formData.min_price) : null,
-        max_price: formData.max_price ? parseFloat(formData.max_price) : null,
-        min_beds: formData.min_beds ? parseInt(formData.min_beds) : null,
-        min_baths: formData.min_baths ? parseInt(formData.min_baths) : null,
-        min_sqft: formData.min_sqft ? parseInt(formData.min_sqft) : null,
-        max_sqft: formData.max_sqft ? parseInt(formData.max_sqft) : null,
-        financing_types: formData.financing_types || [],
-        proof_of_funds: formData.proof_of_funds || false,
-        closing_timeline: formData.closing_timeline || null,
-        property_conditions: formData.property_conditions || [],
-        deals_completed: formData.deals_completed ? parseInt(formData.deals_completed) : null,
-        years_experience: formData.years_experience ? parseInt(formData.years_experience) : null,
-        additional_notes: formData.additional_notes || null,
       };
+
+      for (const field of enabledFields) {
+        const val = formData[field.id];
+        if (DB_COLUMN_FIELD_IDS.has(field.id)) {
+          // Map to the correct DB column type
+          if (field.type === "number") {
+            submission[field.id] = val ? parseFloat(val) : null;
+          } else if (field.type === "checkbox") {
+            submission[field.id] = val || false;
+          } else if (field.type === "multi-select") {
+            submission[field.id] = val || [];
+          } else {
+            submission[field.id] = val || null;
+          }
+        } else {
+          // Custom field - store in custom_fields JSONB
+          if (val !== undefined && val !== "" && val !== null) {
+            customFields[field.id] = {
+              label: field.label,
+              value: val,
+              type: field.type,
+            };
+          }
+        }
+      }
+
+      // Fill defaults for DB columns not in the form
+      if (!submission.phone) submission.phone = null;
+      if (!submission.company_name) submission.company_name = null;
+      if (!submission.property_types) submission.property_types = [];
+      if (!submission.locations) submission.locations = null;
+      if (!submission.min_price) submission.min_price = null;
+      if (!submission.max_price) submission.max_price = null;
+      if (!submission.min_beds) submission.min_beds = null;
+      if (!submission.min_baths) submission.min_baths = null;
+      if (!submission.min_sqft) submission.min_sqft = null;
+      if (!submission.max_sqft) submission.max_sqft = null;
+      if (!submission.financing_types) submission.financing_types = [];
+      if (submission.proof_of_funds === undefined) submission.proof_of_funds = false;
+      if (!submission.closing_timeline) submission.closing_timeline = null;
+      if (!submission.property_conditions) submission.property_conditions = [];
+      if (!submission.deals_completed) submission.deals_completed = null;
+      if (!submission.years_experience) submission.years_experience = null;
+      if (!submission.additional_notes) submission.additional_notes = null;
+
+      if (Object.keys(customFields).length > 0) {
+        submission.custom_fields = customFields;
+      }
 
       const { error: insertError } = await supabase
         .from("buy_box_submissions")
@@ -126,12 +149,16 @@ export default function BuyBoxPublicForm({ form }: Props) {
     );
   }
 
-  // Group enabled fields by section
-  const sections = enabledFields.reduce<Record<string, BuyBoxField[]>>((acc, field) => {
-    if (!acc[field.section]) acc[field.section] = [];
-    acc[field.section].push(field);
-    return acc;
-  }, {});
+  // Group enabled fields by section, preserving order
+  const sections: { name: string; fields: BuyBoxField[] }[] = [];
+  enabledFields.forEach((field) => {
+    const existing = sections.find((s) => s.name === field.section);
+    if (existing) {
+      existing.fields.push(field);
+    } else {
+      sections.push({ name: field.section, fields: [field] });
+    }
+  });
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
@@ -151,131 +178,23 @@ export default function BuyBoxPublicForm({ form }: Props) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {Object.entries(sections).map(([sectionName, sectionFields]) => (
+          {sections.map(({ name, fields: sectionFields }) => (
             <section
-              key={sectionName}
+              key={name}
               className="bg-card border border-border rounded-2xl p-6 md:p-8"
             >
-              <h2 className="text-lg font-semibold mb-5">{sectionName}</h2>
+              <h2 className="text-lg font-semibold mb-5">{name}</h2>
               <div className="space-y-4">
                 {sectionFields.map((field) => (
-                  <div key={field.id}>
-                    {field.type === "checkbox" ? (
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData[field.id] || false}
-                          onChange={(e) => updateField(field.id, e.target.checked)}
-                          className="w-4 h-4 rounded border-border text-accent focus:ring-accent bg-background"
-                        />
-                        <span className="text-sm">
-                          {field.label}
-                          {field.required && <span className="text-danger ml-1">*</span>}
-                        </span>
-                      </label>
-                    ) : field.type === "multi-select" ? (
-                      <div>
-                        <label className={labelClass}>
-                          {field.label}
-                          {field.required && <span className="text-danger ml-1">*</span>}
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                          {getOptions(field).map((option) => {
-                            const selected = (formData[field.id] || []).includes(option);
-                            return (
-                              <button
-                                key={option}
-                                type="button"
-                                onClick={() => toggleMultiSelect(field.id, option)}
-                                className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                                  selected
-                                    ? "bg-accent text-white border-accent"
-                                    : "bg-background border-border text-foreground hover:border-accent/50"
-                                }`}
-                              >
-                                {option}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : field.type === "select" ? (
-                      <div>
-                        <label className={labelClass}>
-                          {field.label}
-                          {field.required && <span className="text-danger ml-1">*</span>}
-                        </label>
-                        <select
-                          value={formData[field.id] || ""}
-                          onChange={(e) => updateField(field.id, e.target.value)}
-                          className={inputClass}
-                        >
-                          <option value="">Select...</option>
-                          {getOptions(field).map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : field.type === "textarea" ? (
-                      <div>
-                        <label className={labelClass}>
-                          {field.label}
-                          {field.required && <span className="text-danger ml-1">*</span>}
-                        </label>
-                        <textarea
-                          value={formData[field.id] || ""}
-                          onChange={(e) => updateField(field.id, e.target.value)}
-                          className={`${inputClass} min-h-[80px]`}
-                          placeholder={field.placeholder}
-                        />
-                      </div>
-                    ) : field.type === "number" ? (
-                      <div>
-                        <label className={labelClass}>
-                          {field.label}
-                          {field.required && <span className="text-danger ml-1">*</span>}
-                        </label>
-                        {field.id.includes("price") ? (
-                          <div className="relative">
-                            <span className="absolute left-4 top-3 text-muted">$</span>
-                            <input
-                              type="number"
-                              value={formData[field.id] || ""}
-                              onChange={(e) => updateField(field.id, e.target.value)}
-                              className={`${inputClass} pl-8`}
-                              placeholder={field.placeholder}
-                              min="0"
-                            />
-                          </div>
-                        ) : (
-                          <input
-                            type="number"
-                            value={formData[field.id] || ""}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={inputClass}
-                            placeholder={field.placeholder}
-                            min="0"
-                          />
-                        )}
-                      </div>
-                    ) : (
-                      <div>
-                        <label className={labelClass}>
-                          {field.label}
-                          {field.required && <span className="text-danger ml-1">*</span>}
-                        </label>
-                        <input
-                          type={field.type}
-                          value={formData[field.id] || ""}
-                          onChange={(e) => updateField(field.id, e.target.value)}
-                          className={inputClass}
-                          placeholder={field.placeholder}
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <FieldRenderer
+                    key={field.id}
+                    field={field}
+                    value={formData[field.id]}
+                    onChange={(val) => updateField(field.id, val)}
+                    onToggleMulti={(opt) => toggleMultiSelect(field.id, opt)}
+                    inputClass={inputClass}
+                    labelClass={labelClass}
+                  />
                 ))}
               </div>
             </section>
@@ -295,6 +214,162 @@ export default function BuyBoxPublicForm({ form }: Props) {
           </button>
         </form>
       </div>
+    </div>
+  );
+}
+
+function FieldRenderer({
+  field,
+  value,
+  onChange,
+  onToggleMulti,
+  inputClass,
+  labelClass,
+}: {
+  field: BuyBoxField;
+  value: any;
+  onChange: (val: any) => void;
+  onToggleMulti: (opt: string) => void;
+  inputClass: string;
+  labelClass: string;
+}) {
+  const options = field.options || [];
+
+  if (field.type === "checkbox") {
+    return (
+      <label className="flex items-center gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={value || false}
+          onChange={(e) => onChange(e.target.checked)}
+          className="w-4 h-4 rounded border-border text-accent focus:ring-accent bg-background"
+        />
+        <span className="text-sm">
+          {field.label}
+          {field.required && <span className="text-danger ml-1">*</span>}
+        </span>
+      </label>
+    );
+  }
+
+  if (field.type === "multi-select") {
+    return (
+      <div>
+        <label className={labelClass}>
+          {field.label}
+          {field.required && <span className="text-danger ml-1">*</span>}
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {options.map((option) => {
+            const selected = (value || []).includes(option);
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => onToggleMulti(option)}
+                className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                  selected
+                    ? "bg-accent text-white border-accent"
+                    : "bg-background border-border text-foreground hover:border-accent/50"
+                }`}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (field.type === "select") {
+    return (
+      <div>
+        <label className={labelClass}>
+          {field.label}
+          {field.required && <span className="text-danger ml-1">*</span>}
+        </label>
+        <select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClass}
+        >
+          <option value="">Select...</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
+  if (field.type === "textarea") {
+    return (
+      <div>
+        <label className={labelClass}>
+          {field.label}
+          {field.required && <span className="text-danger ml-1">*</span>}
+        </label>
+        <textarea
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${inputClass} min-h-[80px]`}
+          placeholder={field.placeholder}
+        />
+      </div>
+    );
+  }
+
+  if (field.type === "number") {
+    const showDollar = field.id.includes("price") || field.label.toLowerCase().includes("price") || field.label.toLowerCase().includes("budget");
+    return (
+      <div>
+        <label className={labelClass}>
+          {field.label}
+          {field.required && <span className="text-danger ml-1">*</span>}
+        </label>
+        {showDollar ? (
+          <div className="relative">
+            <span className="absolute left-4 top-3 text-muted">$</span>
+            <input
+              type="number"
+              value={value || ""}
+              onChange={(e) => onChange(e.target.value)}
+              className={`${inputClass} pl-8`}
+              placeholder={field.placeholder}
+              min="0"
+            />
+          </div>
+        ) : (
+          <input
+            type="number"
+            value={value || ""}
+            onChange={(e) => onChange(e.target.value)}
+            className={inputClass}
+            placeholder={field.placeholder}
+            min="0"
+          />
+        )}
+      </div>
+    );
+  }
+
+  // text, email, tel
+  return (
+    <div>
+      <label className={labelClass}>
+        {field.label}
+        {field.required && <span className="text-danger ml-1">*</span>}
+      </label>
+      <input
+        type={field.type}
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+        placeholder={field.placeholder}
+      />
     </div>
   );
 }

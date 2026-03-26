@@ -46,9 +46,14 @@ create table if not exists buy_box_submissions (
   years_experience integer,
   -- Notes
   additional_notes text,
+  -- Custom fields (JSONB for seller-defined custom fields)
+  custom_fields jsonb default '{}'::jsonb,
   -- Timestamps
   created_at timestamptz default now()
 );
+
+-- If table already exists, add custom_fields column:
+-- alter table buy_box_submissions add column if not exists custom_fields jsonb default '{}'::jsonb;
 
 -- ============================================
 -- Row Level Security (RLS)
