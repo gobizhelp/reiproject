@@ -351,46 +351,41 @@ export default function AdminDemoManager() {
       </div>
 
       {/* Demo accounts with impersonate */}
-      {demoUsers.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-muted uppercase tracking-wide">Demo Accounts</h2>
-            <button
-              onClick={() => setShowPasswords(!showPasswords)}
-              className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-            >
-              {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              {showPasswords ? 'Hide' : 'Show'} passwords
-            </button>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-muted uppercase tracking-wide">Demo Accounts</h2>
+          <button
+            onClick={() => setShowPasswords(!showPasswords)}
+            className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
+          >
+            {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            {showPasswords ? 'Hide' : 'Show'} passwords
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {DEMO_ACCOUNTS.map((account) => (
+            <AccountCard
+              key={account.email}
+              account={account}
+              showPasswords={showPasswords}
+              demoUser={getDemoUserForAccount(account.email)}
+              onImpersonate={impersonateUser}
+              impersonating={impersonating}
+            />
+          ))}
+        </div>
+        {!loadingUsers && demoUsers.length === 0 && (
+          <p className="text-xs text-muted mt-3 text-center">
+            Demo accounts not yet created. Click &quot;Seed Demo Data&quot; above to create them and enable impersonation.
+          </p>
+        )}
+        {loadingUsers && (
+          <div className="flex items-center justify-center gap-2 text-muted text-xs mt-3">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            Checking for existing demo accounts...
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {DEMO_ACCOUNTS.map((account) => (
-              <AccountCard
-                key={account.email}
-                account={account}
-                showPasswords={showPasswords}
-                demoUser={getDemoUserForAccount(account.email)}
-                onImpersonate={impersonateUser}
-                impersonating={impersonating}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!loadingUsers && demoUsers.length === 0 && (
-        <div className="bg-card border border-border border-dashed rounded-2xl p-8 text-center mb-6">
-          <Users className="w-8 h-8 text-muted mx-auto mb-3" />
-          <p className="text-muted">No demo accounts found. Click &quot;Seed Demo Data&quot; to create them.</p>
-        </div>
-      )}
-
-      {loadingUsers && (
-        <div className="flex items-center gap-2 text-muted text-sm mb-6">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Loading demo accounts...
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Results */}
       {result && (

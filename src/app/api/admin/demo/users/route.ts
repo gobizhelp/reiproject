@@ -7,7 +7,7 @@ export async function GET() {
 
     // Get all demo auth users
     const { data: authData } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 });
-    const demoAuthUsers = authData?.users?.filter((u) =>
+    const demoAuthUsers = authData?.users?.filter((u: any) =>
       u.email?.endsWith('@dealpacket.test')
     ) || [];
 
@@ -15,23 +15,39 @@ export async function GET() {
       return NextResponse.json({ users: [] });
     }
 
-    const demoUserIds = demoAuthUsers.map((u) => u.id);
+    const demoUserIds = demoAuthUsers.map((u: any) => u.id);
 
-    // Get their profiles
+    // Get their profiles (core fields only - tier columns may not exist yet)
     const { data: profiles } = await adminSupabase
       .from('profiles')
-      .select('id, full_name, user_role, buyer_tier, seller_tier')
+      .select('id, full_name, user_role')
       .in('id', demoUserIds);
 
+    // Try to fetch tier data separately (may fail if migration hasn't been run)
+    let tierMap = new Map<string, { buyer_tier: string; seller_tier: string }>();
+    try {
+      const { data: tierData } = await adminSupabase
+        .from('profiles')
+        .select('id, buyer_tier, seller_tier')
+        .in('id', demoUserIds);
+      if (tierData) {
+        tierData.forEach((t: any) => {
+          tierMap.set(t.id, { buyer_tier: t.buyer_tier || 'free', seller_tier: t.seller_tier || 'free' });
+        });
+      }
+    } catch {
+      // Tier columns don't exist yet - that's fine
+    }
+
     // Merge email from auth with profile data
-    const emailMap = new Map(demoAuthUsers.map((u) => [u.id, u.email]));
-    const users = (profiles || []).map((p) => ({
+    const emailMap = new Map(demoAuthUsers.map((u: any) => [u.id, u.email]));
+    const users = (profiles || []).map((p: any) => ({
       id: p.id,
       email: emailMap.get(p.id) || '',
       full_name: p.full_name,
       user_role: p.user_role,
-      buyer_tier: p.buyer_tier,
-      seller_tier: p.seller_tier,
+      buyer_tier: tierMap.get(p.id)?.buyer_tier || 'free',
+      seller_tier: tierMap.get(p.id)?.seller_tier || 'free',
     }));
 
     return NextResponse.json({ users });

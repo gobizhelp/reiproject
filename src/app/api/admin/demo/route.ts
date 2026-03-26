@@ -337,7 +337,7 @@ export async function POST() {
 
       userIdMap.set(account.email, userId);
 
-      // Upsert profile
+      // Upsert profile (core fields only - tier columns may not exist yet)
       const { error: profileError } = await adminSupabase
         .from('profiles')
         .upsert({
@@ -347,14 +347,20 @@ export async function POST() {
           full_name: account.name,
           company_name: account.company,
           phone: account.phone,
-          buyer_tier: account.buyerTier,
-          seller_tier: account.sellerTier,
           is_admin: false,
         });
 
       if (profileError) {
         results.push(`Failed to update profile for ${account.email}: ${profileError.message}`);
       }
+
+      // Try to set tier columns (may not exist if migration hasn't been run)
+      await adminSupabase
+        .from('profiles')
+        .update({ buyer_tier: account.buyerTier, seller_tier: account.sellerTier })
+        .eq('id', userId)
+        .then(() => {})
+        .catch(() => {});
     }
 
     // 2. Create demo properties (assigned to seller and both accounts)
