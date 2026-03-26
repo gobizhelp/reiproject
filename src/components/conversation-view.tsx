@@ -8,6 +8,8 @@ import {
   ArrowLeft, Send, Building2, MapPin, Eye, DollarSign, MessageSquare,
   Phone, Mail, User, Share2, CheckCircle
 } from "lucide-react";
+import ProBuyerBadge from "./pro-buyer-badge";
+import type { Tier } from "@/lib/membership/tier-config";
 
 interface PropertyData {
   id: string;
@@ -43,6 +45,7 @@ interface OtherUser {
   full_name: string;
   company_name?: string;
   phone?: string;
+  buyer_tier?: string;
 }
 
 interface Props {
@@ -188,6 +191,9 @@ export default function ConversationView({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-lg truncate">{otherUser.full_name}</h1>
+              {!isBuyer && otherUser.buyer_tier && (
+                <ProBuyerBadge buyerTier={otherUser.buyer_tier as Tier} size="md" />
+              )}
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-accent/20 text-accent shrink-0">
                 <ActionIcon className="w-2.5 h-2.5" />
                 {actionInfo.label}

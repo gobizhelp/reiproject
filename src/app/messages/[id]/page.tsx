@@ -40,13 +40,14 @@ export default async function ConversationPage({ params }: Props) {
 
   const { data: otherProfile } = await supabase
     .from("profiles")
-    .select("id, full_name, company_name, phone")
+    .select("id, full_name, company_name, phone, buyer_tier")
     .eq("id", otherUserId)
     .single();
 
   const otherUser = {
     id: otherUserId,
     full_name: otherProfile?.full_name || "Unknown",
+    buyer_tier: otherProfile?.buyer_tier || "free",
     ...(conv.buyer_shared_contact ? {
       company_name: otherProfile?.company_name,
       phone: otherProfile?.phone,

@@ -6,6 +6,8 @@ import { formatCurrency } from "@/lib/calculations";
 import {
   MessageCircle, Eye, DollarSign, MessageSquare, Building2, MapPin, Clock, User
 } from "lucide-react";
+import ProBuyerBadge from "./pro-buyer-badge";
+import type { Tier } from "@/lib/membership/tier-config";
 
 interface ConversationRow {
   id: string;
@@ -31,6 +33,7 @@ interface ConversationRow {
     full_name: string;
     company_name?: string;
     phone?: string;
+    buyer_tier?: string;
   };
   last_message: {
     message: string;
@@ -129,6 +132,9 @@ export default function ConversationsList({ conversations: initial, role }: Prop
                       <span className="font-bold truncate">
                         {conv.other_user.full_name}
                       </span>
+                      {conv.is_buyer === false && conv.other_user.buyer_tier && (
+                        <ProBuyerBadge buyerTier={conv.other_user.buyer_tier as Tier} />
+                      )}
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${actionConfig.color}`}>
                         <ActionIcon className="w-2.5 h-2.5" />
                         {actionConfig.label}

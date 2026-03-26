@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   FlaskConical,
   ListChecks,
+  Settings,
 } from 'lucide-react';
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/activity', label: 'Activity Log', icon: ClipboardList },
   { href: '/admin/features', label: 'Feature Checklist', icon: ListChecks },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
   { href: '/admin/demo', label: 'Demo Environment', icon: FlaskConical },
 ];
 
