@@ -104,7 +104,7 @@ export type SellerFeature =
 
 // --- Limit Keys ---
 
-export type BuyerLimitKey = 'max_buy_boxes';
+export type BuyerLimitKey = 'max_buy_boxes' | 'max_saved_searches';
 export type SellerLimitKey = 'max_active_listings';
 
 // --- Feature Sets by Tier ---
@@ -226,9 +226,9 @@ export const SELLER_FEATURES_BY_TIER: Record<Tier, ReadonlySet<SellerFeature>> =
 // --- Limits by Tier ---
 
 export const BUYER_LIMITS: Record<Tier, Record<BuyerLimitKey, number>> = {
-  free: { max_buy_boxes: 1 },
-  pro: { max_buy_boxes: 5 },
-  elite: { max_buy_boxes: 999 }, // effectively unlimited
+  free: { max_buy_boxes: 1, max_saved_searches: 0 },
+  pro: { max_buy_boxes: 5, max_saved_searches: 10 },
+  elite: { max_buy_boxes: 999, max_saved_searches: 999 }, // effectively unlimited
 };
 
 export const SELLER_LIMITS: Record<Tier, Record<SellerLimitKey, number>> = {

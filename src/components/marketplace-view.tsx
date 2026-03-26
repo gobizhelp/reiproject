@@ -9,7 +9,7 @@ import type { Tier } from "@/lib/membership/tier-config";
 import {
   Search, SlidersHorizontal, X, MapPin, Bed, Bath, Maximize,
   Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown,
-  Lock, ArrowUpDown,
+  Lock, ArrowUpDown, Bookmark, BookmarkPlus, Trash2, Check,
 } from "lucide-react";
 
 interface PropertyWithPhotos extends Property {
@@ -20,12 +20,25 @@ type ActionType = "request_showing" | "make_offer" | "ask_question";
 
 type SortOption = "newest" | "oldest" | "price_asc" | "price_desc";
 
+interface SavedSearch {
+  id: string;
+  name: string;
+  filters: {
+    searchQuery?: string;
+    basic?: BasicFilters;
+    advanced?: AdvancedFilters;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
 interface Props {
   properties: PropertyWithPhotos[];
   savedPropertyIds: string[];
   sentMessages: Record<string, string[]>;
   currentUserId: string;
   buyerTier: string;
+  initialSavedSearches: SavedSearch[];
 }
 
 const PROPERTY_TYPES = [
@@ -102,9 +115,10 @@ function countActive(obj: Record<string, string>, defaults: Record<string, strin
 
 type StringRecord = Record<string, string>;
 
-export default function MarketplaceView({ properties, savedPropertyIds, sentMessages, currentUserId, buyerTier }: Props) {
+export default function MarketplaceView({ properties, savedPropertyIds, sentMessages, currentUserId, buyerTier, initialSavedSearches }: Props) {
   const tier = (buyerTier || "free") as Tier;
   const hasAdvancedFilters = hasBuyerFeature(tier, "advanced_filters");
+  const hasSavedSearches = hasBuyerFeature(tier, "saved_searches");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -113,6 +127,15 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
   const [advanced, setAdvanced] = useState<AdvancedFilters>({ ...EMPTY_ADVANCED });
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set(savedPropertyIds));
   const [sentMsgs, setSentMsgs] = useState<Record<string, string[]>>(sentMessages);
+
+  // Saved searches state
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(initialSavedSearches);
+  const [showSavedSearches, setShowSavedSearches] = useState(false);
+  const [saveSearchName, setSaveSearchName] = useState("");
+  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [savingSearch, setSavingSearch] = useState(false);
+  const [activeSearchId, setActiveSearchId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState("");
 
   const activeBasicCount = countActive(basic as unknown as StringRecord, EMPTY_BASIC as unknown as StringRecord);
   const activeAdvancedCount = countActive(advanced as unknown as StringRecord, EMPTY_ADVANCED as unknown as StringRecord);
@@ -242,6 +265,86 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
   function clearAllFilters() {
     clearBasicFilters();
     clearAdvancedFilters();
+    setActiveSearchId(null);
+  }
+
+  async function saveCurrentSearch() {
+    if (!saveSearchName.trim()) return;
+    setSavingSearch(true);
+    setSaveError("");
+
+    const filters = {
+      searchQuery: searchQuery || undefined,
+      basic: { ...basic },
+      advanced: hasAdvancedFilters ? { ...advanced } : undefined,
+    };
+
+    const res = await fetch("/api/saved-searches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: saveSearchName.trim(), filters }),
+    });
+
+    if (res.ok) {
+      const { savedSearch } = await res.json();
+      setSavedSearches((prev: SavedSearch[]) => [savedSearch, ...prev]);
+      setSaveSearchName("");
+      setShowSaveInput(false);
+      setActiveSearchId(savedSearch.id);
+    } else {
+      const { error } = await res.json();
+      setSaveError(error || "Failed to save search");
+    }
+    setSavingSearch(false);
+  }
+
+  function loadSavedSearch(search: SavedSearch) {
+    const f = search.filters;
+    setSearchQuery(f.searchQuery || "");
+    setBasic(f.basic ? { ...EMPTY_BASIC, ...f.basic } : { ...EMPTY_BASIC });
+    setAdvanced(f.advanced ? { ...EMPTY_ADVANCED, ...f.advanced } : { ...EMPTY_ADVANCED });
+    setActiveSearchId(search.id);
+    setShowFilters(true);
+    setShowSavedSearches(false);
+    if (f.advanced && Object.values(f.advanced).some((v) => v)) {
+      setShowAdvanced(true);
+    }
+  }
+
+  async function updateSavedSearch(id: string) {
+    setSavingSearch(true);
+    const filters = {
+      searchQuery: searchQuery || undefined,
+      basic: { ...basic },
+      advanced: hasAdvancedFilters ? { ...advanced } : undefined,
+    };
+
+    const res = await fetch("/api/saved-searches", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, filters }),
+    });
+
+    if (res.ok) {
+      const { savedSearch } = await res.json();
+      setSavedSearches((prev: SavedSearch[]) =>
+        prev.map((s: SavedSearch) => (s.id === id ? savedSearch : s))
+      );
+    }
+    setSavingSearch(false);
+  }
+
+  async function deleteSavedSearch(id: string) {
+    const res = await fetch("/api/saved-searches", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    if (res.ok) {
+      setSavedSearches((prev: SavedSearch[]) => prev.filter((s: SavedSearch) => s.id !== id));
+      if (activeSearchId === id) setActiveSearchId(null);
+    }
   }
 
   async function toggleSave(propertyId: string) {
@@ -329,7 +432,140 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
             </span>
           )}
         </button>
+        {hasSavedSearches && (
+          <div className="relative">
+            <button
+              onClick={() => setShowSavedSearches(!showSavedSearches)}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors font-medium text-sm ${
+                showSavedSearches || activeSearchId
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-border bg-card text-muted hover:text-foreground"
+              }`}
+            >
+              <Bookmark className={`w-4 h-4 ${activeSearchId ? "fill-current" : ""}`} />
+              Saved
+              {savedSearches.length > 0 && (
+                <span className="bg-muted/30 text-muted text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {savedSearches.length}
+                </span>
+              )}
+            </button>
+
+            {/* Saved searches dropdown */}
+            {showSavedSearches && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="p-3 border-b border-border flex items-center justify-between">
+                  <h3 className="font-semibold text-sm">Saved Searches</h3>
+                  <button onClick={() => setShowSavedSearches(false)} className="text-muted hover:text-foreground">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {savedSearches.length === 0 && !showSaveInput && (
+                  <div className="p-4 text-center text-sm text-muted">
+                    No saved searches yet. Set your filters and save them for quick access.
+                  </div>
+                )}
+
+                {savedSearches.length > 0 && (
+                  <div className="max-h-64 overflow-y-auto">
+                    {savedSearches.map((search) => (
+                      <div
+                        key={search.id}
+                        className={`flex items-center gap-2 px-3 py-2.5 hover:bg-background/50 transition-colors group ${
+                          activeSearchId === search.id ? "bg-accent/5 border-l-2 border-accent" : ""
+                        }`}
+                      >
+                        <button
+                          onClick={() => loadSavedSearch(search)}
+                          className="flex-1 text-left text-sm truncate font-medium"
+                        >
+                          {search.name}
+                        </button>
+                        {activeSearchId === search.id && (
+                          <button
+                            onClick={() => updateSavedSearch(search.id)}
+                            disabled={savingSearch}
+                            title="Update with current filters"
+                            className="text-accent hover:text-accent-hover p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteSavedSearch(search.id)}
+                          title="Delete saved search"
+                          className="text-muted hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Save current search */}
+                <div className="p-3 border-t border-border">
+                  {showSaveInput ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={saveSearchName}
+                        onChange={(e) => { setSaveSearchName(e.target.value); setSaveError(""); }}
+                        onKeyDown={(e) => e.key === "Enter" && saveCurrentSearch()}
+                        placeholder="Name this search..."
+                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                        autoFocus
+                      />
+                      {saveError && <p className="text-xs text-red-400">{saveError}</p>}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setShowSaveInput(false); setSaveSearchName(""); setSaveError(""); }}
+                          className="flex-1 text-xs py-1.5 rounded-lg border border-border text-muted hover:text-foreground transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={saveCurrentSearch}
+                          disabled={!saveSearchName.trim() || savingSearch}
+                          className="flex-1 text-xs py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
+                        >
+                          {savingSearch ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowSaveInput(true)}
+                      disabled={totalActiveFilters === 0 && !searchQuery}
+                      className="w-full flex items-center justify-center gap-2 text-sm font-medium py-2 rounded-lg border border-dashed border-border text-muted hover:text-foreground hover:border-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <BookmarkPlus className="w-4 h-4" />
+                      Save Current Search
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Active saved search indicator */}
+      {activeSearchId && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1.5 text-xs bg-accent/10 text-accent border border-accent/30 px-2.5 py-1 rounded-full">
+            <Bookmark className="w-3 h-3 fill-current" />
+            {savedSearches.find((s) => s.id === activeSearchId)?.name}
+            <button
+              onClick={() => { clearAllFilters(); setSearchQuery(""); }}
+              className="ml-1 hover:text-foreground"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* Filter Panel */}
       {showFilters && (
