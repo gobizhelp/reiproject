@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import {
   Play,
   Trash2,
@@ -15,6 +17,7 @@ import {
   ShoppingCart,
   MessageCircle,
   Heart,
+  UserCheck,
 } from 'lucide-react';
 
 interface DemoAccount {
@@ -25,6 +28,15 @@ interface DemoAccount {
   sellerTier: string;
 }
 
+interface DemoUser {
+  id: string;
+  email: string;
+  full_name: string | null;
+  user_role: string;
+  buyer_tier: string;
+  seller_tier: string;
+}
+
 interface SeedResult {
   success: boolean;
   results: string[];
@@ -32,7 +44,19 @@ interface SeedResult {
   error?: string;
 }
 
-function AccountCard({ account, showPasswords }: { account: DemoAccount; showPasswords: boolean }) {
+function AccountCard({
+  account,
+  showPasswords,
+  demoUser,
+  onImpersonate,
+  impersonating,
+}: {
+  account: DemoAccount;
+  showPasswords: boolean;
+  demoUser: DemoUser | null;
+  onImpersonate: (userId: string) => void;
+  impersonating: string | null;
+}) {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, label: string) => {
@@ -52,6 +76,8 @@ function AccountCard({ account, showPasswords }: { account: DemoAccount; showPas
     pro: 'text-blue-400',
     elite: 'text-amber-400',
   };
+
+  const isThisImpersonating = impersonating === demoUser?.id;
 
   return (
     <div className="bg-card border border-border rounded-xl p-4">
@@ -73,7 +99,7 @@ function AccountCard({ account, showPasswords }: { account: DemoAccount; showPas
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 mb-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted">Email</span>
           <div className="flex items-center gap-2">
@@ -103,15 +129,53 @@ function AccountCard({ account, showPasswords }: { account: DemoAccount; showPas
           </div>
         </div>
       </div>
+
+      {/* Impersonate button */}
+      {demoUser && (
+        <button
+          onClick={() => onImpersonate(demoUser.id)}
+          disabled={!!impersonating}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-lg hover:bg-orange-500/20 transition-colors disabled:opacity-50"
+        >
+          {isThisImpersonating ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Switching...</>
+          ) : (
+            <><UserCheck className="w-4 h-4" /> View as this user</>
+          )}
+        </button>
+      )}
     </div>
   );
 }
 
 export default function AdminDemoManager() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [result, setResult] = useState<SeedResult | null>(null);
   const [showPasswords, setShowPasswords] = useState(false);
+  const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
+  const [impersonating, setImpersonating] = useState<string | null>(null);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
+  // Load existing demo users on mount
+  useEffect(() => {
+    loadDemoUsers();
+  }, []);
+
+  const loadDemoUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const res = await fetch('/api/admin/demo/users');
+      if (res.ok) {
+        const data = await res.json();
+        setDemoUsers(data.users || []);
+      }
+    } catch {
+      // Ignore errors loading users
+    }
+    setLoadingUsers(false);
+  };
 
   const seedDemo = async () => {
     setLoading(true);
@@ -120,6 +184,8 @@ export default function AdminDemoManager() {
       const res = await fetch('/api/admin/demo', { method: 'POST' });
       const data = await res.json();
       setResult(data);
+      // Reload demo users after seeding
+      await loadDemoUsers();
     } catch (err: any) {
       setResult({ success: false, results: [], error: err.message });
     }
@@ -134,11 +200,82 @@ export default function AdminDemoManager() {
       const res = await fetch('/api/admin/demo', { method: 'DELETE' });
       const data = await res.json();
       setResult(data);
+      setDemoUsers([]);
     } catch (err: any) {
       setResult({ success: false, results: [], error: err.message });
     }
     setDeleting(false);
   };
+
+  const impersonateUser = async (userId: string) => {
+    setImpersonating(userId);
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        alert(`Failed to impersonate: ${data.error || 'Unknown error'}`);
+        setImpersonating(null);
+        return;
+      }
+
+      // Store admin session info before switching
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Save admin tokens in localStorage so we can switch back
+        localStorage.setItem('admin_impersonation', JSON.stringify({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          admin_user_id: session.user.id,
+          target_name: data.target.name,
+          target_email: data.target.email,
+          target_role: data.target.role,
+          started_at: new Date().toISOString(),
+        }));
+      }
+
+      // Use the hashed token to verify and create session as the target user
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: 'magiclink',
+      });
+
+      if (verifyError) {
+        alert(`Failed to switch session: ${verifyError.message}`);
+        localStorage.removeItem('admin_impersonation');
+        setImpersonating(null);
+        return;
+      }
+
+      // Redirect to the target user's default view
+      if (data.target.role === 'buyer') {
+        router.push('/marketplace');
+      } else {
+        router.push('/dashboard');
+      }
+      router.refresh();
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+      setImpersonating(null);
+    }
+  };
+
+  // Match demo users to account definitions by email
+  const getDemoUserForAccount = (email: string): DemoUser | null => {
+    return demoUsers.find((u) => u.email === email) || null;
+  };
+
+  // Static account definitions (same as API)
+  const DEMO_ACCOUNTS: DemoAccount[] = [
+    { email: 'demo-buyer@dealpacket.test', password: 'DemoB!2025', role: 'buyer', buyerTier: 'pro', sellerTier: 'free' },
+    { email: 'demo-seller@dealpacket.test', password: 'DemoS!2025', role: 'seller', buyerTier: 'free', sellerTier: 'pro' },
+    { email: 'demo-both@dealpacket.test', password: 'DemoA!2025', role: 'both', buyerTier: 'elite', sellerTier: 'elite' },
+  ];
 
   return (
     <div>
@@ -146,7 +283,7 @@ export default function AdminDemoManager() {
         <div>
           <h1 className="text-2xl font-bold">Demo Environment</h1>
           <p className="text-sm text-muted mt-1">
-            Create demo accounts with sample data for testing the platform
+            Create demo accounts with sample data and switch into them to test
           </p>
         </div>
       </div>
@@ -213,6 +350,48 @@ export default function AdminDemoManager() {
         </button>
       </div>
 
+      {/* Demo accounts with impersonate */}
+      {demoUsers.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-muted uppercase tracking-wide">Demo Accounts</h2>
+            <button
+              onClick={() => setShowPasswords(!showPasswords)}
+              className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
+            >
+              {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              {showPasswords ? 'Hide' : 'Show'} passwords
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {DEMO_ACCOUNTS.map((account) => (
+              <AccountCard
+                key={account.email}
+                account={account}
+                showPasswords={showPasswords}
+                demoUser={getDemoUserForAccount(account.email)}
+                onImpersonate={impersonateUser}
+                impersonating={impersonating}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loadingUsers && demoUsers.length === 0 && (
+        <div className="bg-card border border-border border-dashed rounded-2xl p-8 text-center mb-6">
+          <Users className="w-8 h-8 text-muted mx-auto mb-3" />
+          <p className="text-muted">No demo accounts found. Click &quot;Seed Demo Data&quot; to create them.</p>
+        </div>
+      )}
+
+      {loadingUsers && (
+        <div className="flex items-center gap-2 text-muted text-sm mb-6">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Loading demo accounts...
+        </div>
+      )}
+
       {/* Results */}
       {result && (
         <div className="space-y-4">
@@ -227,27 +406,6 @@ export default function AdminDemoManager() {
               {result.success ? 'Demo data operation completed' : `Error: ${result.error || 'Unknown error'}`}
             </span>
           </div>
-
-          {/* Demo accounts */}
-          {result.accounts && result.accounts.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-muted uppercase tracking-wide">Demo Accounts</h2>
-                <button
-                  onClick={() => setShowPasswords(!showPasswords)}
-                  className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-                >
-                  {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  {showPasswords ? 'Hide' : 'Show'} passwords
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {result.accounts.map((account) => (
-                  <AccountCard key={account.email} account={account} showPasswords={showPasswords} />
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Log */}
           {result.results.length > 0 && (
