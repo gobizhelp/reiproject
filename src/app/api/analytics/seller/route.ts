@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest } from "next/server";
 import { profileHasSellerFeature } from "@/lib/membership/feature-gate";
 import type { Profile } from "@/lib/profile-types";
@@ -59,14 +60,17 @@ export async function GET(request: NextRequest) {
     .in("property_id", propertyIds)
     .gte("created_at", since.toISOString());
 
-  // Fetch saves count per property
-  const { data: saves } = await supabase
+  // Use admin client for cross-user queries (saves by other users, all buy boxes)
+  const adminClient = createAdminClient();
+
+  // Fetch saves count per property (other users' saves, bypasses RLS)
+  const { data: saves } = await adminClient
     .from("saved_listings")
     .select("property_id")
     .in("property_id", propertyIds);
 
-  // Fetch buy box matches per property
-  const { data: buyBoxes } = await supabase
+  // Fetch buy box matches per property (all buyers' buy boxes)
+  const { data: buyBoxes } = await adminClient
     .from("buyer_buy_boxes")
     .select("*");
 
