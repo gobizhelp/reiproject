@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Property } from "@/lib/types";
 import PropertyCard from "./property-card";
 import { Trash2, CheckSquare, Square, Archive } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type SellerStatus = Property["seller_status"];
 
@@ -20,9 +21,12 @@ interface Props {
   properties: (Property & {
     property_photos: { id: string; url: string; display_order: number }[];
   })[];
+  hasFeaturedAccess?: boolean;
+  hasDuplicateAccess?: boolean;
 }
 
-export default function PropertyList({ properties: initial }: Props) {
+export default function PropertyList({ properties: initial, hasFeaturedAccess, hasDuplicateAccess }: Props) {
+  const router = useRouter();
   const [properties, setProperties] = useState(initial);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
@@ -73,6 +77,43 @@ export default function PropertyList({ properties: initial }: Props) {
           p.id === propertyId ? { ...p, seller_status: status } : p
         )
       );
+    }
+  }
+
+  async function toggleFeatured(propertyId: string, isFeatured: boolean) {
+    const res = await fetch("/api/properties/featured", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ property_id: propertyId, is_featured: isFeatured }),
+    });
+    if (res.ok) {
+      setProperties((prev) =>
+        prev.map((p) => {
+          // If featuring this one, unfeature all others
+          if (isFeatured && p.id !== propertyId) return { ...p, is_featured: false };
+          if (p.id === propertyId) return { ...p, is_featured: isFeatured };
+          return p;
+        })
+      );
+    } else {
+      const data = await res.json();
+      alert(data.error || "Failed to update featured status");
+    }
+  }
+
+  async function duplicateListing(propertyId: string) {
+    const res = await fetch("/api/properties/duplicate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ property_id: propertyId }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      router.push(`/properties/${data.id}/edit`);
+      router.refresh();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Failed to duplicate listing");
     }
   }
 
@@ -246,6 +287,10 @@ export default function PropertyList({ properties: initial }: Props) {
                 property={property}
                 onDelete={() => deleteProperty(property.id)}
                 onStatusChange={updateSellerStatus}
+                onToggleFeatured={toggleFeatured}
+                onDuplicate={duplicateListing}
+                hasFeaturedAccess={hasFeaturedAccess}
+                hasDuplicateAccess={hasDuplicateAccess}
               />
             </div>
           ))}

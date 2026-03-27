@@ -17,6 +17,10 @@ export interface Profile {
   suspended_reason: string | null;
   buyer_tier: Tier;
   seller_tier: Tier;
+  // Branded seller profile fields (Pro+)
+  logo_url: string | null;
+  bio: string | null;
+  website: string | null;
   created_at: string;
   updated_at: string;
 }

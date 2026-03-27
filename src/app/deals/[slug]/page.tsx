@@ -7,8 +7,9 @@ import { Property, PropertyPhoto, Comp } from "@/lib/types";
 import { Metadata } from "next";
 import DealPacketView from "@/components/deal-packet-view";
 import AnalyticsTracker from "@/components/analytics-tracker";
-import { profileHasBuyerFeature } from "@/lib/membership/feature-gate";
+import { profileHasBuyerFeature, hasSellerFeature } from "@/lib/membership/feature-gate";
 import type { Profile } from "@/lib/profile-types";
+import type { Tier } from "@/lib/membership/tier-config";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -74,6 +75,35 @@ export default async function DealPacketPage({ params }: Props) {
     property.full_rehab_arv_high,
   );
 
+  // Fetch seller branding for branded listing page
+  let sellerBranding: {
+    full_name: string | null;
+    company_name: string | null;
+    logo_url: string | null;
+    bio: string | null;
+    website: string | null;
+  } | null = null;
+
+  const { data: sellerProfile } = await supabase
+    .from("profiles")
+    .select("full_name, company_name, logo_url, bio, website, seller_tier")
+    .eq("id", property.user_id)
+    .single();
+
+  if (sellerProfile) {
+    const sellerTier = (sellerProfile.seller_tier || "free") as Tier;
+    const hasBranding = hasSellerFeature(sellerTier, "branded_listing_page");
+    if (hasBranding && (sellerProfile.logo_url || sellerProfile.bio || sellerProfile.website)) {
+      sellerBranding = {
+        full_name: sellerProfile.full_name,
+        company_name: sellerProfile.company_name,
+        logo_url: sellerProfile.logo_url,
+        bio: sellerProfile.bio,
+        website: sellerProfile.website,
+      };
+    }
+  }
+
   // Fetch buyer-specific data if logged in
   let isSaved = false;
   let existingConversationId: string | null = null;
@@ -137,6 +167,7 @@ export default async function DealPacketPage({ params }: Props) {
       sentActionTypes={sentActionTypes}
       noteContent={noteContent}
       hasNotesFeature={hasNotesFeature}
+      sellerBranding={sellerBranding}
     />
     </>
   );

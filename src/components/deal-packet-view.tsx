@@ -12,6 +12,8 @@ import {
 import Navbar from "@/components/navbar";
 import BuyerNoteEditor from "@/components/buyer-note-editor";
 import ShareButton from "@/components/share-button";
+import FeaturedListingBadge from "@/components/featured-listing-badge";
+import SellerBrandingCard from "@/components/seller-branding-card";
 
 interface Props {
   property: Property;
@@ -25,9 +27,16 @@ interface Props {
   sentActionTypes?: string[];
   noteContent?: string;
   hasNotesFeature?: boolean;
+  sellerBranding?: {
+    full_name: string | null;
+    company_name: string | null;
+    logo_url: string | null;
+    bio: string | null;
+    website: string | null;
+  } | null;
 }
 
-export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, existingConversationId, sentActionTypes = [], noteContent, hasNotesFeature }: Props) {
+export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, existingConversationId, sentActionTypes = [], noteContent, hasNotesFeature, sellerBranding }: Props) {
   const router = useRouter();
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [saved, setSaved] = useState(initialSaved || false);
@@ -227,6 +236,20 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
         {!showActions && (
           <div className="flex mb-6">
             <ShareButton slug={property.slug} address={property.street_address} variant="full" />
+          </div>
+        )}
+
+        {/* Featured badge + Seller branding */}
+        {(property.is_featured || sellerBranding) && (
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            {property.is_featured && (
+              <FeaturedListingBadge size="md" />
+            )}
+            {sellerBranding && (
+              <div className="flex-1">
+                <SellerBrandingCard seller={sellerBranding} />
+              </div>
+            )}
           </div>
         )}
 
