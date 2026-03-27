@@ -54,8 +54,8 @@ export default function PropertyCard({ property, onDelete, onStatusChange, onTog
   }
 
   return (
-    <div className={`bg-card border border-border rounded-2xl overflow-hidden hover:border-accent/50 transition-colors ${sellerStatus === "archived" ? "opacity-60" : ""}`}>
-      <div className="h-40 bg-border/30 relative">
+    <div className={`bg-card border border-border rounded-2xl hover:border-accent/50 transition-colors ${sellerStatus === "archived" ? "opacity-60" : ""}`}>
+      <div className="h-40 bg-border/30 relative overflow-hidden rounded-t-2xl">
         {thumbnail ? (
           <img src={thumbnail} alt={property.street_address} className="w-full h-full object-cover" />
         ) : (
