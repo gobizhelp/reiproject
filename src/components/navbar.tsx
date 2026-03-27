@@ -21,7 +21,6 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(cachedProfile);
-  const [switching, setSwitching] = useState(false);
   const {
     unreadCount, soundEnabled, toggleSound,
     persistedNotifications, persistedUnreadCount,
@@ -56,9 +55,8 @@ export default function Navbar() {
     router.refresh();
   }
 
-  async function switchView(view: ActiveView) {
-    if (!profile || switching) return;
-    setSwitching(true);
+  function switchView(view: ActiveView) {
+    if (!profile || profile.active_view === view) return;
 
     // Update cache immediately so the remount after navigation picks up the new view
     cachedProfile = { ...profile, active_view: view };
@@ -70,7 +68,7 @@ export default function Navbar() {
       .update({ active_view: view })
       .eq("id", profile.id);
 
-    // Navigate first — the page and nav will update together on remount
+    // Navigate — the page and nav will update together on remount
     if (view === "buyer") {
       router.push("/marketplace");
     } else {
@@ -174,7 +172,7 @@ export default function Navbar() {
             <div className="flex items-center bg-border/50 rounded-lg p-0.5">
               <button
                 onClick={() => switchView("seller")}
-                disabled={switching}
+
                 className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
                   !isBuyer
                     ? "bg-accent text-white shadow-sm"
@@ -186,7 +184,7 @@ export default function Navbar() {
               </button>
               <button
                 onClick={() => switchView("buyer")}
-                disabled={switching}
+
                 className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
                   isBuyer
                     ? "bg-accent text-white shadow-sm"
