@@ -37,7 +37,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protected routes
-  const protectedPaths = ['/dashboard', '/properties', '/buyers', '/marketplace', '/my-buy-boxes', '/settings', '/saved-listings', '/matched-listings', '/deal-pipeline', '/messages', '/admin'];
+  const protectedPaths = ['/dashboard', '/properties', '/buyers', '/marketplace', '/my-buy-boxes', '/settings', '/saved-listings', '/matched-listings', '/deal-pipeline', '/messages', '/admin', '/select-role'];
   const isProtected = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
@@ -48,17 +48,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Check if user is suspended
+  // Check profile-based access controls
   if (user && isProtected) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_admin, is_suspended')
+      .select('is_admin, is_suspended, role_selected')
       .eq('id', user.id)
       .single();
 
     if (profile?.is_suspended && !request.nextUrl.pathname.startsWith('/suspended')) {
       const url = request.nextUrl.clone();
       url.pathname = '/suspended';
+      return NextResponse.redirect(url);
+    }
+
+    // Force role selection if user hasn't chosen yet
+    if (!profile?.role_selected && !request.nextUrl.pathname.startsWith('/select-role')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/select-role';
       return NextResponse.redirect(url);
     }
 
@@ -86,5 +93,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/properties/:path*', '/buyers/:path*', '/marketplace/:path*', '/my-buy-boxes/:path*', '/settings/:path*', '/saved-listings/:path*', '/matched-listings/:path*', '/deal-pipeline/:path*', '/messages/:path*', '/admin/:path*', '/login', '/signup', '/auth/callback'],
+  matcher: ['/dashboard/:path*', '/properties/:path*', '/buyers/:path*', '/marketplace/:path*', '/my-buy-boxes/:path*', '/settings/:path*', '/saved-listings/:path*', '/matched-listings/:path*', '/deal-pipeline/:path*', '/messages/:path*', '/admin/:path*', '/select-role', '/login', '/signup', '/auth/callback'],
 };

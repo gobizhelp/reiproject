@@ -8,6 +8,7 @@ create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   user_role text not null default 'seller' check (user_role in ('seller', 'buyer', 'both')),
   active_view text not null default 'seller' check (active_view in ('seller', 'buyer')),
+  role_selected boolean not null default false,
   full_name text,
   company_name text,
   phone text,
