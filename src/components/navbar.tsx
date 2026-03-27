@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ShoppingCart,
   Package, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical,
@@ -19,6 +19,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [switching, setSwitching] = useState(false);
+  const hasLoadedOnce = useRef(false);
   const {
     unreadCount, soundEnabled, toggleSound,
     persistedNotifications, persistedUnreadCount,
@@ -40,6 +41,7 @@ export default function Navbar() {
 
       if (data) {
         setProfile(data as Profile);
+        hasLoadedOnce.current = true;
       }
     }
     loadProfile();
@@ -81,7 +83,7 @@ export default function Navbar() {
         : "text-muted hover:text-foreground"
     }`;
 
-  const profileLoaded = profile !== null;
+  const profileLoaded = profile !== null || hasLoadedOnce.current;
   const isBuyer = profile?.active_view === "buyer";
   const isBoth = profile?.user_role === "both";
 
@@ -107,55 +109,59 @@ export default function Navbar() {
                 <span className="h-4 w-16 bg-border/50 rounded animate-pulse" />
                 <span className="h-4 w-18 bg-border/50 rounded animate-pulse" />
               </div>
-            ) : isBuyer ? (
-              <>
-                <Link href="/marketplace" className={linkClass("/marketplace")}>
-                  <span className="flex items-center gap-1.5">
-                    <Search className="w-4 h-4" />
-                    Marketplace
-                  </span>
-                </Link>
-                <Link href="/matched-listings" className={linkClass("/matched-listings")}>
-                  <span className="flex items-center gap-1.5">
-                    <Target className="w-4 h-4" />
-                    Matched
-                  </span>
-                </Link>
-                <Link href="/messages" className={linkClass("/messages")}>
-                  <span className="flex items-center gap-1.5 relative">
-                    <MessageCircle className="w-4 h-4" />
-                    Messages
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
-                    )}
-                  </span>
-                </Link>
-              </>
             ) : (
-              <>
-                <Link href="/dashboard" className={linkClass("/dashboard")}>
-                  Properties
-                </Link>
-                <Link href="/messages" className={linkClass("/messages")}>
-                  <span className="flex items-center gap-1.5 relative">
-                    <MessageCircle className="w-4 h-4" />
-                    Messages
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
-                        {unreadCount > 99 ? "99+" : unreadCount}
+              <div className="flex items-center gap-4 transition-opacity duration-200" key={isBuyer ? "buyer" : "seller"}>
+                {isBuyer ? (
+                  <>
+                    <Link href="/marketplace" className={linkClass("/marketplace")}>
+                      <span className="flex items-center gap-1.5">
+                        <Search className="w-4 h-4" />
+                        Marketplace
                       </span>
-                    )}
-                  </span>
-                </Link>
-                <Link href="/buyers" className={linkClass("/buyers")}>
-                  <span className="flex items-center gap-1.5">
-                    <Users className="w-4 h-4" />
-                    Buyers
-                  </span>
-                </Link>
-              </>
+                    </Link>
+                    <Link href="/matched-listings" className={linkClass("/matched-listings")}>
+                      <span className="flex items-center gap-1.5">
+                        <Target className="w-4 h-4" />
+                        Matched
+                      </span>
+                    </Link>
+                    <Link href="/messages" className={linkClass("/messages")}>
+                      <span className="flex items-center gap-1.5 relative">
+                        <MessageCircle className="w-4 h-4" />
+                        Messages
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/dashboard" className={linkClass("/dashboard")}>
+                      Properties
+                    </Link>
+                    <Link href="/messages" className={linkClass("/messages")}>
+                      <span className="flex items-center gap-1.5 relative">
+                        <MessageCircle className="w-4 h-4" />
+                        Messages
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                    <Link href="/buyers" className={linkClass("/buyers")}>
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-4 h-4" />
+                        Buyers
+                      </span>
+                    </Link>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>
