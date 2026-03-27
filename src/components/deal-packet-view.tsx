@@ -32,6 +32,8 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
   const [saved, setSaved] = useState(initialSaved || false);
   const [askOpen, setAskOpen] = useState(false);
   const [question, setQuestion] = useState("");
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerAmount, setOfferAmount] = useState("");
   const [sending, setSending] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(!!existingConversationId);
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
@@ -53,9 +55,29 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
     if (!res.ok) setSaved(wasSaved);
   }
 
+  function formatOfferAmount(value: string): string {
+    const num = parseFloat(value.replace(/[^0-9.]/g, ""));
+    if (isNaN(num)) return "";
+    return num.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  async function handleMakeOffer() {
+    const cleaned = offerAmount.replace(/[^0-9.]/g, "");
+    if (!cleaned || isNaN(parseFloat(cleaned))) return;
+    const formatted = formatOfferAmount(offerAmount);
+    await handleAction("make_offer", `I'd like to make an offer of ${formatted} on this property.`);
+    setOfferAmount("");
+    setOfferOpen(false);
+  }
+
   async function handleAction(type: string, customMessage?: string) {
     if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
     if (type === "ask_question" && !customMessage) { setAskOpen(true); return; }
+    if (type === "make_offer" && !customMessage) {
+      if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
+      setOfferOpen(true);
+      return;
+    }
     // If conversation already exists for showing/offer, confirm first
     if (conversationStarted && (type === "request_showing" || type === "make_offer") && !confirmAction) {
       setConfirmAction(type);
@@ -239,6 +261,42 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                 Make Offer
               </button>
             </div>
+            {offerOpen && (
+              <div className="mt-3 bg-background border border-emerald-500/30 rounded-lg p-3 space-y-2">
+                <label className="text-xs font-medium text-emerald-400">Enter your offer amount</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={offerAmount}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9]/g, "");
+                        setOfferAmount(raw ? parseInt(raw).toLocaleString() : "");
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleMakeOffer()}
+                      placeholder="150,000"
+                      className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    onClick={handleMakeOffer}
+                    disabled={!offerAmount.trim() || sending}
+                    className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  >
+                    {sending ? "Sending..." : "Submit Offer"}
+                  </button>
+                  <button
+                    onClick={() => { setOfferOpen(false); setOfferAmount(""); }}
+                    className="px-3 py-2.5 text-muted hover:text-foreground rounded-lg border border-border transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
             {!askOpen ? (
               <button
                 onClick={() => {

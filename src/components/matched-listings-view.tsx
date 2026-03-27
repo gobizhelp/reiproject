@@ -329,6 +329,8 @@ function MatchedCard({
 }) {
   const [askOpen, setAskOpen] = useState(false);
   const [question, setQuestion] = useState("");
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerAmount, setOfferAmount] = useState("");
   const [sending, setSending] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ActionType | null>(null);
 
@@ -347,10 +349,15 @@ function MatchedCard({
   const hasSentOffer = sentTypes.includes("make_offer");
 
   function handleActionClick(type: ActionType) {
-    if (
-      (type === "request_showing" && hasSentShowing) ||
-      (type === "make_offer" && hasSentOffer)
-    ) {
+    if (type === "make_offer") {
+      if (hasSentOffer) {
+        setConfirmAction(type);
+      } else {
+        setOfferOpen(true);
+      }
+      return;
+    }
+    if (type === "request_showing" && hasSentShowing) {
       setConfirmAction(type);
     } else {
       doSend(type);
@@ -361,6 +368,18 @@ function MatchedCard({
     setSending(true);
     setConfirmAction(null);
     await onSendMessage(type, customMessage);
+    setSending(false);
+  }
+
+  async function handleMakeOffer() {
+    const cleaned = offerAmount.replace(/[^0-9]/g, "");
+    if (!cleaned) return;
+    const num = parseInt(cleaned);
+    const formatted = num.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    setSending(true);
+    await onSendMessage("make_offer", `I'd like to make an offer of ${formatted} on this property.`);
+    setOfferAmount("");
+    setOfferOpen(false);
     setSending(false);
   }
 
@@ -556,7 +575,7 @@ function MatchedCard({
                   {confirmAction === "request_showing"
                     ? "requested a showing"
                     : "sent an offer"}
-                  . Send again?
+                  . {confirmAction === "make_offer" ? "Send another offer?" : "Send again?"}
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -566,11 +585,41 @@ function MatchedCard({
                     Cancel
                   </button>
                   <button
-                    onClick={() => doSend(confirmAction)}
+                    onClick={() => { setConfirmAction(null); if (confirmAction === "make_offer") { setOfferOpen(true); } else { doSend(confirmAction); } }}
                     disabled={sending}
                     className="flex-1 text-xs py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
                   >
-                    {sending ? "Sending..." : "Send Again"}
+                    {confirmAction === "make_offer" ? "New Offer" : (sending ? "Sending..." : "Send Again")}
+                  </button>
+                </div>
+              </div>
+            )}
+            {offerOpen && (
+              <div className="bg-background border border-emerald-500/30 rounded-lg p-3 space-y-2">
+                <label className="text-xs font-medium text-emerald-400">Enter your offer amount</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={offerAmount}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9]/g, "");
+                        setOfferAmount(raw ? parseInt(raw).toLocaleString() : "");
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleMakeOffer()}
+                      placeholder="150,000"
+                      className="w-full bg-background border border-border rounded-lg pl-8 pr-2 py-2 text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    onClick={handleMakeOffer}
+                    disabled={!offerAmount.trim() || sending}
+                    className="px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  >
+                    {sending ? "..." : <Send className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>

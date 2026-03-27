@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Cannot message your own property" }, { status: 400 });
   }
 
-  const message = messageType === "ask_question"
+  const message = customMessage?.trim()
     ? customMessage.trim()
     : DEFAULT_MESSAGES[messageType];
 
