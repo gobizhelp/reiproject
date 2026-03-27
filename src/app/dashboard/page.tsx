@@ -30,6 +30,15 @@ export default async function DashboardPage() {
   ]);
 
   const typedProfile = profile as Profile | null;
+
+  // Sync active_view to "seller" if a "both" user navigates here directly
+  if (typedProfile?.user_role === "both" && typedProfile.active_view !== "seller") {
+    await supabase
+      .from("profiles")
+      .update({ active_view: "seller" })
+      .eq("id", user.id);
+  }
+
   const hasAnalytics = typedProfile
     ? profileHasSellerFeature(typedProfile, "listing_analytics")
     : false;

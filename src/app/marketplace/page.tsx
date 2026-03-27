@@ -15,9 +15,17 @@ export default async function MarketplacePage() {
   // Fetch user profile for tier gating
   const { data: profile } = await supabase
     .from("profiles")
-    .select("buyer_tier")
+    .select("buyer_tier, user_role, active_view")
     .eq("id", user.id)
     .single();
+
+  // Sync active_view to "buyer" if a "both" user navigates here directly
+  if (profile?.user_role === "both" && profile.active_view !== "buyer") {
+    await supabase
+      .from("profiles")
+      .update({ active_view: "buyer" })
+      .eq("id", user.id);
+  }
 
   const buyerTier = profile?.buyer_tier ?? "free";
 
