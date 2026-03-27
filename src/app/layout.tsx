@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ImpersonationBanner from "@/components/impersonation-banner";
 import NotificationProvider from "@/components/notification-provider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function RootLayout({
         <NotificationProvider>
           {children}
         </NotificationProvider>
+        <SpeedInsights />
         <Analytics />
       </body>
     </html>
