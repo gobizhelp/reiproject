@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Add the initial message
-  const message = action === "ask_question"
+  const message = customMessage?.trim()
     ? customMessage.trim()
     : DEFAULT_MESSAGES[action];
 
