@@ -10,15 +10,15 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes max for Vercel
 
 /**
- * POST /api/cron/daily-digest
+ * GET /api/cron/daily-digest
  *
- * Triggered by an external cron service (e.g., Vercel Cron, GitHub Actions, etc.)
- * every hour. Finds buyers whose digest send_hour matches the current hour in
- * their configured timezone, then sends them a digest of new matching listings.
+ * Triggered by Vercel Cron every hour. Finds buyers whose digest send_hour
+ * matches the current hour in their configured timezone, then sends them a
+ * digest of new matching listings.
  *
  * Requires CRON_SECRET header for authentication.
  */
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
