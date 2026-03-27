@@ -446,10 +446,10 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
           )}
         </button>
         {/* Grid / Map Toggle */}
-        <div className="flex rounded-xl border border-border overflow-hidden">
+        <div className="relative flex rounded-xl border border-border">
           <button
             onClick={() => setViewMode("grid")}
-            className={`flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-3 rounded-l-xl text-sm font-medium transition-colors ${
               viewMode === "grid"
                 ? "bg-accent text-white"
                 : "bg-card text-muted hover:text-foreground"
@@ -462,7 +462,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
             onClick={() => {
               if (hasMapView) setViewMode("map");
             }}
-            className={`flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors relative ${
+            className={`flex items-center gap-1.5 px-3 py-3 rounded-r-xl text-sm font-medium transition-colors ${
               !hasMapView
                 ? "bg-card text-muted/50 cursor-not-allowed"
                 : viewMode === "map"
@@ -472,8 +472,10 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
             title={hasMapView ? "Map view" : "Upgrade to Pro for Map view"}
           >
             <Map className="w-4 h-4" />
-            {!hasMapView && <Lock className="w-3 h-3 absolute -top-1 -right-1 text-amber-400" />}
           </button>
+          {!hasMapView && (
+            <Lock className="w-3 h-3 absolute -top-1.5 -right-1.5 text-amber-400" />
+          )}
         </div>
 
         {hasSavedSearches && (
