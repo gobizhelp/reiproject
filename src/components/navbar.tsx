@@ -7,8 +7,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Building2, LogOut, Users, Search, Settings, ArrowLeftRight, ShoppingCart, Home,
-  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical,
+  Building2, LogOut, Users, Search, Settings, ShoppingCart,
+  Package, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical,
   Bell, Check, Clock, CheckCircle, Archive, RotateCcw
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
@@ -19,7 +19,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [switching, setSwitching] = useState(false);
-  const [showViewMenu, setShowViewMenu] = useState(false);
   const {
     unreadCount, soundEnabled, toggleSound,
     persistedNotifications, persistedUnreadCount,
@@ -56,7 +55,6 @@ export default function Navbar() {
   async function switchView(view: ActiveView) {
     if (!profile || switching) return;
     setSwitching(true);
-    setShowViewMenu(false);
 
     const supabase = createClient();
     await supabase
@@ -83,6 +81,7 @@ export default function Navbar() {
         : "text-muted hover:text-foreground"
     }`;
 
+  const profileLoaded = profile !== null;
   const isBuyer = profile?.active_view === "buyer";
   const isBoth = profile?.user_role === "both";
 
@@ -102,7 +101,13 @@ export default function Navbar() {
             <span className="text-xl font-bold">REI Reach</span>
           </Link>
           <div className="hidden md:flex items-center gap-4">
-            {isBuyer ? (
+            {!profileLoaded ? (
+              <div className="flex items-center gap-4">
+                <span className="h-4 w-20 bg-border/50 rounded animate-pulse" />
+                <span className="h-4 w-16 bg-border/50 rounded animate-pulse" />
+                <span className="h-4 w-18 bg-border/50 rounded animate-pulse" />
+              </div>
+            ) : isBuyer ? (
               <>
                 <Link href="/marketplace" className={linkClass("/marketplace")}>
                   <span className="flex items-center gap-1.5">
@@ -157,50 +162,36 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {/* View Switcher for "both" users */}
           {isBoth && (
-            <div className="relative">
+            <div className="flex items-center bg-border/50 rounded-lg p-0.5">
               <button
-                onClick={() => setShowViewMenu(!showViewMenu)}
-                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                  showViewMenu ? "border-accent bg-accent/10 text-accent" : "border-border text-muted hover:text-foreground hover:border-muted"
+                onClick={() => switchView("seller")}
+                disabled={switching}
+                className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
+                  !isBuyer
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-muted hover:text-foreground"
                 }`}
               >
-                {isBuyer ? (
-                  <><ShoppingCart className="w-4 h-4" /> Buyer</>
-                ) : (
-                  <><Building2 className="w-4 h-4" /> Seller</>
-                )}
-                <ChevronDown className="w-3 h-3" />
+                <Building2 className="w-4 h-4" />
+                Seller
               </button>
-              {showViewMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowViewMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
-                    <button
-                      onClick={() => switchView("seller")}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                        !isBuyer ? "text-accent bg-accent/10" : "text-muted hover:text-foreground hover:bg-card-hover"
-                      }`}
-                    >
-                      <Building2 className="w-4 h-4" />
-                      Seller View
-                    </button>
-                    <button
-                      onClick={() => switchView("buyer")}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                        isBuyer ? "text-accent bg-accent/10" : "text-muted hover:text-foreground hover:bg-card-hover"
-                      }`}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Buyer View
-                    </button>
-                  </div>
-                </>
-              )}
+              <button
+                onClick={() => switchView("buyer")}
+                disabled={switching}
+                className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
+                  isBuyer
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Buyer
+              </button>
             </div>
           )}
 
           {/* Mobile nav links */}
-          {isBuyer ? (
+          {profileLoaded && (isBuyer ? (
             <>
               <Link href="/marketplace" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Search className="w-5 h-5" />
@@ -223,7 +214,7 @@ export default function Navbar() {
                 <Users className="w-5 h-5" />
               </Link>
             </>
-          )}
+          ))}
 
           {profile?.is_admin && (
             <Link
@@ -347,7 +338,7 @@ export default function Navbar() {
       </div>
 
       {/* Secondary navigation bar */}
-      {isBuyer && (
+      {profileLoaded && isBuyer && (
         <div className="border-t border-border">
           <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center gap-2">
             <Link href="/saved-listings" className={secondaryLinkClass("/saved-listings")}>
