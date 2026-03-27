@@ -6,6 +6,7 @@ import { calculateDealAnalysis, formatCurrency, formatPercent } from "@/lib/calc
 import { Property, PropertyPhoto, Comp } from "@/lib/types";
 import { Metadata } from "next";
 import DealPacketView from "@/components/deal-packet-view";
+import AnalyticsTracker from "@/components/analytics-tracker";
 import { profileHasBuyerFeature } from "@/lib/membership/feature-gate";
 import type { Profile } from "@/lib/profile-types";
 
@@ -122,6 +123,8 @@ export default async function DealPacketPage({ params }: Props) {
   }
 
   return (
+    <>
+    <AnalyticsTracker propertyId={property.id} eventType="view" />
     <DealPacketView
       property={property}
       photos={photos}
@@ -135,5 +138,6 @@ export default async function DealPacketPage({ params }: Props) {
       noteContent={noteContent}
       hasNotesFeature={hasNotesFeature}
     />
+    </>
   );
 }
