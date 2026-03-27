@@ -10,15 +10,15 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes max for Vercel
 
 /**
- * POST /api/cron/daily-digest
+ * GET /api/cron/daily-digest
  *
- * Triggered by an external cron service (e.g., Vercel Cron, GitHub Actions, etc.)
- * every hour. Finds buyers whose digest send_hour matches the current hour in
- * their configured timezone, then sends them a digest of new matching listings.
+ * Triggered by Vercel Cron every hour. Finds buyers whose digest send_hour
+ * matches the current hour in their configured timezone, then sends them a
+ * digest of new matching listings.
  *
  * Requires CRON_SECRET header for authentication.
  */
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
@@ -50,9 +50,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Filter to only buyers whose send_hour matches the current hour in their timezone
+  // and who haven't received a digest (manual or cron) in the last 24 hours
+  const oneDayMs = 24 * 60 * 60 * 1000;
   const eligibleSettings = digestSettings.filter((s) => {
     const currentHourInTz = targetTimezones.get(s.timezone);
-    return currentHourInTz !== undefined && currentHourInTz === s.send_hour;
+    if (currentHourInTz === undefined || currentHourInTz !== s.send_hour) return false;
+    if (s.last_sent_at) {
+      const elapsed = now.getTime() - new Date(s.last_sent_at).getTime();
+      if (elapsed < oneDayMs) return false;
+    }
+    return true;
   });
 
   if (eligibleSettings.length === 0) {
@@ -161,12 +168,17 @@ export async function POST(request: NextRequest) {
         : 'Your daily deal digest — no new matches today';
 
     try {
-      await resend.emails.send({
+      const { data: sendData, error: sendError } = await resend.emails.send({
         from: EMAIL_FROM,
         to: email,
         subject,
         html,
       });
+
+      if (sendError || !sendData) {
+        errors.push(`Failed to send to ${userId}: ${sendError?.message || 'unknown error'}`);
+        continue;
+      }
 
       // Update last_sent_at
       await supabase

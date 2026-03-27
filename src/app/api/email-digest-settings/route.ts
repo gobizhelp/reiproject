@@ -53,6 +53,25 @@ export async function PUT(request: Request) {
     return Response.json({ error: 'timezone is required' }, { status: 400 });
   }
 
+  // If enabling, verify the user has at least one buy box
+  if (enabled) {
+    const { count, error: boxError } = await supabase
+      .from('buyer_buy_boxes')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (boxError) {
+      return Response.json({ error: boxError.message }, { status: 500 });
+    }
+
+    if (!count || count === 0) {
+      return Response.json(
+        { error: 'You need at least one buy box before enabling the daily digest. Add a buy box in your buyer profile.' },
+        { status: 400 }
+      );
+    }
+  }
+
   const { data, error } = await supabase
     .from('email_digest_settings')
     .upsert(

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TIMEZONE_OPTIONS, HOUR_OPTIONS } from "@/lib/email-digest-types";
-import { Mail, Loader2, Save, Clock, Globe } from "lucide-react";
+import { Mail, Loader2, Save, Clock, Globe, Send, AlertTriangle } from "lucide-react";
 
 interface Props {
   userId: string;
@@ -13,21 +13,31 @@ export default function EmailDigestSettings({ userId }: Props) {
   const [enabled, setEnabled] = useState(false);
   const [sendHour, setSendHour] = useState(8);
   const [timezone, setTimezone] = useState("America/New_York");
+  const [lastSentAt, setLastSentAt] = useState<string | null>(null);
+  const [hasBuyBoxes, setHasBuyBoxes] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [sendResult, setSendResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchSettings() {
+      const supabase = createClient();
       try {
-        const res = await fetch("/api/email-digest-settings");
-        if (res.ok) {
-          const { settings } = await res.json();
+        const [settingsRes, buyBoxRes] = await Promise.all([
+          fetch("/api/email-digest-settings"),
+          supabase.from("buyer_buy_boxes").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        ]);
+        if (settingsRes.ok) {
+          const { settings } = await settingsRes.json();
           setEnabled(settings.enabled);
           setSendHour(settings.send_hour);
           setTimezone(settings.timezone);
+          setLastSentAt(settings.last_sent_at ?? null);
         }
+        setHasBuyBoxes((buyBoxRes.count ?? 0) > 0);
       } catch {
         // Use defaults
       } finally {
@@ -35,7 +45,46 @@ export default function EmailDigestSettings({ userId }: Props) {
       }
     }
     fetchSettings();
-  }, []);
+  }, [userId]);
+
+  function isCooldownActive(): boolean {
+    if (!lastSentAt) return false;
+    const elapsed = Date.now() - new Date(lastSentAt).getTime();
+    return elapsed < 24 * 60 * 60 * 1000;
+  }
+
+  function cooldownTimeLeft(): string {
+    if (!lastSentAt) return "";
+    const remaining = 24 * 60 * 60 * 1000 - (Date.now() - new Date(lastSentAt).getTime());
+    if (remaining <= 0) return "";
+    const hours = Math.floor(remaining / (60 * 60 * 1000));
+    const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+    return `${hours}h ${minutes}m`;
+  }
+
+  async function handleSendNow() {
+    setSending(true);
+    setSendResult(null);
+
+    try {
+      const res = await fetch("/api/email-digest-settings/send-now", {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send digest");
+      }
+
+      setLastSentAt(data.last_sent_at);
+      setSendResult({ type: "success", message: `Digest sent with ${data.matches} matching listing${data.matches === 1 ? "" : "s"}.` });
+      setTimeout(() => setSendResult(null), 5000);
+    } catch (err) {
+      setSendResult({ type: "error", message: err instanceof Error ? err.message : "Failed to send" });
+    } finally {
+      setSending(false);
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -100,6 +149,16 @@ export default function EmailDigestSettings({ userId }: Props) {
         </div>
       )}
 
+      {sendResult && (
+        <div className={`rounded-lg px-4 py-3 text-sm mb-4 ${
+          sendResult.type === "success"
+            ? "bg-success/10 border border-success/30 text-success"
+            : "bg-danger/10 border border-danger/30 text-danger"
+        }`}>
+          {sendResult.message}
+        </div>
+      )}
+
       <div className="space-y-5">
         {/* Enable toggle */}
         <div className="flex items-center justify-between">
@@ -123,6 +182,19 @@ export default function EmailDigestSettings({ userId }: Props) {
             />
           </button>
         </div>
+
+        {/* Buy box warning */}
+        {enabled && hasBuyBoxes === false && (
+          <div className="flex items-start gap-3 bg-warning/10 border border-warning/30 text-warning rounded-lg px-4 py-3 text-sm">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <p>
+              You need at least one buy box for the digest to match listings.{" "}
+              <a href="/buyer/profile" className="underline font-medium">
+                Add a buy box
+              </a>
+            </p>
+          </div>
+        )}
 
         {/* Time and timezone (shown when enabled) */}
         {enabled && (
@@ -163,6 +235,30 @@ export default function EmailDigestSettings({ userId }: Props) {
                   </option>
                 ))}
               </select>
+            </div>
+          </div>
+        )}
+
+        {/* Send Now */}
+        {enabled && (
+          <div className="pt-2 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">Send digest now</p>
+                <p className="text-muted text-xs">
+                  {isCooldownActive()
+                    ? `Available again in ${cooldownTimeLeft()}`
+                    : "Manually trigger your digest email"}
+                </p>
+              </div>
+              <button
+                onClick={handleSendNow}
+                disabled={sending || isCooldownActive()}
+                className="inline-flex items-center gap-2 bg-accent hover:bg-accent/80 disabled:opacity-50 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors"
+              >
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Send Now
+              </button>
             </div>
           </div>
         )}
