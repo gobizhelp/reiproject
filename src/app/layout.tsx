@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ImpersonationBanner from "@/components/impersonation-banner";
 import NotificationProvider from "@/components/notification-provider";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://reireach.com"),
@@ -36,6 +37,7 @@ export default function RootLayout({
         <NotificationProvider>
           {children}
         </NotificationProvider>
+        <Analytics />
       </body>
     </html>
   );
