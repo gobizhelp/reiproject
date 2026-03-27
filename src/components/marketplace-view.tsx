@@ -10,9 +10,11 @@ import {
   Search, SlidersHorizontal, X, MapPin, Bed, Bath, Maximize,
   Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown,
   Lock, ArrowUpDown, Bookmark, BookmarkPlus, Trash2, Check, Crown,
+  LayoutGrid, Map,
 } from "lucide-react";
 import ProBuyerBadge from "./pro-buyer-badge";
 import ShareButton from "./share-button";
+import PropertyMap from "./property-map";
 
 interface PropertyWithPhotos extends Property {
   property_photos: { id: string; url: string; display_order: number }[];
@@ -123,6 +125,10 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
   const tier = (buyerTier || "free") as Tier;
   const hasAdvancedFilters = hasBuyerFeature(tier, "advanced_filters");
   const hasSavedSearches = hasBuyerFeature(tier, "saved_searches");
+  const hasMapView = hasBuyerFeature(tier, "map_view");
+
+  type ViewMode = "grid" | "map";
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -439,6 +445,37 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
             </span>
           )}
         </button>
+        {/* Grid / Map Toggle */}
+        <div className="flex rounded-xl border border-border overflow-hidden">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors ${
+              viewMode === "grid"
+                ? "bg-accent text-white"
+                : "bg-card text-muted hover:text-foreground"
+            }`}
+            title="Grid view"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (hasMapView) setViewMode("map");
+            }}
+            className={`flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors relative ${
+              !hasMapView
+                ? "bg-card text-muted/50 cursor-not-allowed"
+                : viewMode === "map"
+                  ? "bg-accent text-white"
+                  : "bg-card text-muted hover:text-foreground"
+            }`}
+            title={hasMapView ? "Map view" : "Upgrade to Pro for Map view"}
+          >
+            <Map className="w-4 h-4" />
+            {!hasMapView && <Lock className="w-3 h-3 absolute -top-1 -right-1 text-amber-400" />}
+          </button>
+        </div>
+
         {hasSavedSearches && (
           <div className="relative">
             <button
@@ -950,8 +987,10 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
         )}
       </div>
 
-      {/* Property Grid */}
-      {filtered.length === 0 ? (
+      {/* Property Grid / Map */}
+      {viewMode === "map" && hasMapView ? (
+        <PropertyMap properties={filtered} />
+      ) : filtered.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl p-16 text-center">
           <p className="text-muted text-lg mb-2">No deals match your criteria</p>
           <p className="text-muted text-sm">Try adjusting your search or filters</p>
