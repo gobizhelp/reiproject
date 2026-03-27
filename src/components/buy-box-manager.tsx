@@ -48,7 +48,6 @@ const emptyForm: BuyBoxFormData = {
   min_sqft: null,
   max_sqft: null,
   financing_types: [],
-  proof_of_funds: null,
   closing_timeline: null,
   property_conditions: [],
   additional_notes: null,
@@ -82,7 +81,6 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
       min_sqft: box.min_sqft,
       max_sqft: box.max_sqft,
       financing_types: box.financing_types || [],
-      proof_of_funds: box.proof_of_funds,
       closing_timeline: box.closing_timeline,
       property_conditions: box.property_conditions || [],
       additional_notes: box.additional_notes,
@@ -111,7 +109,6 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
       min_sqft: form.min_sqft || null,
       max_sqft: form.max_sqft || null,
       financing_types: form.financing_types,
-      proof_of_funds: form.proof_of_funds,
       closing_timeline: form.closing_timeline || null,
       property_conditions: form.property_conditions,
       additional_notes: form.additional_notes || null,
@@ -336,17 +333,6 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
                   {CLOSING_TIMELINE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
-              <div className="flex items-end pb-1">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.proof_of_funds === true}
-                    onChange={(e) => setForm({ ...form, proof_of_funds: e.target.checked })}
-                    className="w-5 h-5 rounded border-border bg-background accent-accent"
-                  />
-                  <span className="text-sm font-medium">Proof of Funds Available</span>
-                </label>
-              </div>
             </div>
 
             {/* Property Conditions */}
@@ -483,9 +469,6 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
                     )}
                     {box.closing_timeline && (
                       <div><span className="text-muted">Closing:</span> <span className="font-medium">{box.closing_timeline}</span></div>
-                    )}
-                    {box.proof_of_funds && (
-                      <div><span className="text-muted">POF:</span> <span className="font-medium text-success">Yes</span></div>
                     )}
                     {box.property_conditions?.length > 0 && (
                       <div className="col-span-2"><span className="text-muted">Conditions:</span> <span className="font-medium">{box.property_conditions.join(", ")}</span></div>

@@ -38,7 +38,6 @@ export interface BuyerBuyBox {
   min_sqft: number | null;
   max_sqft: number | null;
   financing_types: string[];
-  proof_of_funds: boolean | null;
   closing_timeline: string | null;
   property_conditions: string[];
   additional_notes: string | null;

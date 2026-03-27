@@ -88,7 +88,7 @@ create index if not exists idx_profiles_seller_tier on profiles(seller_tier);
 insert into membership_plans (id, name, description, plan_type, tier, monthly_price_cents) values
   ('free_buyer', 'Free Buyer', 'Browse deals, create one buy box, and get daily alerts.', 'buyer', 'free', 0),
   ('pro_buyer', 'Pro Buyer', 'Instant alerts, more buy boxes, advanced filters, and better targeting.', 'buyer', 'pro', 2900),
-  ('elite_buyer', 'Elite Buyer', 'First-look access, premium inventory, team features, and advanced analytics.', 'buyer', 'elite', 7900),
+  ('elite_buyer', 'Elite Buyer', 'First-look access, team features, and multi-market watchlists.', 'buyer', 'elite', 7900),
   ('free_seller', 'Free Seller', 'List one property and receive buyer inquiries.', 'seller', 'free', 0),
   ('pro_seller', 'Pro Seller', 'List more deals, email matched buyers, and see performance analytics.', 'seller', 'pro', 7900),
   ('elite_seller', 'Elite Seller', 'High-volume listings, SMS blasts, audience segmentation, and team tools.', 'seller', 'elite', 19900),

@@ -39,19 +39,14 @@ export type BuyerFeature =
   | 'private_notes'
   | 'basic_deal_pipeline'
   | 'priority_inquiry'
-  | 'proof_of_funds_upload'
   | 'pro_buyer_badge'
   | 'sms_alerts'
   | 'push_notifications'
   | 'first_look_access'
-  | 'premium_inventory'
-  | 'verified_buyer_badge'
-  | 'verified_proof_of_funds_badge'
   | 'team_seats'
   | 'shared_team_pipeline'
   | 'shared_notes'
   | 'bulk_export'
-  | 'advanced_buyer_analytics'
   | 'multi_market_watchlists';
 
 export type SellerFeature =
@@ -83,18 +78,13 @@ export type SellerFeature =
   | 'attachment_uploads'
   | 'inquiry_status_tracking'
   | 'basic_dispo_pipeline'
-  | 'property_flyer_generation'
   | 'sms_blast'
   | 'buyer_list_import'
   | 'audience_segmentation'
-  | 'vip_first_release'
-  | 'timed_release_windows'
   | 'private_listings'
   | 'premium_only_listings'
-  | 'advanced_analytics'
   | 'open_click_tracking'
   | 'buyer_intent_tracking'
-  | 'verified_seller_badge'
   | 'seller_team_seats'
   | 'shared_team_inbox'
   | 'team_dispo_pipeline'
@@ -132,7 +122,6 @@ const PRO_BUYER_FEATURES: BuyerFeature[] = [
   'private_notes',
   'basic_deal_pipeline',
   'priority_inquiry',
-  'proof_of_funds_upload',
   'pro_buyer_badge',
 ];
 
@@ -141,14 +130,10 @@ const ELITE_BUYER_FEATURES: BuyerFeature[] = [
   'sms_alerts',
   'push_notifications',
   'first_look_access',
-  'premium_inventory',
-  'verified_buyer_badge',
-  'verified_proof_of_funds_badge',
   'team_seats',
   'shared_team_pipeline',
   'shared_notes',
   'bulk_export',
-  'advanced_buyer_analytics',
   'multi_market_watchlists',
 ];
 
@@ -185,7 +170,6 @@ const PRO_SELLER_FEATURES: SellerFeature[] = [
   'attachment_uploads',
   'inquiry_status_tracking',
   'basic_dispo_pipeline',
-  'property_flyer_generation',
 ];
 
 const ELITE_SELLER_FEATURES: SellerFeature[] = [
@@ -193,14 +177,10 @@ const ELITE_SELLER_FEATURES: SellerFeature[] = [
   'sms_blast',
   'buyer_list_import',
   'audience_segmentation',
-  'vip_first_release',
-  'timed_release_windows',
   'private_listings',
   'premium_only_listings',
-  'advanced_analytics',
   'open_click_tracking',
   'buyer_intent_tracking',
-  'verified_seller_badge',
   'seller_team_seats',
   'shared_team_inbox',
   'team_dispo_pipeline',
@@ -268,7 +248,7 @@ export const MEMBERSHIP_PLANS: Record<PlanId, MembershipPlan> = {
   elite_buyer: {
     id: 'elite_buyer',
     name: 'Elite Buyer',
-    description: 'First-look access, premium inventory, team features, and advanced analytics.',
+    description: 'First-look access, team features, and multi-market watchlists.',
     planType: 'buyer',
     tier: 'elite',
     monthlyPriceCents: 7900,
@@ -336,19 +316,14 @@ export const BUYER_FEATURE_LABELS: Record<BuyerFeature, string> = {
   private_notes: 'Private notes on listings',
   basic_deal_pipeline: 'Basic deal pipeline',
   priority_inquiry: 'Priority inquiry placement',
-  proof_of_funds_upload: 'Proof of funds upload',
   pro_buyer_badge: 'Pro buyer badge',
   sms_alerts: 'SMS alerts',
   push_notifications: 'Push notifications',
   first_look_access: 'First-look access',
-  premium_inventory: 'Premium-only inventory',
-  verified_buyer_badge: 'Verified buyer badge',
-  verified_proof_of_funds_badge: 'Verified proof of funds badge',
   team_seats: 'Team seats',
   shared_team_pipeline: 'Shared team pipeline',
   shared_notes: 'Shared notes',
   bulk_export: 'Bulk export',
-  advanced_buyer_analytics: 'Advanced buyer analytics',
   multi_market_watchlists: 'Multi-market watchlists',
 };
 
@@ -381,18 +356,13 @@ export const SELLER_FEATURE_LABELS: Record<SellerFeature, string> = {
   attachment_uploads: 'Attachment uploads',
   inquiry_status_tracking: 'Inquiry status tracking',
   basic_dispo_pipeline: 'Basic dispo pipeline',
-  property_flyer_generation: 'Property flyer generation',
   sms_blast: 'SMS blast',
   buyer_list_import: 'Buyer list import',
   audience_segmentation: 'Audience segmentation',
-  vip_first_release: 'VIP first release',
-  timed_release_windows: 'Timed release windows',
   private_listings: 'Private listings',
   premium_only_listings: 'Premium-only listings',
-  advanced_analytics: 'Advanced analytics',
   open_click_tracking: 'Open/click tracking',
   buyer_intent_tracking: 'Buyer intent tracking',
-  verified_seller_badge: 'Verified seller badge',
   seller_team_seats: 'Team seats',
   shared_team_inbox: 'Shared team inbox',
   team_dispo_pipeline: 'Team dispo pipeline',

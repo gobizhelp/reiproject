@@ -133,7 +133,6 @@ export const BUYER_IMPORT_FIELDS: ImportField[] = [
   { key: "max_sqft", label: "Max Sqft", section: "Investment Criteria", type: "number" },
   // Financing
   { key: "financing_types", label: "Financing Types (comma-separated)", section: "Financing", type: "string" },
-  { key: "proof_of_funds", label: "Proof of Funds Available", section: "Financing", type: "boolean" },
   { key: "closing_timeline", label: "Closing Timeline", section: "Financing", type: "string" },
   // Property Conditions
   { key: "property_conditions", label: "Property Conditions (comma-separated)", section: "Property Conditions", type: "string" },

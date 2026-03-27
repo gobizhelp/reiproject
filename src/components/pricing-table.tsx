@@ -70,10 +70,9 @@ const BUYER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
   elite: [
     ["basic_search"],           // "Unlimited buy boxes" (limit, always ready)
     ["first_look_access"],      // "First-look access"
-    ["premium_inventory"],      // "Premium-only inventory"
     ["sms_alerts", "push_notifications"], // "SMS & push notifications"
     ["team_seats", "shared_team_pipeline"], // "Team seats & shared pipeline"
-    ["advanced_buyer_analytics"], // "Advanced analytics"
+    ["bulk_export", "multi_market_watchlists"], // "Bulk export & watchlists"
   ],
 };
 
@@ -97,7 +96,6 @@ const SELLER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
   elite: [
     ["create_listing"],         // "Unlimited listings" (limit, always ready)
     ["sms_blast", "audience_segmentation"], // "SMS blast & audience segmentation"
-    ["vip_first_release"],      // "VIP first release"
     ["private_listings", "premium_only_listings"], // "Private & premium-only listings"
     ["shared_team_inbox", "team_dispo_pipeline"], // "Team inbox & dispo pipeline"
     ["deal_room", "offer_collection_tools"], // "Deal room & offer tools"
@@ -153,10 +151,9 @@ const BUYER_HIGHLIGHTS: Record<Tier, string[]> = {
   elite: [
     "Unlimited buy boxes",
     "First-look access",
-    "Premium-only inventory",
     "SMS & push notifications",
     "Team seats & shared pipeline",
-    "Advanced analytics",
+    "Bulk export & watchlists",
   ],
 };
 
@@ -180,7 +177,6 @@ const SELLER_HIGHLIGHTS: Record<Tier, string[]> = {
   elite: [
     "Unlimited listings",
     "SMS blast & audience segmentation",
-    "VIP first release",
     "Private & premium-only listings",
     "Team inbox & dispo pipeline",
     "Deal room & offer tools",
@@ -193,7 +189,7 @@ const BUYER_FEATURE_GROUPS: { label: string; features: BuyerFeature[] }[] = [
     features: [
       "browse_listings", "view_listing_details", "basic_search", "basic_filters",
       "advanced_filters", "match_feed", "saved_searches", "map_view",
-      "first_look_access", "premium_inventory", "multi_market_watchlists",
+      "first_look_access", "multi_market_watchlists",
     ],
   },
   {
@@ -207,17 +203,17 @@ const BUYER_FEATURE_GROUPS: { label: string; features: BuyerFeature[] }[] = [
     label: "Deal Management",
     features: [
       "save_listings", "contact_seller", "private_notes", "basic_deal_pipeline",
-      "priority_inquiry", "proof_of_funds_upload", "bulk_export",
+      "priority_inquiry", "bulk_export",
     ],
   },
   {
     label: "Badges & Verification",
-    features: ["pro_buyer_badge", "verified_buyer_badge", "verified_proof_of_funds_badge"],
+    features: ["pro_buyer_badge"],
   },
   {
     label: "Team & Analytics",
     features: [
-      "team_seats", "shared_team_pipeline", "shared_notes", "advanced_buyer_analytics",
+      "team_seats", "shared_team_pipeline", "shared_notes",
     ],
   },
 ];
@@ -237,15 +233,14 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
     label: "Marketing & Distribution",
     features: [
       "manual_share_link", "email_blast", "sms_blast", "buyer_list_import",
-      "audience_segmentation", "vip_first_release", "timed_release_windows",
-      "property_flyer_generation",
+      "audience_segmentation",
     ],
   },
   {
     label: "Analytics & Tracking",
     features: [
       "inquiry_count", "matched_buyer_count", "listing_analytics", "views_count",
-      "saves_count", "inquiries_analytics", "advanced_analytics",
+      "saves_count", "inquiries_analytics",
       "open_click_tracking", "buyer_intent_tracking",
     ],
   },
@@ -253,7 +248,7 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
     label: "Pipeline & Team",
     features: [
       "receive_inquiries", "inquiry_status_tracking", "basic_dispo_pipeline",
-      "branded_seller_profile", "verified_seller_badge", "seller_team_seats",
+      "branded_seller_profile", "seller_team_seats",
       "shared_team_inbox", "team_dispo_pipeline", "internal_notes_assignment",
       "offer_collection_tools", "deal_room",
     ],

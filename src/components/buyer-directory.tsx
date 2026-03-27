@@ -71,7 +71,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
   const [filterCondition, setFilterCondition] = useState("");
   const [filterMinBudget, setFilterMinBudget] = useState("");
   const [filterMaxBudget, setFilterMaxBudget] = useState("");
-  const [filterProofOfFunds, setFilterProofOfFunds] = useState<"" | "yes" | "no">("");
 
   const activeFilterCount = [
     filterPropertyType,
@@ -79,7 +78,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
     filterCondition,
     filterMinBudget,
     filterMaxBudget,
-    filterProofOfFunds,
   ].filter(Boolean).length;
 
   const filtered = useMemo(() => {
@@ -134,10 +132,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
         if (s.min_price !== null && s.min_price > max) return false;
       }
 
-      // Proof of funds
-      if (filterProofOfFunds === "yes" && !s.proof_of_funds) return false;
-      if (filterProofOfFunds === "no" && s.proof_of_funds) return false;
-
       return true;
     });
   }, [
@@ -148,7 +142,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
     filterCondition,
     filterMinBudget,
     filterMaxBudget,
-    filterProofOfFunds,
   ]);
 
   function clearFilters() {
@@ -157,7 +150,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
     setFilterCondition("");
     setFilterMinBudget("");
     setFilterMaxBudget("");
-    setFilterProofOfFunds("");
   }
 
   async function deleteSubmission(id: string) {
@@ -258,7 +250,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
         s.min_sqft ?? "",
         s.max_sqft ?? "",
         (s.financing_types || []).join("; "),
-        s.proof_of_funds ? "Yes" : "No",
         s.closing_timeline || "",
         (s.property_conditions || []).join("; "),
         s.deals_completed ?? "",
@@ -438,18 +429,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                   min="0"
                 />
               </div>
-              <div>
-                <label className="block text-xs text-muted mb-1">Proof of Funds</label>
-                <select
-                  value={filterProofOfFunds}
-                  onChange={(e) => setFilterProofOfFunds(e.target.value as "" | "yes" | "no")}
-                  className={inputClass}
-                >
-                  <option value="">Any</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </select>
-              </div>
             </div>
             {activeFilterCount > 0 && (
               <button
@@ -595,11 +574,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                         up to {formatCurrency(sub.max_price)}
                       </span>
                     )}
-                    {sub.proof_of_funds && (
-                      <span className="px-2 py-1 rounded bg-success/10 text-success text-xs">
-                        POF
-                      </span>
-                    )}
                   </div>
 
                   {/* Expand icon */}
@@ -667,7 +641,6 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
                         {(sub.financing_types || []).length > 0 && (
                           <DetailRow label="Financing" value={(sub.financing_types || []).join(", ")} />
                         )}
-                        <DetailRow label="Proof of Funds" value={sub.proof_of_funds ? "Yes" : "No"} />
                         {sub.closing_timeline && (
                           <DetailRow label="Closing Timeline" value={sub.closing_timeline} />
                         )}
@@ -782,7 +755,6 @@ function AddBuyerModal({
     min_sqft: "",
     max_sqft: "",
     financing_types: [] as string[],
-    proof_of_funds: false,
     closing_timeline: "",
     property_conditions: [] as string[],
     deals_completed: "",
@@ -831,7 +803,6 @@ function AddBuyerModal({
       min_sqft: formData.min_sqft ? parseInt(formData.min_sqft) : null,
       max_sqft: formData.max_sqft ? parseInt(formData.max_sqft) : null,
       financing_types: formData.financing_types,
-      proof_of_funds: formData.proof_of_funds,
       closing_timeline: formData.closing_timeline || null,
       property_conditions: formData.property_conditions,
       deals_completed: formData.deals_completed ? parseInt(formData.deals_completed) : null,
@@ -982,12 +953,6 @@ function AddBuyerModal({
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
-                </div>
-                <div className="flex items-end pb-1">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={formData.proof_of_funds} onChange={(e) => update("proof_of_funds", e.target.checked)} className="w-4 h-4 rounded border-border text-accent focus:ring-accent" />
-                    <span className="text-sm">Proof of Funds Available</span>
-                  </label>
                 </div>
               </div>
             </div>

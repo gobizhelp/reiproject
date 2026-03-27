@@ -37,7 +37,6 @@ create table if not exists buy_box_submissions (
   max_sqft integer,
   -- Financing
   financing_types text[] default '{}',
-  proof_of_funds boolean,
   closing_timeline text,
   -- Property Conditions
   property_conditions text[] default '{}',
