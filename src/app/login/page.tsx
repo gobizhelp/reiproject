@@ -53,7 +53,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <Image src="/logo.svg" alt="REI Reach" width={28} height={28} />
+            <Image src="/logo.svg" alt="" width={28} height={28} />
             <span className="text-2xl font-bold">REI Reach</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>

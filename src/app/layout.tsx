@@ -36,7 +36,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ImpersonationBanner />
         <NotificationProvider>
-          {children}
+          <main className="flex-1 flex flex-col">
+            {children}
+          </main>
         </NotificationProvider>
         <SpeedInsights />
         <Analytics />
