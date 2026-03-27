@@ -4,8 +4,24 @@ import ImpersonationBanner from "@/components/impersonation-banner";
 import NotificationProvider from "@/components/notification-provider";
 
 export const metadata: Metadata = {
-  title: "REI Reach - Off-Market Real Estate Wholesale Marketplace",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://reireach.com"),
+  title: {
+    default: "REI Reach - Off-Market Real Estate Wholesale Marketplace",
+    template: "%s | REI Reach",
+  },
   description: "Close more off-market deals faster. REI Reach connects wholesalers with qualified buyers through professional deal packets, instant matching, and built-in deal analysis.",
+  openGraph: {
+    type: "website",
+    siteName: "REI Reach",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

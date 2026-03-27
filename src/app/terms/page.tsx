@@ -3,9 +3,14 @@ import MarketingNav from "@/components/marketing/marketing-nav";
 import Footer from "@/components/marketing/footer";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | REI Reach",
+  title: "Terms of Service",
   description:
     "Terms of Service for REI Reach. Read our terms covering account usage, subscriptions, content policies, and communication consent.",
+  openGraph: {
+    title: "Terms of Service",
+    description:
+      "Terms of Service for REI Reach. Read our terms covering account usage, subscriptions, content policies, and communication consent.",
+  },
 };
 
 export default function TermsOfServicePage() {

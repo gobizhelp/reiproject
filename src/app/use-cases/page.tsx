@@ -6,9 +6,14 @@ import CTASection from "@/components/marketing/cta-section";
 import { DollarSign, Home, TrendingUp, Building2, Users } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Use Cases | REI Reach",
+  title: "Use Cases",
   description:
     "See how wholesalers, fix-and-flip investors, buy-and-hold investors, institutional buyers, and agents use REI Reach to close more deals.",
+  openGraph: {
+    title: "Use Cases",
+    description:
+      "See how wholesalers, fix-and-flip investors, buy-and-hold investors, institutional buyers, and agents use REI Reach to close more deals.",
+  },
 };
 
 const useCases = [

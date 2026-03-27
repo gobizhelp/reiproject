@@ -25,6 +25,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${form.title} - Buy Box`,
     description: "Submit your investment criteria",
+    openGraph: {
+      title: `${form.title} - Buy Box`,
+      description: "Submit your investment criteria",
+    },
   };
 }
 

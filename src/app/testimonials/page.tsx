@@ -6,9 +6,14 @@ import Footer from "@/components/marketing/footer";
 import HeroSection from "@/components/marketing/hero-section";
 
 export const metadata: Metadata = {
-  title: "Testimonials | REI Reach",
+  title: "Testimonials",
   description:
     "Hear from real wholesalers and investors using REI Reach to close more deals and build wealth.",
+  openGraph: {
+    title: "Testimonials",
+    description:
+      "Hear from real wholesalers and investors using REI Reach to close more deals and build wealth.",
+  },
 };
 
 export default function TestimonialsPage() {

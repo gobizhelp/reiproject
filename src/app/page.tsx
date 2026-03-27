@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -11,9 +12,45 @@ import {
 import MarketingNav from "@/components/marketing/marketing-nav";
 import Footer from "@/components/marketing/footer";
 
+export const metadata: Metadata = {
+  title: {
+    absolute: "REI Reach - Off-Market Real Estate Wholesale Marketplace",
+  },
+  description:
+    "Close more off-market deals faster. REI Reach connects wholesalers with qualified buyers through professional deal packets, instant matching, and built-in deal analysis.",
+  openGraph: {
+    title: "REI Reach - Off-Market Real Estate Wholesale Marketplace",
+    description:
+      "Close more off-market deals faster. REI Reach connects wholesalers with qualified buyers through professional deal packets, instant matching, and built-in deal analysis.",
+  },
+};
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "Organization",
+                name: "REI Reach",
+                url: process.env.NEXT_PUBLIC_SITE_URL || "https://reireach.com",
+                description:
+                  "Off-market real estate wholesale marketplace connecting wholesalers with qualified buyers.",
+                logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://reireach.com"}/icon.svg`,
+              },
+              {
+                "@type": "WebSite",
+                name: "REI Reach",
+                url: process.env.NEXT_PUBLIC_SITE_URL || "https://reireach.com",
+              },
+            ],
+          }),
+        }}
+      />
       <MarketingNav />
 
       {/* Hero */}

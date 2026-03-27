@@ -7,8 +7,12 @@ import CTASection from "@/components/marketing/cta-section";
 import { Target, Bell, Shield, Clock, BarChart3, Heart, Search, Zap, TrendingUp } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "For Buyers | REI Reach",
+  title: "For Buyers",
   description: "Find off-market deals before anyone else. Set your buy box, get instant alerts, and invest with confidence using full deal analysis on every listing.",
+  openGraph: {
+    title: "For Buyers",
+    description: "Find off-market deals before anyone else. Set your buy box, get instant alerts, and invest with confidence using full deal analysis on every listing.",
+  },
 };
 
 export default function ForBuyersPage() {

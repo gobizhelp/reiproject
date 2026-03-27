@@ -7,9 +7,14 @@ import StepCard from "@/components/marketing/step-card";
 import CTASection from "@/components/marketing/cta-section";
 
 export const metadata: Metadata = {
-  title: "How It Works | REI Reach",
+  title: "How It Works",
   description:
     "See how REI Reach connects wholesalers with qualified buyers through deal posting, buy box matching, instant alerts, and streamlined distribution.",
+  openGraph: {
+    title: "How It Works",
+    description:
+      "See how REI Reach connects wholesalers with qualified buyers through deal posting, buy box matching, instant alerts, and streamlined distribution.",
+  },
 };
 
 export default function HowItWorksPage() {

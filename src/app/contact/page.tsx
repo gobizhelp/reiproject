@@ -5,9 +5,14 @@ import ContactForm from "./contact-form";
 import { Mail, Clock } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Contact | REI Reach",
+  title: "Contact",
   description:
     "Get in touch with the REI Reach team. Questions, partnerships, demo requests, or support — we'd love to hear from you.",
+  openGraph: {
+    title: "Contact",
+    description:
+      "Get in touch with the REI Reach team. Questions, partnerships, demo requests, or support — we'd love to hear from you.",
+  },
 };
 
 export default function ContactPage() {

@@ -8,8 +8,12 @@ import CTASection from "@/components/marketing/cta-section";
 import { DollarSign, Target, Mail, BarChart3, Share2, Users, Upload, Zap, TrendingUp } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "For Sellers | REI Reach",
+  title: "For Sellers",
   description: "Move properties faster, earn bigger assignment fees, and reach qualified buyers instantly. The dispo system built for wholesalers who refuse to leave money on the table.",
+  openGraph: {
+    title: "For Sellers",
+    description: "Move properties faster, earn bigger assignment fees, and reach qualified buyers instantly. The dispo system built for wholesalers who refuse to leave money on the table.",
+  },
 };
 
 export default function ForSellersPage() {
