@@ -42,7 +42,7 @@ export default function MarketingNav() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.svg" alt="REI Reach" width={28} height={28} />
+          <Image src="/logo.svg" alt="" width={28} height={28} />
           <span className="text-xl font-bold">REI Reach</span>
         </Link>
 
@@ -101,6 +101,8 @@ export default function MarketingNav() {
         <button
           className="md:hidden text-muted hover:text-foreground transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>

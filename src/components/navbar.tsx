@@ -102,7 +102,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href={isBuyer ? "/marketplace" : "/dashboard"} className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="REI Reach" width={28} height={28} />
+            <Image src="/logo.svg" alt="" width={28} height={28} />
             <span className="text-xl font-bold">REI Reach</span>
           </Link>
           <div className="hidden md:flex items-center gap-4">
