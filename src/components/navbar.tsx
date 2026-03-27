@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ShoppingCart,
   Package, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical,
@@ -14,12 +14,14 @@ import {
 import type { Profile, ActiveView } from "@/lib/profile-types";
 import { useNotifications } from "@/components/notification-provider";
 
+// Module-level cache so profile survives component remounts from router.refresh()
+let cachedProfile: Profile | null = null;
+
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(cachedProfile);
   const [switching, setSwitching] = useState(false);
-  const hasLoadedOnce = useRef(false);
   const {
     unreadCount, soundEnabled, toggleSound,
     persistedNotifications, persistedUnreadCount,
@@ -40,8 +42,8 @@ export default function Navbar() {
         .single();
 
       if (data) {
-        setProfile(data as Profile);
-        hasLoadedOnce.current = true;
+        cachedProfile = data as Profile;
+        setProfile(cachedProfile);
       }
     }
     loadProfile();
@@ -64,7 +66,8 @@ export default function Navbar() {
       .update({ active_view: view })
       .eq("id", profile.id);
 
-    setProfile({ ...profile, active_view: view });
+    cachedProfile = { ...profile, active_view: view };
+    setProfile(cachedProfile);
     setSwitching(false);
 
     // Navigate to the appropriate home page
@@ -83,7 +86,7 @@ export default function Navbar() {
         : "text-muted hover:text-foreground"
     }`;
 
-  const profileLoaded = profile !== null || hasLoadedOnce.current;
+  const profileLoaded = profile !== null;
   const isBuyer = profile?.active_view === "buyer";
   const isBoth = profile?.user_role === "both";
 
