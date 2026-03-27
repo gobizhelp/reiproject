@@ -34,7 +34,7 @@ export default function ShareButton({ slug, address, variant = "icon", className
   }, [open]);
 
   async function handleNativeShare() {
-    if (navigator.share) {
+    if (typeof navigator.share === "function") {
       try {
         await navigator.share({ title: address, text: shareText, url: shareUrl });
       } catch {
@@ -71,7 +71,7 @@ export default function ShareButton({ slug, address, variant = "icon", className
     e.stopPropagation();
 
     // On mobile, try native share directly
-    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+    if (typeof navigator.share === "function" && /Mobi|Android/i.test(navigator.userAgent)) {
       handleNativeShare();
       return;
     }
@@ -125,7 +125,7 @@ export default function ShareButton({ slug, address, variant = "icon", className
               <MessageCircle className="w-4 h-4 text-muted" />
               Text Message
             </button>
-            {typeof navigator !== "undefined" && navigator.share && (
+            {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
               <button
                 onClick={handleNativeShare}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-background transition-colors"
