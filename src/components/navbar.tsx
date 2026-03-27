@@ -60,17 +60,17 @@ export default function Navbar() {
     if (!profile || switching) return;
     setSwitching(true);
 
+    // Update cache immediately so the remount after navigation picks up the new view
+    cachedProfile = { ...profile, active_view: view };
+
     const supabase = createClient();
-    await supabase
+    // Fire DB update without awaiting — navigate immediately for snappy feel
+    supabase
       .from("profiles")
       .update({ active_view: view })
       .eq("id", profile.id);
 
-    cachedProfile = { ...profile, active_view: view };
-    setProfile(cachedProfile);
-    setSwitching(false);
-
-    // Navigate to the appropriate home page
+    // Navigate first — the page and nav will update together on remount
     if (view === "buyer") {
       router.push("/marketplace");
     } else {
