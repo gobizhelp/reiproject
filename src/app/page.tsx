@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  Building2,
   ArrowRight,
   Target,
   TrendingUp,
@@ -9,33 +8,13 @@ import {
   Zap,
   DollarSign,
 } from "lucide-react";
+import MarketingNav from "@/components/marketing/marketing-nav";
+import Footer from "@/components/marketing/footer";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <nav className="border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-7 h-7 text-accent" />
-            <span className="text-xl font-bold">REI Reach</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/pricing" className="text-muted hover:text-foreground transition-colors">
-              Pricing
-            </Link>
-            <Link href="/login" className="text-muted hover:text-foreground transition-colors">
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Sign up free
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav />
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-4 py-24 text-center">
@@ -197,6 +176,8 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }
