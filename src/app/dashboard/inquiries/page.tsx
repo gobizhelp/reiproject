@@ -4,14 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
-import SellerAnalyticsView from "@/components/seller-analytics-view";
-import InquiriesAnalyticsView from "@/components/inquiries-analytics-view";
-import AnalyticsTabs from "@/components/analytics-tabs";
+import InquiryStatusTracker from "@/components/inquiry-status-tracker";
 import { profileHasSellerFeature } from "@/lib/membership/feature-gate";
 import type { Profile } from "@/lib/profile-types";
-import { ArrowLeft, BarChart3 } from "lucide-react";
+import { ArrowLeft, MessageSquare } from "lucide-react";
 
-export default async function SellerAnalyticsPage() {
+export default async function InquiriesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -24,11 +22,8 @@ export default async function SellerAnalyticsPage() {
     .single();
 
   const typedProfile = profile as Profile | null;
-  const hasListingAnalytics = typedProfile
-    ? profileHasSellerFeature(typedProfile, "listing_analytics")
-    : false;
-  const hasInquiriesAnalytics = typedProfile
-    ? profileHasSellerFeature(typedProfile, "inquiries_analytics")
+  const hasAccess = typedProfile
+    ? profileHasSellerFeature(typedProfile, "inquiry_status_tracking")
     : false;
 
   return (
@@ -44,20 +39,16 @@ export default async function SellerAnalyticsPage() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-accent" />
-              Property Analytics
+              <MessageSquare className="w-8 h-8 text-accent" />
+              Inquiry Tracker
             </h1>
             <p className="text-muted mt-1">
-              Track how your listings are performing
+              Track and manage buyer inquiries by status
             </p>
           </div>
         </div>
 
-        <AnalyticsTabs
-          listingAnalytics={<SellerAnalyticsView hasAccess={hasListingAnalytics} />}
-          inquiriesAnalytics={<InquiriesAnalyticsView hasAccess={hasInquiriesAnalytics} />}
-          hasInquiriesAccess={hasInquiriesAnalytics}
-        />
+        <InquiryStatusTracker hasAccess={hasAccess} />
       </div>
     </div>
   );

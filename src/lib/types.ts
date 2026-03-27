@@ -140,6 +140,20 @@ export interface ConversationMessage {
   created_at: string;
 }
 
+export interface PropertyAttachment {
+  id: string;
+  property_id: string;
+  user_id: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  url: string;
+  storage_path: string;
+  created_at: string;
+}
+
+export type InquiryStatus = 'new' | 'contacted' | 'negotiating' | 'closed_won' | 'closed_lost';
+
 export interface BuyerNote {
   id: string;
   user_id: string;
