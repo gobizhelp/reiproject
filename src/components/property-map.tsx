@@ -180,34 +180,41 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
         const priceLabel = prop.asking_price ? formatCurrency(prop.asking_price) : "N/A";
 
         const markerHtml = `<div style="
-            background: #1d4ed8;
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 0.01em;
-            white-space: nowrap;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-            border: 2px solid #fff;
-            cursor: pointer;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            line-height: 1;
-          ">${priceLabel}</div>
-          <div style="
-            width: 0; height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 8px solid #1d4ed8;
-            margin: -1px auto 0;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
-          "></div>`;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: max-content;
+            transform: translate(-50%, -100%);
+          ">
+            <div style="
+              background: #1d4ed8;
+              color: #fff;
+              padding: 6px 14px;
+              border-radius: 20px;
+              font-size: 14px;
+              font-weight: 700;
+              white-space: nowrap;
+              box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+              border: 2px solid #fff;
+              cursor: pointer;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+              line-height: 1.2;
+            ">${priceLabel}</div>
+            <div style="
+              width: 0; height: 0;
+              border-left: 8px solid transparent;
+              border-right: 8px solid transparent;
+              border-top: 8px solid #1d4ed8;
+              margin-top: -2px;
+              filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+            "></div>
+          </div>`;
 
         const icon = L.divIcon({
           className: "",
           html: markerHtml,
-          iconSize: [0, 0],
-          iconAnchor: [0, 38],
+          iconSize: null,
+          iconAnchor: [0, 0],
         });
 
         const marker = L.marker([prop.latitude, prop.longitude], { icon }).addTo(map);
