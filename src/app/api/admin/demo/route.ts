@@ -524,7 +524,7 @@ export async function DELETE() {
     // Find demo users
     const { data: authData } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 });
     const demoUsers = authData?.users?.filter((u) =>
-      u.email?.endsWith('@reireach.test')
+      u.email?.endsWith('@reireach.test') || u.email?.endsWith('@dealpacket.test')
     ) || [];
 
     const demoUserIds = demoUsers.map((u) => u.id);
