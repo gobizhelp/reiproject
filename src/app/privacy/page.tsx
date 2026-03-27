@@ -3,9 +3,14 @@ import MarketingNav from "@/components/marketing/marketing-nav";
 import Footer from "@/components/marketing/footer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | REI Reach",
+  title: "Privacy Policy",
   description:
     "Privacy Policy for REI Reach. Learn how we collect, use, and protect your personal information, including our SMS/text messaging practices.",
+  openGraph: {
+    title: "Privacy Policy",
+    description:
+      "Privacy Policy for REI Reach. Learn how we collect, use, and protect your personal information, including our SMS/text messaging practices.",
+  },
 };
 
 export default function PrivacyPolicyPage() {

@@ -10,8 +10,12 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Features | REI Reach",
+  title: "Features",
   description: "Explore every tool REI Reach offers — buy boxes, instant matching, deal analysis, email blasts, analytics, team features, and more. Built for serious real estate investors.",
+  openGraph: {
+    title: "Features",
+    description: "Explore every tool REI Reach offers — buy boxes, instant matching, deal analysis, email blasts, analytics, team features, and more. Built for serious real estate investors.",
+  },
 };
 
 export default function FeaturesPage() {

@@ -7,9 +7,14 @@ import CTASection from "@/components/marketing/cta-section";
 import { Zap, Eye, Layers, Building2, DollarSign, Home, TrendingUp, Users } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "About | REI Reach",
+  title: "About",
   description:
     "REI Reach is built by investors, for investors. Learn why we created the off-market real estate marketplace designed to help you close more deals and build generational wealth.",
+  openGraph: {
+    title: "About",
+    description:
+      "REI Reach is built by investors, for investors. Learn why we created the off-market real estate marketplace designed to help you close more deals and build generational wealth.",
+  },
 };
 
 export default function AboutPage() {

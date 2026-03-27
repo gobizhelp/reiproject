@@ -25,9 +25,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!property) return { title: "Deal Not Found" };
 
+  const title = `${property.street_address}, ${property.city} ${property.state}`;
+  const description = `Off-market deal: ${property.street_address}. Asking ${formatCurrency(property.asking_price)}.`;
+
   return {
-    title: `${property.street_address}, ${property.city} ${property.state} - REI Reach`,
-    description: `Off-market deal: ${property.street_address}. Asking ${formatCurrency(property.asking_price)}.`,
+    title,
+    description,
+    openGraph: { title, description },
   };
 }
 

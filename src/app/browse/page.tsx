@@ -15,9 +15,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Browse Off-Market Listings | REI Reach",
+  title: "Browse Off-Market Listings",
   description:
     "Preview real off-market investment properties. Sign up free to unlock full details, deal analysis, and instant alerts.",
+  openGraph: {
+    title: "Browse Off-Market Listings",
+    description:
+      "Preview real off-market investment properties. Sign up free to unlock full details, deal analysis, and instant alerts.",
+  },
 };
 
 export default async function BrowsePage() {

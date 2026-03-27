@@ -1,6 +1,16 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Pricing",
+  description: "Simple, transparent pricing for wholesalers and investors. Start free, upgrade as you grow. No long-term contracts.",
+  openGraph: {
+    title: "Pricing",
+    description: "Simple, transparent pricing for wholesalers and investors. Start free, upgrade as you grow. No long-term contracts.",
+  },
+};
 import { createAdminClient } from "@/lib/supabase/admin";
 import Navbar from "@/components/navbar";
 import PricingTable from "@/components/pricing-table";

@@ -4,9 +4,14 @@ import Footer from "@/components/marketing/footer";
 import HelpCenter from "./help-center";
 
 export const metadata: Metadata = {
-  title: "Support | REI Reach",
+  title: "Support",
   description:
     "Get help with REI Reach. Browse our help center for guides on getting started, buying, selling, billing, and account management.",
+  openGraph: {
+    title: "Support",
+    description:
+      "Get help with REI Reach. Browse our help center for guides on getting started, buying, selling, billing, and account management.",
+  },
 };
 
 export default function SupportPage() {
