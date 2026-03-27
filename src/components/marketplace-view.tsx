@@ -1004,6 +1004,7 @@ function MarketplaceCard({
 
   const hasSentShowing = sentTypes.includes("request_showing");
   const hasSentOffer = sentTypes.includes("make_offer");
+  const hasSentQuestion = sentTypes.includes("ask_question");
 
   function handleActionClick(type: ActionType) {
     if (type === "make_offer") {
@@ -1175,18 +1176,26 @@ function MarketplaceCard({
               <button
                 onClick={() => handleActionClick("request_showing")}
                 disabled={sending}
-                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 disabled:opacity-50"
+                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors disabled:opacity-50 ${
+                  hasSentShowing
+                    ? "bg-accent/20 text-accent border border-accent/50"
+                    : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
+                }`}
               >
-                <Eye className="w-3.5 h-3.5" />
-                Request Showing
+                {hasSentShowing ? <Check className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {hasSentShowing ? "Showing Requested" : "Request Showing"}
               </button>
               <button
                 onClick={() => handleActionClick("make_offer")}
                 disabled={sending}
-                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 disabled:opacity-50"
+                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors disabled:opacity-50 ${
+                  hasSentOffer
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                    : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                }`}
               >
-                <DollarSign className="w-3.5 h-3.5" />
-                Make Offer
+                {hasSentOffer ? <Check className="w-3.5 h-3.5" /> : <DollarSign className="w-3.5 h-3.5" />}
+                {hasSentOffer ? "Offer Sent" : "Make Offer"}
               </button>
             </div>
             {/* Confirm re-send */}
@@ -1238,10 +1247,14 @@ function MarketplaceCard({
             {!askOpen ? (
               <button
                 onClick={() => setAskOpen(true)}
-                className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-muted hover:text-foreground py-2 rounded-lg border border-border hover:border-muted transition-colors"
+                className={`w-full flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg border transition-colors ${
+                  hasSentQuestion
+                    ? "text-foreground border-border/80 bg-border/20"
+                    : "text-muted hover:text-foreground border-border hover:border-muted"
+                }`}
               >
-                <MessageSquare className="w-3.5 h-3.5" />
-                Ask a Question
+                {hasSentQuestion ? <Check className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />}
+                {hasSentQuestion ? "Question Sent" : "Ask a Question"}
               </button>
             ) : (
               <div className="flex gap-2">
