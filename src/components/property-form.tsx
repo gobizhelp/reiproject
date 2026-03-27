@@ -7,10 +7,12 @@ import { Property, Comp } from "@/lib/types";
 import { calculateDealAnalysis, formatCurrency, formatPercent, formatCurrencyRange } from "@/lib/calculations";
 import PhotoUpload from "./photo-upload";
 import CompsEditor from "./comps-editor";
-import { Loader2, Save, Send } from "lucide-react";
+import ListingTemplatePicker from "./listing-template-picker";
+import { Loader2, Save, Send, FileText } from "lucide-react";
 
 interface Props {
   property?: Property & { property_photos: any[]; comps: Comp[] };
+  hasTemplatesAccess?: boolean;
 }
 
 const US_STATES = [
@@ -30,12 +32,15 @@ const PROPERTY_TYPES = [
   "Triplex", "Fourplex", "Mobile Home", "Land", "Commercial", "Other"
 ];
 
-export default function PropertyForm({ property }: Props) {
+export default function PropertyForm({ property, hasTemplatesAccess }: Props) {
   const router = useRouter();
   const isEditing = !!property;
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
 
   // Title & Address
   const [title, setTitle] = useState(property?.title || "");
@@ -111,6 +116,59 @@ export default function PropertyForm({ property }: Props) {
     parseFloat(fullRehabArvLow) || null,
     parseFloat(fullRehabArvHigh) || null,
   );
+
+  function applyTemplate(data: Record<string, unknown>) {
+    if (data.listing_status) setListingStatus(data.listing_status as string);
+    if (data.ideal_investor_strategy) {
+      setSelectedStrategies((data.ideal_investor_strategy as string).split(", ").filter(Boolean));
+    }
+    if (data.property_type) setPropertyType(data.property_type as string);
+    if (data.city) setCity(data.city as string);
+    if (data.state) setState(data.state as string);
+    if (data.zip_code) setZipCode(data.zip_code as string);
+    if (data.contact_name) setContactName(data.contact_name as string);
+    if (data.contact_phone) setContactPhone(data.contact_phone as string);
+    if (data.contact_email) setContactEmail(data.contact_email as string);
+    if (data.showing_instructions) setShowingInstructions(data.showing_instructions as string);
+    setShowTemplatePicker(false);
+  }
+
+  async function saveAsTemplate() {
+    const templateName = prompt("Enter a name for this template:");
+    if (!templateName) return;
+    setSavingTemplate(true);
+    setTemplateSaved(false);
+
+    const body: Record<string, unknown> = { name: templateName };
+    if (isEditing && property) {
+      body.property_id = property.id;
+    } else {
+      body.template_data = {
+        listing_status: listingStatus,
+        ideal_investor_strategy: selectedStrategies.join(", "),
+        property_type: propertyType,
+        contact_name: contactName,
+        contact_phone: contactPhone,
+        contact_email: contactEmail,
+        showing_instructions: showingInstructions,
+      };
+    }
+
+    const res = await fetch("/api/listing-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      setTemplateSaved(true);
+      setTimeout(() => setTemplateSaved(false), 3000);
+    } else {
+      const data = await res.json();
+      setError(data.error || "Failed to save template");
+    }
+    setSavingTemplate(false);
+  }
 
   function generateSlug(address: string, city: string): string {
     return `${address}-${city}`
@@ -670,7 +728,7 @@ export default function PropertyForm({ property }: Props) {
       </section>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button
           onClick={() => handleSubmit("draft")}
           disabled={loading}
@@ -687,7 +745,36 @@ export default function PropertyForm({ property }: Props) {
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           Publish Deal Packet
         </button>
+
+        {/* Template buttons (Pro+) */}
+        {hasTemplatesAccess && (
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={() => setShowTemplatePicker(true)}
+              className="flex items-center gap-2 text-sm border border-border hover:border-accent/50 text-muted hover:text-accent px-4 py-2.5 rounded-xl font-medium transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Load Template
+            </button>
+            <button
+              onClick={saveAsTemplate}
+              disabled={savingTemplate}
+              className="flex items-center gap-2 text-sm border border-border hover:border-accent/50 text-muted hover:text-accent px-4 py-2.5 rounded-xl font-medium transition-colors disabled:opacity-50"
+            >
+              {savingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              {templateSaved ? "Saved!" : "Save as Template"}
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Template picker modal */}
+      {showTemplatePicker && (
+        <ListingTemplatePicker
+          onApply={applyTemplate}
+          onClose={() => setShowTemplatePicker(false)}
+        />
+      )}
     </div>
   );
 }

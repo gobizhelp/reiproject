@@ -3,7 +3,8 @@
 import { Property } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
 import Link from "next/link";
-import { Copy, ExternalLink, Pencil, Trash2, ChevronDown, Clock, CheckCircle, Archive, RotateCcw } from "lucide-react";
+import { Copy, ExternalLink, Pencil, Trash2, ChevronDown, Clock, CheckCircle, Archive, RotateCcw, Star, Files } from "lucide-react";
+import FeaturedListingBadge from "./featured-listing-badge";
 import { useState, useRef, useEffect } from "react";
 
 interface PropertyCardProps {
@@ -12,6 +13,10 @@ interface PropertyCardProps {
   };
   onDelete?: () => void;
   onStatusChange?: (id: string, status: Property["seller_status"]) => void;
+  onToggleFeatured?: (id: string, isFeatured: boolean) => void;
+  onDuplicate?: (id: string) => void;
+  hasFeaturedAccess?: boolean;
+  hasDuplicateAccess?: boolean;
 }
 
 const SELLER_STATUS_CONFIG = {
@@ -21,7 +26,7 @@ const SELLER_STATUS_CONFIG = {
   archived: { label: "Archived", className: "bg-muted/20 text-muted", icon: Archive },
 } as const;
 
-export default function PropertyCard({ property, onDelete, onStatusChange }: PropertyCardProps) {
+export default function PropertyCard({ property, onDelete, onStatusChange, onToggleFeatured, onDuplicate, hasFeaturedAccess, hasDuplicateAccess }: PropertyCardProps) {
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -66,8 +71,14 @@ export default function PropertyCard({ property, onDelete, onStatusChange }: Pro
         >
           {property.status === "published" ? "Published" : "Draft"}
         </span>
+        {/* Featured badge */}
+        {property.is_featured && (
+          <span className="absolute top-3 left-3">
+            <FeaturedListingBadge />
+          </span>
+        )}
         {/* Seller status badge (only show if not active) */}
-        {sellerStatus !== "active" && (
+        {sellerStatus !== "active" && !property.is_featured && (
           <span
             className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold ${statusConfig.className}`}
           >
@@ -170,6 +181,30 @@ export default function PropertyCard({ property, onDelete, onStatusChange }: Pro
                 </div>
               )}
             </div>
+          )}
+          {/* Featured toggle (Pro+) */}
+          {onToggleFeatured && hasFeaturedAccess && (
+            <button
+              onClick={() => onToggleFeatured(property.id, !property.is_featured)}
+              className={`flex items-center justify-center p-2 rounded-lg transition-colors ${
+                property.is_featured
+                  ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+                  : "bg-border/50 text-muted hover:bg-amber-500/10 hover:text-amber-400"
+              }`}
+              title={property.is_featured ? "Remove featured badge" : "Mark as featured"}
+            >
+              <Star className={`w-4 h-4 ${property.is_featured ? "fill-current" : ""}`} />
+            </button>
+          )}
+          {/* Duplicate (Pro+) */}
+          {onDuplicate && hasDuplicateAccess && (
+            <button
+              onClick={() => onDuplicate(property.id)}
+              className="flex items-center justify-center bg-border/50 hover:bg-accent/10 hover:text-accent p-2 rounded-lg transition-colors"
+              title="Duplicate listing"
+            >
+              <Files className="w-4 h-4" />
+            </button>
           )}
           {onDelete && (
             <button

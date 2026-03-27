@@ -10,7 +10,7 @@ import {
   Search, SlidersHorizontal, X, MapPin, Bed, Bath, Maximize,
   Building2, Heart, Eye, DollarSign, MessageSquare, Send, ChevronDown,
   Lock, ArrowUpDown, Bookmark, BookmarkPlus, Trash2, Check, Crown,
-  LayoutGrid, Map,
+  LayoutGrid, Map, Star,
 } from "lucide-react";
 import ProBuyerBadge from "./pro-buyer-badge";
 import ShareButton from "./share-button";
@@ -244,20 +244,20 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
       return true;
     });
 
-    // Sort
+    // Sort (featured listings always appear first)
     switch (basic.sortBy) {
       case "oldest":
-        result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         break;
       case "price_asc":
-        result.sort((a, b) => (a.asking_price || 0) - (b.asking_price || 0));
+        result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0) || (a.asking_price || 0) - (b.asking_price || 0));
         break;
       case "price_desc":
-        result.sort((a, b) => (b.asking_price || 0) - (a.asking_price || 0));
+        result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0) || (b.asking_price || 0) - (a.asking_price || 0));
         break;
       case "newest":
       default:
-        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         break;
     }
 
@@ -1137,6 +1137,12 @@ function MarketplaceCard({
           )}
           {/* Tags overlay */}
           <div className="absolute top-3 left-3 flex gap-2">
+            {property.is_featured && (
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 backdrop-blur-sm flex items-center gap-1 border border-amber-500/30">
+                <Star className="w-3 h-3 fill-current" />
+                Featured
+              </span>
+            )}
             {isEarlyAccess && (
               <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/90 text-white backdrop-blur-sm flex items-center gap-1">
                 <Crown className="w-3 h-3" />

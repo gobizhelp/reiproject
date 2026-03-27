@@ -8,6 +8,8 @@ import {
   Building2, ShoppingCart, ArrowLeftRight, Loader2, Save, User, Phone, Briefcase
 } from "lucide-react";
 import ProBuyerBadge from "./pro-buyer-badge";
+import BrandedSellerProfile from "./branded-seller-profile";
+import { profileHasSellerFeature } from "@/lib/membership/feature-gate";
 
 interface Props {
   profile: Profile | null;
@@ -167,6 +169,20 @@ export default function ProfileSettings({ profile, userEmail, userId }: Props) {
             ))}
           </div>
         </section>
+
+        {/* Branded Seller Profile (Pro+) */}
+        {profile && (profile.user_role === "seller" || profile.user_role === "both") && (
+          <BrandedSellerProfile
+            profile={{
+              logo_url: profile.logo_url,
+              bio: profile.bio,
+              website: profile.website,
+              company_name: profile.company_name,
+              full_name: profile.full_name,
+            }}
+            hasAccess={profileHasSellerFeature(profile, "branded_seller_profile")}
+          />
+        )}
 
         {/* Save */}
         <div className="flex justify-end">

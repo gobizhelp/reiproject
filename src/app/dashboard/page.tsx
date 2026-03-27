@@ -43,6 +43,18 @@ export default async function DashboardPage() {
     ? profileHasSellerFeature(typedProfile, "listing_analytics")
     : false;
 
+  const hasFeaturedAccess = typedProfile
+    ? profileHasSellerFeature(typedProfile, "featured_listing_badge")
+    : false;
+
+  const hasDuplicateAccess = typedProfile
+    ? profileHasSellerFeature(typedProfile, "duplicate_listing")
+    : false;
+
+  const hasTemplatesAccess = typedProfile
+    ? profileHasSellerFeature(typedProfile, "listing_templates")
+    : false;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -96,7 +108,11 @@ export default async function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <PropertyList properties={properties as (Property & { property_photos: { id: string; url: string; display_order: number }[] })[]} />
+          <PropertyList
+            properties={properties as (Property & { property_photos: { id: string; url: string; display_order: number }[] })[]}
+            hasFeaturedAccess={hasFeaturedAccess}
+            hasDuplicateAccess={hasDuplicateAccess}
+          />
         )}
       </div>
     </div>
