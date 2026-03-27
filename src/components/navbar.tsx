@@ -7,19 +7,20 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Building2, LogOut, Users, Search, Settings, ArrowLeftRight, ShoppingCart, Home,
-  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical,
+  Building2, LogOut, Users, Search, Settings, ShoppingCart,
+  Package, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical,
   Bell, Check, Clock, CheckCircle, Archive, RotateCcw
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
 import { useNotifications } from "@/components/notification-provider";
 
+// Module-level cache so profile survives component remounts from router.refresh()
+let cachedProfile: Profile | null = null;
+
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [switching, setSwitching] = useState(false);
-  const [showViewMenu, setShowViewMenu] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(cachedProfile);
   const {
     unreadCount, soundEnabled, toggleSound,
     persistedNotifications, persistedUnreadCount,
@@ -28,6 +29,9 @@ export default function Navbar() {
   const [showNotifPanel, setShowNotifPanel] = useState(false);
 
   useEffect(() => {
+    // Skip re-fetch if we already have a cached profile (e.g. after a view switch)
+    if (cachedProfile) return;
+
     async function loadProfile() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -40,7 +44,8 @@ export default function Navbar() {
         .single();
 
       if (data) {
-        setProfile(data as Profile);
+        cachedProfile = data as Profile;
+        setProfile(cachedProfile);
       }
     }
     loadProfile();
@@ -54,9 +59,11 @@ export default function Navbar() {
   }
 
   async function switchView(view: ActiveView) {
-    if (!profile || switching) return;
-    setSwitching(true);
-    setShowViewMenu(false);
+    if (!profile || profile.active_view === view) return;
+
+    // Update cache so remount picks up the new view — but don't setProfile yet,
+    // so the nav stays on the current view until the page finishes loading
+    cachedProfile = { ...profile, active_view: view };
 
     const supabase = createClient();
     await supabase
@@ -64,16 +71,12 @@ export default function Navbar() {
       .update({ active_view: view })
       .eq("id", profile.id);
 
-    setProfile({ ...profile, active_view: view });
-    setSwitching(false);
-
-    // Navigate to the appropriate home page
+    // Use window.location so the full page (nav + content) loads together
     if (view === "buyer") {
-      router.push("/marketplace");
+      window.location.href = "/marketplace";
     } else {
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     }
-    router.refresh();
   }
 
   const linkClass = (href: string) =>
@@ -83,6 +86,7 @@ export default function Navbar() {
         : "text-muted hover:text-foreground"
     }`;
 
+  const profileLoaded = profile !== null;
   const isBuyer = profile?.active_view === "buyer";
   const isBoth = profile?.user_role === "both";
 
@@ -102,105 +106,101 @@ export default function Navbar() {
             <span className="text-xl font-bold">REI Reach</span>
           </Link>
           <div className="hidden md:flex items-center gap-4">
-            {isBuyer ? (
-              <>
-                <Link href="/marketplace" className={linkClass("/marketplace")}>
-                  <span className="flex items-center gap-1.5">
-                    <Search className="w-4 h-4" />
-                    Marketplace
-                  </span>
-                </Link>
-                <Link href="/matched-listings" className={linkClass("/matched-listings")}>
-                  <span className="flex items-center gap-1.5">
-                    <Target className="w-4 h-4" />
-                    Matched
-                  </span>
-                </Link>
-                <Link href="/messages" className={linkClass("/messages")}>
-                  <span className="flex items-center gap-1.5 relative">
-                    <MessageCircle className="w-4 h-4" />
-                    Messages
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
-                    )}
-                  </span>
-                </Link>
-              </>
+            {!profileLoaded ? (
+              <div className="flex items-center gap-4">
+                <span className="h-4 w-20 bg-border/50 rounded animate-pulse" />
+                <span className="h-4 w-16 bg-border/50 rounded animate-pulse" />
+                <span className="h-4 w-18 bg-border/50 rounded animate-pulse" />
+              </div>
             ) : (
-              <>
-                <Link href="/dashboard" className={linkClass("/dashboard")}>
-                  Properties
-                </Link>
-                <Link href="/messages" className={linkClass("/messages")}>
-                  <span className="flex items-center gap-1.5 relative">
-                    <MessageCircle className="w-4 h-4" />
-                    Messages
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
-                        {unreadCount > 99 ? "99+" : unreadCount}
+              <div className="flex items-center gap-4 transition-opacity duration-200" key={isBuyer ? "buyer" : "seller"}>
+                {isBuyer ? (
+                  <>
+                    <Link href="/marketplace" className={linkClass("/marketplace")}>
+                      <span className="flex items-center gap-1.5">
+                        <Search className="w-4 h-4" />
+                        Marketplace
                       </span>
-                    )}
-                  </span>
-                </Link>
-                <Link href="/buyers" className={linkClass("/buyers")}>
-                  <span className="flex items-center gap-1.5">
-                    <Users className="w-4 h-4" />
-                    Buyers
-                  </span>
-                </Link>
-              </>
+                    </Link>
+                    <Link href="/matched-listings" className={linkClass("/matched-listings")}>
+                      <span className="flex items-center gap-1.5">
+                        <Target className="w-4 h-4" />
+                        Matched
+                      </span>
+                    </Link>
+                    <Link href="/messages" className={linkClass("/messages")}>
+                      <span className="flex items-center gap-1.5 relative">
+                        <MessageCircle className="w-4 h-4" />
+                        Messages
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/dashboard" className={linkClass("/dashboard")}>
+                      Properties
+                    </Link>
+                    <Link href="/messages" className={linkClass("/messages")}>
+                      <span className="flex items-center gap-1.5 relative">
+                        <MessageCircle className="w-4 h-4" />
+                        Messages
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                    <Link href="/buyers" className={linkClass("/buyers")}>
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-4 h-4" />
+                        Buyers
+                      </span>
+                    </Link>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>
         <div className="flex items-center gap-3">
           {/* View Switcher for "both" users */}
           {isBoth && (
-            <div className="relative">
+            <div className="flex items-center bg-border/50 rounded-lg p-0.5">
               <button
-                onClick={() => setShowViewMenu(!showViewMenu)}
-                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                  showViewMenu ? "border-accent bg-accent/10 text-accent" : "border-border text-muted hover:text-foreground hover:border-muted"
+                onClick={() => switchView("seller")}
+
+                className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
+                  !isBuyer
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-muted hover:text-foreground"
                 }`}
               >
-                {isBuyer ? (
-                  <><ShoppingCart className="w-4 h-4" /> Buyer</>
-                ) : (
-                  <><Building2 className="w-4 h-4" /> Seller</>
-                )}
-                <ChevronDown className="w-3 h-3" />
+                <Building2 className="w-4 h-4" />
+                Seller
               </button>
-              {showViewMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowViewMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
-                    <button
-                      onClick={() => switchView("seller")}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                        !isBuyer ? "text-accent bg-accent/10" : "text-muted hover:text-foreground hover:bg-card-hover"
-                      }`}
-                    >
-                      <Building2 className="w-4 h-4" />
-                      Seller View
-                    </button>
-                    <button
-                      onClick={() => switchView("buyer")}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                        isBuyer ? "text-accent bg-accent/10" : "text-muted hover:text-foreground hover:bg-card-hover"
-                      }`}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Buyer View
-                    </button>
-                  </div>
-                </>
-              )}
+              <button
+                onClick={() => switchView("buyer")}
+
+                className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
+                  isBuyer
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Buyer
+              </button>
             </div>
           )}
 
           {/* Mobile nav links */}
-          {isBuyer ? (
+          {profileLoaded && (isBuyer ? (
             <>
               <Link href="/marketplace" className="md:hidden text-muted hover:text-foreground transition-colors">
                 <Search className="w-5 h-5" />
@@ -223,7 +223,7 @@ export default function Navbar() {
                 <Users className="w-5 h-5" />
               </Link>
             </>
-          )}
+          ))}
 
           {profile?.is_admin && (
             <Link
@@ -347,7 +347,7 @@ export default function Navbar() {
       </div>
 
       {/* Secondary navigation bar */}
-      {isBuyer && (
+      {profileLoaded && isBuyer && (
         <div className="border-t border-border">
           <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center gap-2">
             <Link href="/saved-listings" className={secondaryLinkClass("/saved-listings")}>
