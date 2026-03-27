@@ -440,7 +440,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
           <SlidersHorizontal className="w-4 h-4" />
           Filters
           {totalActiveFilters > 0 && (
-            <span className="bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               {totalActiveFilters}
             </span>
           )}
@@ -451,7 +451,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
             onClick={() => setViewMode("grid")}
             className={`flex items-center gap-1.5 px-3 py-3 rounded-l-xl text-sm font-medium transition-colors ${
               viewMode === "grid"
-                ? "bg-accent text-white"
+                ? "bg-primary text-white"
                 : "bg-card text-muted hover:text-foreground"
             }`}
             title="Grid view"
@@ -466,7 +466,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
               !hasMapView
                 ? "bg-card text-muted/50 cursor-not-allowed"
                 : viewMode === "map"
-                  ? "bg-accent text-white"
+                  ? "bg-primary text-white"
                   : "bg-card text-muted hover:text-foreground"
             }`}
             title={hasMapView ? "Map view" : "Upgrade to Pro for Map view"}
@@ -574,7 +574,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
                         <button
                           onClick={saveCurrentSearch}
                           disabled={!saveSearchName.trim() || savingSearch}
-                          className="flex-1 text-xs py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
+                          className="flex-1 text-xs py-1.5 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
                         >
                           {savingSearch ? "Saving..." : "Save"}
                         </button>
@@ -779,7 +779,7 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
                   </span>
                 )}
                 {hasAdvancedFilters && activeAdvancedCount > 0 && (
-                  <span className="bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {activeAdvancedCount}
                   </span>
                 )}
@@ -1281,7 +1281,7 @@ function MarketplaceCard({
                   <button onClick={() => setConfirmAction(null)} className="flex-1 text-xs py-1.5 rounded-lg border border-border text-muted hover:text-foreground transition-colors">
                     Cancel
                   </button>
-                  <button onClick={() => { setConfirmAction(null); if (confirmAction === "make_offer") { setOfferOpen(true); } else { doSend(confirmAction); } }} disabled={sending} className="flex-1 text-xs py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50">
+                  <button onClick={() => { setConfirmAction(null); if (confirmAction === "make_offer") { setOfferOpen(true); } else { doSend(confirmAction); } }} disabled={sending} className="flex-1 text-xs py-1.5 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50">
                     {confirmAction === "make_offer" ? "New Offer" : (sending ? "Sending..." : "Send Again")}
                   </button>
                 </div>
@@ -1343,7 +1343,7 @@ function MarketplaceCard({
                 <button
                   onClick={handleAskQuestion}
                   disabled={!question.trim() || sending}
-                  className="px-3 py-2 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                  className="px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>

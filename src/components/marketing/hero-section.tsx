@@ -42,7 +42,7 @@ export default function HeroSection({
           {primaryCTA && (
             <Link
               href={primaryCTA.href}
-              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
             >
               {primaryCTA.label} <ArrowRight className="w-5 h-5" />
             </Link>

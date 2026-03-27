@@ -158,7 +158,7 @@ export default function ConversationsList({ conversations: initial, role }: Prop
                       {new Date(conv.updated_at).toLocaleDateString()}
                     </span>
                     {isUnread && (
-                      <span className="bg-accent text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                      <span className="bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
                         {conv.unread_count}
                       </span>
                     )}

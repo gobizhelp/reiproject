@@ -87,7 +87,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={sending}
-        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
       >
         {sending ? (
           <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>

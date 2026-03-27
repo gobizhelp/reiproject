@@ -139,7 +139,7 @@ export default function CSVFieldMapper({ importFields, onImport, entityName }: C
           <p className="text-muted text-sm mb-6">
             or click to browse your files
           </p>
-          <label className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors cursor-pointer">
+          <label className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors cursor-pointer">
             <FileSpreadsheet className="w-5 h-5" />
             Choose CSV File
             <input
@@ -241,7 +241,7 @@ export default function CSVFieldMapper({ importFields, onImport, entityName }: C
               <button
                 onClick={() => setStep("preview")}
                 disabled={Object.keys(mapping).length === 0}
-                className="px-5 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Preview Import
               </button>
@@ -315,7 +315,7 @@ export default function CSVFieldMapper({ importFields, onImport, entityName }: C
             <button
               onClick={handleStartImport}
               disabled={importing}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-semibold transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-semibold transition-colors disabled:opacity-50"
             >
               {importing ? (
                 <>
@@ -364,7 +364,7 @@ export default function CSVFieldMapper({ importFields, onImport, entityName }: C
 
           <button
             onClick={reset}
-            className="px-5 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-semibold transition-colors"
+            className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-semibold transition-colors"
           >
             Import More
           </button>

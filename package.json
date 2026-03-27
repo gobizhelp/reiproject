@@ -21,6 +21,9 @@
     "react-dropzone": "^15.0.0",
     "resend": "^6.9.4"
   },
+  "browserslist": [
+    "defaults and fully supports es6-module"
+  ],
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

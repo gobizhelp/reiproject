@@ -108,7 +108,7 @@ export default function MessagesView({ messages: initial, role }: Props) {
             onClick={() => setFilter(tab.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === tab.key
-                ? "bg-accent text-white"
+                ? "bg-primary text-white"
                 : "bg-card border border-border text-muted hover:text-foreground"
             }`}
           >

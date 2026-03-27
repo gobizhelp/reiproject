@@ -360,7 +360,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                 <button
                   onClick={handleAskQuestion}
                   disabled={!question.trim() || sending}
-                  className="px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                  className="px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -404,7 +404,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                 <button
                   onClick={() => handleAction(confirmAction)}
                   disabled={sending}
-                  className="flex-1 px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
                 >
                   {sending ? "Sending..." : "Send Again"}
                 </button>
@@ -769,7 +769,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
             </p>
             <a
               href="/signup"
-              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors"
             >
               Sign up here
               <ArrowRight className="w-4 h-4" />

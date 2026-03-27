@@ -206,7 +206,7 @@ export default function BuyBoxPublicForm({ form }: Props) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white px-6 py-4 rounded-xl font-semibold text-lg transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-4 rounded-xl font-semibold text-lg transition-colors disabled:opacity-50"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -272,7 +272,7 @@ function FieldRenderer({
                 onClick={() => onToggleMulti(option)}
                 className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
                   selected
-                    ? "bg-accent text-white border-accent"
+                    ? "bg-primary text-white border-accent"
                     : "bg-background border-border text-foreground hover:border-accent/50"
                 }`}
               >

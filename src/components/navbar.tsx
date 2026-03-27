@@ -133,7 +133,7 @@ export default function Navbar() {
                         <MessageCircle className="w-4 h-4" />
                         Messages
                         {unreadCount > 0 && (
-                          <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                          <span className="absolute -top-2 -right-4 bg-primary text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
@@ -150,7 +150,7 @@ export default function Navbar() {
                         <MessageCircle className="w-4 h-4" />
                         Messages
                         {unreadCount > 0 && (
-                          <span className="absolute -top-2 -right-4 bg-accent text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                          <span className="absolute -top-2 -right-4 bg-primary text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
@@ -177,7 +177,7 @@ export default function Navbar() {
 
                 className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
                   !isBuyer
-                    ? "bg-accent text-white shadow-sm"
+                    ? "bg-primary text-white shadow-sm"
                     : "text-muted hover:text-foreground"
                 }`}
               >
@@ -189,7 +189,7 @@ export default function Navbar() {
 
                 className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${
                   isBuyer
-                    ? "bg-accent text-white shadow-sm"
+                    ? "bg-primary text-white shadow-sm"
                     : "text-muted hover:text-foreground"
                 }`}
               >
@@ -214,7 +214,7 @@ export default function Navbar() {
               <Link href="/messages" className="md:hidden text-muted hover:text-foreground transition-colors relative">
                 <MessageCircle className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[9px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-0.5">
+                  <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-0.5">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
@@ -243,7 +243,7 @@ export default function Navbar() {
             >
               <Bell className="w-4 h-4" />
               {persistedUnreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[9px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-0.5">
+                <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-0.5">
                   {persistedUnreadCount > 99 ? "99+" : persistedUnreadCount}
                 </span>
               )}
@@ -315,7 +315,7 @@ export default function Navbar() {
                               </p>
                             </div>
                             {!notif.is_read && (
-                              <span className="shrink-0 w-2 h-2 rounded-full bg-accent mt-2" />
+                              <span className="shrink-0 w-2 h-2 rounded-full bg-primary mt-2" />
                             )}
                           </button>
                         );

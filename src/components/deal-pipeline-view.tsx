@@ -60,7 +60,7 @@ export default function DealPipelineView({ dealStages: initial, hasFeature }: Pr
           </p>
           <Link
             href="/pricing"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-6 py-3 rounded-lg transition-colors"
           >
             View Pricing
           </Link>
@@ -143,7 +143,7 @@ export default function DealPipelineView({ dealStages: initial, hasFeature }: Pr
         </div>
         <Link
           href="/marketplace"
-          className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+          className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
         >
           <Plus className="w-4 h-4" />
           Find Deals
@@ -159,7 +159,7 @@ export default function DealPipelineView({ dealStages: initial, hasFeature }: Pr
           </p>
           <Link
             href="/marketplace"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-6 py-3 rounded-lg transition-colors"
           >
             Browse Marketplace
           </Link>
@@ -333,7 +333,7 @@ function PipelineCard({
               <button
                 onClick={onSaveNotes}
                 disabled={savingNotes}
-                className="flex-1 text-xs py-1 rounded bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
+                className="flex-1 text-xs py-1 rounded bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
               >
                 {savingNotes ? "Saving..." : "Save"}
               </button>

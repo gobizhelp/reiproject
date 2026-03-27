@@ -327,7 +327,7 @@ export default function AdminPropertyList() {
                 <button
                   onClick={handleModerate}
                   disabled={actionLoading}
-                  className="flex-1 px-4 py-2 text-sm bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 text-sm bg-primary hover:bg-primary-hover text-white rounded-lg transition-colors disabled:opacity-50"
                 >
                   {actionLoading ? 'Saving...' : 'Update'}
                 </button>

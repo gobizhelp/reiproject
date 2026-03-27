@@ -67,7 +67,7 @@ export default async function DashboardPage() {
             </Link>
             <Link
               href="/properties/new"
-              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
             >
               <Plus className="w-5 h-5" />
               New Property
