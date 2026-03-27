@@ -4,10 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Navbar from "@/components/navbar";
 import PropertyForm from "@/components/property-form";
-import AttachmentUpload from "@/components/attachment-upload";
 import { profileHasSellerFeature } from "@/lib/membership/feature-gate";
 import type { Profile } from "@/lib/profile-types";
-import { Paperclip } from "lucide-react";
 
 export default async function EditPropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -45,22 +43,11 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
       <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-2">Edit Property</h1>
         <p className="text-muted mb-8">Update your deal packet details</p>
-        <PropertyForm property={property} hasTemplatesAccess={hasTemplatesAccess} />
-
-        {/* Attachments section (Pro+) */}
-        <section className="bg-card border border-border rounded-2xl p-6 md:p-8 mt-8">
-          <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
-            <Paperclip className="w-5 h-5 text-accent" />
-            Attachments
-            {!hasAttachmentAccess && (
-              <span className="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded-full font-semibold">PRO</span>
-            )}
-          </h2>
-          <p className="text-muted text-sm mb-4">
-            Upload rehab estimates, comps, flyers, or other documents for buyers
-          </p>
-          <AttachmentUpload propertyId={property.id} hasAccess={hasAttachmentAccess} />
-        </section>
+        <PropertyForm
+          property={property}
+          hasTemplatesAccess={hasTemplatesAccess}
+          hasAttachmentAccess={hasAttachmentAccess}
+        />
       </div>
     </div>
   );
