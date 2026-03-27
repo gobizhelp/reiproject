@@ -52,6 +52,7 @@ export default function Navbar() {
   }, []);
 
   async function handleSignOut() {
+    cachedProfile = null;
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
