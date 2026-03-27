@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2 } from "lucide-react";
+import Image from "next/image";
 
 const footerLinks = [
   {
@@ -47,7 +47,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-3">
-              <Building2 className="w-6 h-6 text-accent" />
+              <Image src="/logo.svg" alt="REI Reach" width={24} height={24} />
               <span className="text-lg font-bold">REI Reach</span>
             </Link>
             <p className="text-muted text-sm">

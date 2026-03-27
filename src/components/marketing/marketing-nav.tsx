@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
-import { Building2, ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 
 const navLinks = [
   {
@@ -41,7 +42,7 @@ export default function MarketingNav() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <Building2 className="w-7 h-7 text-accent" />
+          <Image src="/logo.svg" alt="REI Reach" width={28} height={28} />
           <span className="text-xl font-bold">REI Reach</span>
         </Link>
 
