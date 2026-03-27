@@ -61,24 +61,22 @@ export default function Navbar() {
   async function switchView(view: ActiveView) {
     if (!profile || profile.active_view === view) return;
 
-    // Update cache immediately so the remount after navigation picks up the new view
+    // Update cache so remount picks up the new view — but don't setProfile yet,
+    // so the nav stays on the current view until the page finishes loading
     cachedProfile = { ...profile, active_view: view };
-    setProfile(cachedProfile);
 
     const supabase = createClient();
-    // Await the DB update so it's persisted before the page re-fetches server data
     await supabase
       .from("profiles")
       .update({ active_view: view })
       .eq("id", profile.id);
 
-    // Navigate — the page and nav will update together on remount
+    // Use window.location so the full page (nav + content) loads together
     if (view === "buyer") {
-      router.push("/marketplace");
+      window.location.href = "/marketplace";
     } else {
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     }
-    router.refresh();
   }
 
   const linkClass = (href: string) =>
