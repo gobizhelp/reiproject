@@ -13,4 +13,4 @@ export function getResend(): Resend {
   return resendInstance;
 }
 
-export const EMAIL_FROM = process.env.EMAIL_FROM || 'REI Reach <noreply@alerts.reireach.com>';
+export const EMAIL_FROM = process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'REI Reach <noreply@alerts.reireach.com>';
