@@ -110,7 +110,6 @@ export default function BuyBoxPublicForm({ form }: Props) {
       if (!submission.min_sqft) submission.min_sqft = null;
       if (!submission.max_sqft) submission.max_sqft = null;
       if (!submission.financing_types) submission.financing_types = [];
-      if (submission.proof_of_funds === undefined) submission.proof_of_funds = false;
       if (!submission.closing_timeline) submission.closing_timeline = null;
       if (!submission.property_conditions) submission.property_conditions = [];
       if (!submission.deals_completed) submission.deals_completed = null;

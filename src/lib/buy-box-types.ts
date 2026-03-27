@@ -52,7 +52,6 @@ export interface BuyBoxSubmission {
   min_sqft: number | null;
   max_sqft: number | null;
   financing_types: string[];
-  proof_of_funds: boolean | null;
   closing_timeline: string | null;
   property_conditions: string[];
   deals_completed: number | null;
@@ -67,7 +66,7 @@ export const DB_COLUMN_FIELD_IDS = new Set([
   'first_name', 'last_name', 'email', 'phone', 'company_name',
   'property_types', 'locations', 'min_price', 'max_price',
   'min_beds', 'min_baths', 'min_sqft', 'max_sqft',
-  'financing_types', 'proof_of_funds', 'closing_timeline',
+  'financing_types', 'closing_timeline',
   'property_conditions', 'deals_completed', 'years_experience',
   'additional_notes',
 ]);
@@ -134,7 +133,6 @@ export const DEFAULT_BUY_BOX_FIELDS: BuyBoxField[] = [
 
   // Financing
   { id: 'financing_types', label: 'Financing Method', enabled: true, required: false, section: 'Financing', type: 'multi-select', options: FINANCING_TYPE_OPTIONS },
-  { id: 'proof_of_funds', label: 'Proof of Funds Available', enabled: true, required: false, section: 'Financing', type: 'checkbox' },
   { id: 'closing_timeline', label: 'Closing Timeline', enabled: true, required: false, section: 'Financing', type: 'select', options: CLOSING_TIMELINE_OPTIONS },
 
   // Property Conditions
