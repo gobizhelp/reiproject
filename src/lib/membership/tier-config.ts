@@ -152,6 +152,7 @@ const FREE_SELLER_FEATURES: SellerFeature[] = [
   'basic_dashboard',
   'manual_share_link',
   'inquiry_count',
+  'buyer_list_import',
 ];
 
 const PRO_SELLER_FEATURES: SellerFeature[] = [
@@ -170,16 +171,15 @@ const PRO_SELLER_FEATURES: SellerFeature[] = [
   'attachment_uploads',
   'inquiry_status_tracking',
   'basic_dispo_pipeline',
+  'open_click_tracking',
 ];
 
 const ELITE_SELLER_FEATURES: SellerFeature[] = [
   ...PRO_SELLER_FEATURES,
   'sms_blast',
-  'buyer_list_import',
   'audience_segmentation',
   'private_listings',
   'premium_only_listings',
-  'open_click_tracking',
   'buyer_intent_tracking',
   'seller_team_seats',
   'shared_team_inbox',
