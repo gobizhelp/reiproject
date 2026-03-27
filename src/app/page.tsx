@@ -70,7 +70,7 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
           >
             Start Closing Deals <ArrowRight className="w-5 h-5" />
           </Link>
@@ -207,7 +207,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
           >
             Create Your Free Account <ArrowRight className="w-5 h-5" />
           </Link>

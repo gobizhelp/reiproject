@@ -335,7 +335,7 @@ export default function AdminDemoManager() {
         <button
           onClick={seedDemo}
           disabled={loading || deleting}
-          className="flex items-center gap-2 px-4 py-2.5 bg-accent text-white rounded-lg font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
           {loading ? 'Seeding...' : 'Seed Demo Data'}

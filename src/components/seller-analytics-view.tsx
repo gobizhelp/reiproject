@@ -83,7 +83,7 @@ export default function SellerAnalyticsView({ hasAccess }: Props) {
         </p>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+          className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-semibold transition-colors"
         >
           <TrendingUp className="w-5 h-5" />
           Upgrade to Pro
@@ -148,7 +148,7 @@ export default function SellerAnalyticsView({ hasAccess }: Props) {
               onClick={() => setDays(d)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 days === d
-                  ? "bg-accent text-white"
+                  ? "bg-primary text-white"
                   : "bg-border/50 text-foreground hover:bg-border"
               }`}
             >

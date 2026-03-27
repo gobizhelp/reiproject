@@ -135,7 +135,7 @@ export default function BuyerCSVImport() {
         </p>
         <Link
           href="/buyers/form"
-          className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
+          className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
         >
           Create Buy Box Form
         </Link>

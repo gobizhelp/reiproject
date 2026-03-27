@@ -343,7 +343,7 @@ export default function PropertyForm({ property }: Props) {
                       }
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                         isSelected
-                          ? "bg-accent text-white border-accent"
+                          ? "bg-primary text-white border-accent"
                           : "bg-muted/50 text-muted-foreground border-border hover:border-accent/50"
                       }`}
                     >
@@ -682,7 +682,7 @@ export default function PropertyForm({ property }: Props) {
         <button
           onClick={() => handleSubmit("published")}
           disabled={loading}
-          className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           Publish Deal Packet

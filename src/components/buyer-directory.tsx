@@ -331,7 +331,7 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
               <Filter className="w-4 h-4" />
               Filters
               {activeFilterCount > 0 && (
-                <span className="bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
@@ -359,7 +359,7 @@ export default function BuyerDirectory({ submissions: initialSubmissions, formId
             </button>
             <button
               onClick={() => setShowAddBuyer(true)}
-              className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add Buyer
@@ -916,7 +916,7 @@ function AddBuyerModal({
                       onClick={() => toggleMulti("property_types", opt)}
                       className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
                         formData.property_types.includes(opt)
-                          ? "bg-accent text-white border-accent"
+                          ? "bg-primary text-white border-accent"
                           : "bg-background border-border text-foreground hover:border-accent/50"
                       }`}
                     >
@@ -964,7 +964,7 @@ function AddBuyerModal({
                       onClick={() => toggleMulti("financing_types", opt)}
                       className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
                         formData.financing_types.includes(opt)
-                          ? "bg-accent text-white border-accent"
+                          ? "bg-primary text-white border-accent"
                           : "bg-background border-border text-foreground hover:border-accent/50"
                       }`}
                     >
@@ -1004,7 +1004,7 @@ function AddBuyerModal({
                   onClick={() => toggleMulti("property_conditions", opt)}
                   className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
                     formData.property_conditions.includes(opt)
-                      ? "bg-accent text-white border-accent"
+                      ? "bg-primary text-white border-accent"
                       : "bg-background border-border text-foreground hover:border-accent/50"
                   }`}
                 >
@@ -1038,7 +1038,7 @@ function AddBuyerModal({
             <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-lg border border-border text-foreground hover:border-accent/50 text-sm font-medium transition-colors">
               Cancel
             </button>
-            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               {saving ? "Adding..." : "Add Buyer"}
             </button>

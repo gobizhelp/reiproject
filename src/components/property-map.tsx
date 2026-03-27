@@ -308,7 +308,7 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
 
             <Link
               href={`/deals/${selectedProperty.slug}`}
-              className="mt-3 block w-full text-center text-sm font-medium py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors"
+              className="mt-3 block w-full text-center text-sm font-medium py-2 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors"
             >
               View Deal Details
             </Link>

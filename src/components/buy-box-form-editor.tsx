@@ -427,7 +427,7 @@ export default function BuyBoxFormEditor({ form, isSystemTemplate }: Props) {
             <button
               onClick={addSection}
               disabled={!addingSectionName.trim()}
-              className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-accent-hover transition-colors flex-shrink-0"
+              className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-primary-hover transition-colors flex-shrink-0"
             >
               Add
             </button>
@@ -773,7 +773,7 @@ export default function BuyBoxFormEditor({ form, isSystemTemplate }: Props) {
         <button
           onClick={handleSave}
           disabled={loading}
-          className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {isEditing ? "Save Changes" : "Create Form"}

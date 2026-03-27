@@ -91,7 +91,7 @@ export default function MarketingNav() {
           </Link>
           <Link
             href="/signup"
-            className="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             Sign up free
           </Link>
@@ -148,7 +148,7 @@ export default function MarketingNav() {
               </Link>
               <Link
                 href="/signup"
-                className="block w-full text-center bg-accent hover:bg-accent-hover text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+                className="block w-full text-center bg-primary hover:bg-primary-hover text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
                 Sign up free

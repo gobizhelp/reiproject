@@ -170,7 +170,7 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
         {editing === null && (
           <button
             onClick={startNew}
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
           >
             <Plus className="w-5 h-5" />
             New Buy Box
@@ -393,7 +393,7 @@ export default function BuyBoxManager({ buyBoxes: initialBoxes, userId }: Props)
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name.trim()}
-                className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {editing === "new" ? "Create" : "Save Changes"}

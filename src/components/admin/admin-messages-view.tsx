@@ -140,7 +140,7 @@ export default function AdminMessagesView() {
                       {config.label}
                     </span>
                     {!m.is_read && (
-                      <span className="w-2 h-2 rounded-full bg-accent" />
+                      <span className="w-2 h-2 rounded-full bg-primary" />
                     )}
                   </div>
                   <div className="flex items-center gap-4 text-sm">

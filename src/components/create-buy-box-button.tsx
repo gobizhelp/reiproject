@@ -53,7 +53,7 @@ export default function CreateBuyBoxButton() {
     <button
       onClick={handleCreate}
       disabled={loading}
-      className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
+      className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
     >
       {loading ? (
         <Loader2 className="w-5 h-5 animate-spin" />

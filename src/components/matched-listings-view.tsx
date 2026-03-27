@@ -149,7 +149,7 @@ export default function MatchedListingsView({
           </p>
           <Link
             href="/my-buy-boxes"
-            className="inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-xl font-medium hover:bg-accent-hover transition-colors"
+            className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-hover transition-colors"
           >
             <Package className="w-4 h-4" />
             Create a Buy Box
@@ -587,7 +587,7 @@ function MatchedCard({
                   <button
                     onClick={() => { setConfirmAction(null); if (confirmAction === "make_offer") { setOfferOpen(true); } else { doSend(confirmAction); } }}
                     disabled={sending}
-                    className="flex-1 text-xs py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
+                    className="flex-1 text-xs py-1.5 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
                   >
                     {confirmAction === "make_offer" ? "New Offer" : (sending ? "Sending..." : "Send Again")}
                   </button>
@@ -646,7 +646,7 @@ function MatchedCard({
                 <button
                   onClick={handleAskQuestion}
                   disabled={!question.trim() || sending}
-                  className="px-3 py-2 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                  className="px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>

@@ -217,7 +217,7 @@ export default function HelpCenter() {
           </p>
           <a
             href="/contact"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             Contact Support
           </a>

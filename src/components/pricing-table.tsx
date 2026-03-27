@@ -347,7 +347,7 @@ function ConfirmModal({
             className={`flex-1 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${
               isDowngrade
                 ? "bg-danger hover:bg-danger/80 text-white"
-                : "bg-accent hover:bg-accent-hover text-white"
+                : "bg-primary hover:bg-primary-hover text-white"
             }`}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -419,7 +419,7 @@ function TierCard({
       )}
       {!isCurrent && popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="bg-accent text-white text-xs font-semibold px-3 py-1 rounded-full">
+          <span className="bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full">
             Most Popular
           </span>
         </div>
@@ -473,7 +473,7 @@ function TierCard({
             onClick={() => onSelectPlan?.(plan.tier)}
             className={`w-full text-center py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
               plan.tier === "pro"
-                ? "bg-accent hover:bg-accent-hover text-white"
+                ? "bg-primary hover:bg-primary-hover text-white"
                 : "bg-amber-500 hover:bg-amber-600 text-black"
             }`}
           >
@@ -494,7 +494,7 @@ function TierCard({
             plan.tier === "free"
               ? "bg-border text-foreground hover:bg-muted/30"
               : plan.tier === "pro"
-              ? "bg-accent hover:bg-accent-hover text-white"
+              ? "bg-primary hover:bg-primary-hover text-white"
               : "bg-amber-500 hover:bg-amber-600 text-black"
           }`}
         >
@@ -740,7 +740,7 @@ export default function PricingTable({
             onClick={() => setActiveTab("buyer")}
             className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-colors relative ${
               activeTab === "buyer"
-                ? "bg-accent text-white"
+                ? "bg-primary text-white"
                 : "text-muted hover:text-foreground"
             }`}
           >
@@ -753,7 +753,7 @@ export default function PricingTable({
             onClick={() => setActiveTab("seller")}
             className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-colors relative ${
               activeTab === "seller"
-                ? "bg-accent text-white"
+                ? "bg-primary text-white"
                 : "text-muted hover:text-foreground"
             }`}
           >
@@ -914,7 +914,7 @@ export default function PricingTable({
                       disabled={loading}
                       className={`block w-full text-center py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${
                         plan.tier === "pro"
-                          ? "bg-accent hover:bg-accent-hover text-white"
+                          ? "bg-primary hover:bg-primary-hover text-white"
                           : "bg-amber-500 hover:bg-amber-600 text-black"
                       }`}
                     >
@@ -933,7 +933,7 @@ export default function PricingTable({
                     href="/signup"
                     className={`block w-full text-center py-3 rounded-lg font-medium transition-colors ${
                       plan.tier === "pro"
-                        ? "bg-accent hover:bg-accent-hover text-white"
+                        ? "bg-primary hover:bg-primary-hover text-white"
                         : "bg-amber-500 hover:bg-amber-600 text-black"
                     }`}
                   >

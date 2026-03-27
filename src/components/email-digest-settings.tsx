@@ -113,7 +113,7 @@ export default function EmailDigestSettings({ userId }: Props) {
             aria-checked={enabled}
             onClick={() => setEnabled(!enabled)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              enabled ? "bg-accent" : "bg-border"
+              enabled ? "bg-primary" : "bg-border"
             }`}
           >
             <span
@@ -172,7 +172,7 @@ export default function EmailDigestSettings({ userId }: Props) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Digest Settings
