@@ -3,6 +3,7 @@ export interface Property {
   user_id: string;
   slug: string;
   status: 'draft' | 'published';
+  seller_status: 'active' | 'pending' | 'sold' | 'archived';
   // Title & Address
   title: string | null;
   street_address: string;
@@ -97,7 +98,7 @@ export interface DealAnalysis {
   profitFullRehabHigh: number;
 }
 
-export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'published_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by'>;
+export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'published_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by' | 'seller_status'>;
 
 export interface SavedListing {
   id: string;
@@ -159,4 +160,39 @@ export interface DealStageRecord {
   notes: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// Notifications
+export type NotificationType =
+  | 'dm_received'
+  | 'showing_requested'
+  | 'showing_responded'
+  | 'offer_received'
+  | 'offer_responded'
+  | 'question_received'
+  | 'question_answered'
+  | 'listing_saved'
+  | 'listing_approved'
+  | 'listing_flagged'
+  | 'price_changed'
+  | 'listing_status_changed'
+  | 'listing_removed'
+  | 'new_listing_match';
+
+export type NotificationPriority = 'low' | 'medium' | 'high';
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  priority: NotificationPriority;
+  property_id: string | null;
+  conversation_id: string | null;
+  listing_message_id: string | null;
+  is_read: boolean;
+  read_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
 }

@@ -75,11 +75,12 @@ export default async function MatchedListingsPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  // Fetch all published properties with photos
+  // Fetch all published properties with photos (exclude sold and archived)
   const { data: properties } = await supabase
     .from("properties")
     .select("*, property_photos(id, url, display_order)")
     .eq("status", "published")
+    .in("seller_status", ["active", "pending"])
     .order("created_at", { ascending: false });
 
   // Fetch user's saved listing property IDs

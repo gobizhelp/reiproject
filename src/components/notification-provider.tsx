@@ -3,33 +3,45 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { playDMSound, playNotificationSound } from "@/lib/notification-sounds";
-import { MessageCircle, X, Bell } from "lucide-react";
+import { MessageCircle, X, Bell, Home } from "lucide-react";
+import type { AppNotification } from "@/lib/types";
 
-interface Notification {
+interface ToastNotification {
   id: string;
-  type: "dm" | "general";
+  type: "dm" | "general" | "listing_update";
   title: string;
   message: string;
   conversationId?: string;
+  propertyId?: string;
   timestamp: number;
 }
 
 interface NotificationContextValue {
   unreadCount: number;
-  notifications: Notification[];
+  notifications: ToastNotification[];
+  persistedNotifications: AppNotification[];
+  persistedUnreadCount: number;
   clearNotification: (id: string) => void;
   clearAll: () => void;
   soundEnabled: boolean;
   toggleSound: () => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  refreshNotifications: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue>({
   unreadCount: 0,
   notifications: [],
+  persistedNotifications: [],
+  persistedUnreadCount: 0,
   clearNotification: () => {},
   clearAll: () => {},
   soundEnabled: true,
   toggleSound: () => {},
+  markNotificationRead: () => {},
+  markAllNotificationsRead: () => {},
+  refreshNotifications: () => {},
 });
 
 export function useNotifications() {
@@ -39,9 +51,11 @@ export function useNotifications() {
 export default function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<ToastNotification[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [toasts, setToasts] = useState<Notification[]>([]);
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
+  const [persistedNotifications, setPersistedNotifications] = useState<AppNotification[]>([]);
+  const [persistedUnreadCount, setPersistedUnreadCount] = useState(0);
   const supabaseRef = useRef(createClient());
 
   // Load sound preference from localStorage
@@ -70,6 +84,53 @@ export default function NotificationProvider({ children }: { children: React.Rea
     setToasts([]);
   }, []);
 
+  // Fetch persisted notifications from API
+  const refreshNotifications = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch("/api/notifications?limit=50");
+      if (res.ok) {
+        const data = await res.json();
+        setPersistedNotifications(data);
+        setPersistedUnreadCount(data.filter((n: AppNotification) => !n.is_read).length);
+      }
+    } catch {
+      // silently fail
+    }
+  }, [userId]);
+
+  const markNotificationRead = useCallback(async (id: string) => {
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notification_id: id }),
+      });
+      setPersistedNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n))
+      );
+      setPersistedUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // silently fail
+    }
+  }, []);
+
+  const markAllNotificationsRead = useCallback(async () => {
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mark_all_read: true }),
+      });
+      setPersistedNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
+      );
+      setPersistedUnreadCount(0);
+    } catch {
+      // silently fail
+    }
+  }, []);
+
   // Get the current user
   useEffect(() => {
     const supabase = supabaseRef.current;
@@ -78,13 +139,12 @@ export default function NotificationProvider({ children }: { children: React.Rea
     });
   }, []);
 
-  // Fetch initial unread count
+  // Fetch initial unread count (messages) and persisted notifications
   useEffect(() => {
     if (!userId) return;
     const supabase = supabaseRef.current;
 
     async function fetchUnread() {
-      // Count unread conversation messages
       const { count } = await supabase
         .from("conversation_messages")
         .select("id", { count: "exact", head: true })
@@ -95,9 +155,10 @@ export default function NotificationProvider({ children }: { children: React.Rea
     }
 
     fetchUnread();
-  }, [userId]);
+    refreshNotifications();
+  }, [userId, refreshNotifications]);
 
-  // Subscribe to real-time conversation messages
+  // Subscribe to real-time conversation messages + notifications table
   useEffect(() => {
     if (!userId) return;
     const supabase = supabaseRef.current;
@@ -120,14 +181,11 @@ export default function NotificationProvider({ children }: { children: React.Rea
             created_at: string;
           };
 
-          // Ignore own messages
           if (msg.sender_id === userId) return;
 
-          // Increment unread count
           setUnreadCount((prev) => prev + 1);
 
-          // Create notification
-          const notification: Notification = {
+          const notification: ToastNotification = {
             id: msg.id,
             type: "dm",
             title: "New Message",
@@ -139,12 +197,10 @@ export default function NotificationProvider({ children }: { children: React.Rea
           setNotifications((prev) => [notification, ...prev].slice(0, 50));
           setToasts((prev) => [notification, ...prev].slice(0, 3));
 
-          // Play DM sound
           if (soundEnabled) {
             playDMSound();
           }
 
-          // Auto-dismiss toast after 5 seconds
           setTimeout(() => {
             setToasts((prev) => prev.filter((t) => t.id !== notification.id));
           }, 5000);
@@ -166,10 +222,9 @@ export default function NotificationProvider({ children }: { children: React.Rea
             message_type: string;
           };
 
-          // Only notify the recipient
           if (msg.recipient_id !== userId) return;
 
-          const notification: Notification = {
+          const notification: ToastNotification = {
             id: msg.id,
             type: "general",
             title: msg.message_type === "make_offer" ? "New Offer" :
@@ -181,13 +236,48 @@ export default function NotificationProvider({ children }: { children: React.Rea
           setNotifications((prev) => [notification, ...prev].slice(0, 50));
           setToasts((prev) => [notification, ...prev].slice(0, 3));
 
-          // Play general notification sound
           if (soundEnabled) {
             playNotificationSound();
           }
 
           setTimeout(() => {
             setToasts((prev) => prev.filter((t) => t.id !== notification.id));
+          }, 5000);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const notif = payload.new as AppNotification;
+
+          // Add to persisted notifications list
+          setPersistedNotifications((prev) => [notif, ...prev].slice(0, 50));
+          setPersistedUnreadCount((prev) => prev + 1);
+
+          // Show toast for listing status changes
+          const toast: ToastNotification = {
+            id: notif.id,
+            type: "listing_update",
+            title: notif.title,
+            message: notif.message.length > 80 ? notif.message.slice(0, 80) + "..." : notif.message,
+            propertyId: notif.property_id || undefined,
+            timestamp: Date.now(),
+          };
+
+          setToasts((prev) => [toast, ...prev].slice(0, 3));
+
+          if (soundEnabled && notif.priority === "high") {
+            playNotificationSound();
+          }
+
+          setTimeout(() => {
+            setToasts((prev) => prev.filter((t) => t.id !== toast.id));
           }, 5000);
         }
       )
@@ -206,7 +296,6 @@ export default function NotificationProvider({ children }: { children: React.Rea
         (payload) => {
           const msg = payload.new as { sender_id: string; is_read: boolean };
           const old = payload.old as { is_read: boolean };
-          // If a message sent by someone else was just marked as read
           if (msg.sender_id !== userId && !old.is_read && msg.is_read) {
             setUnreadCount((prev) => Math.max(0, prev - 1));
           }
@@ -222,7 +311,19 @@ export default function NotificationProvider({ children }: { children: React.Rea
 
   return (
     <NotificationContext.Provider
-      value={{ unreadCount, notifications, clearNotification, clearAll, soundEnabled, toggleSound }}
+      value={{
+        unreadCount,
+        notifications,
+        persistedNotifications,
+        persistedUnreadCount,
+        clearNotification,
+        clearAll,
+        soundEnabled,
+        toggleSound,
+        markNotificationRead,
+        markAllNotificationsRead,
+        refreshNotifications,
+      }}
     >
       {children}
 
@@ -234,10 +335,14 @@ export default function NotificationProvider({ children }: { children: React.Rea
             className="pointer-events-auto bg-card border border-border rounded-xl shadow-lg p-4 max-w-sm animate-slide-in flex items-start gap-3"
           >
             <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-              toast.type === "dm" ? "bg-accent/20 text-accent" : "bg-orange-500/20 text-orange-400"
+              toast.type === "dm" ? "bg-accent/20 text-accent" :
+              toast.type === "listing_update" ? "bg-warning/20 text-warning" :
+              "bg-orange-500/20 text-orange-400"
             }`}>
               {toast.type === "dm" ? (
                 <MessageCircle className="w-4 h-4" />
+              ) : toast.type === "listing_update" ? (
+                <Home className="w-4 h-4" />
               ) : (
                 <Bell className="w-4 h-4" />
               )}

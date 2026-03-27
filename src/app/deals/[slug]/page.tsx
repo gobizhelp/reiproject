@@ -50,6 +50,9 @@ export default async function DealPacketPage({ params }: Props) {
 
   if (!property) notFound();
 
+  // Hide archived properties from public view entirely
+  if (property.seller_status === "archived") notFound();
+
   const photos = (property.property_photos as PropertyPhoto[])?.sort(
     (a, b) => a.display_order - b.display_order
   ) || [];
@@ -75,10 +78,11 @@ export default async function DealPacketPage({ params }: Props) {
   let existingConversationId: string | null = null;
   let noteContent: string | undefined;
   let hasNotesFeature: boolean | undefined;
+  let sentActionTypes: string[] = [];
   const isOwn = user?.id === property.user_id;
 
   if (user && !isOwn) {
-    const [savedRes, convRes, profileRes, noteRes] = await Promise.all([
+    const [savedRes, convRes, profileRes, noteRes, sentMsgRes] = await Promise.all([
       supabase
         .from("saved_listings")
         .select("id")
@@ -102,11 +106,17 @@ export default async function DealPacketPage({ params }: Props) {
         .eq("user_id", user.id)
         .eq("property_id", property.id)
         .maybeSingle(),
+      supabase
+        .from("listing_messages")
+        .select("message_type")
+        .eq("sender_id", user.id)
+        .eq("property_id", property.id),
     ]);
 
     isSaved = !!savedRes.data;
     existingConversationId = convRes.data?.id || null;
     noteContent = noteRes.data?.content || "";
+    sentActionTypes = (sentMsgRes.data as any[] || []).map((m: any) => m.message_type);
     const profile = profileRes.data as Profile | null;
     hasNotesFeature = profile ? profileHasBuyerFeature(profile, "private_notes") : false;
   }
@@ -121,6 +131,7 @@ export default async function DealPacketPage({ params }: Props) {
       isOwn={isOwn}
       isSaved={isSaved}
       existingConversationId={existingConversationId}
+      sentActionTypes={sentActionTypes}
       noteContent={noteContent}
       hasNotesFeature={hasNotesFeature}
     />

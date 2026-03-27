@@ -7,7 +7,7 @@ import { formatCurrency, formatPercent, formatCurrencyRange } from "@/lib/calcul
 import {
   Building2, Bed, Bath, Maximize, Calendar, MapPin, Phone, Mail, User,
   ChevronLeft, ChevronRight, DollarSign, TrendingUp, Target, Info, ArrowRight,
-  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send, X
+  Tag, Home, Wrench, Star, Heart, Eye, MessageSquare, Send, X, Check
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 import BuyerNoteEditor from "@/components/buyer-note-editor";
@@ -22,11 +22,12 @@ interface Props {
   isOwn?: boolean;
   isSaved?: boolean;
   existingConversationId?: string | null;
+  sentActionTypes?: string[];
   noteContent?: string;
   hasNotesFeature?: boolean;
 }
 
-export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, existingConversationId, noteContent, hasNotesFeature }: Props) {
+export default function DealPacketView({ property, photos, comps, analysis, isLoggedIn, isOwn, isSaved: initialSaved, existingConversationId, sentActionTypes = [], noteContent, hasNotesFeature }: Props) {
   const router = useRouter();
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [saved, setSaved] = useState(initialSaved || false);
@@ -37,6 +38,11 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
   const [sending, setSending] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(!!existingConversationId);
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
+  const [sentTypes, setSentTypes] = useState<Set<string>>(new Set(sentActionTypes));
+
+  const hasSentShowing = sentTypes.has("request_showing");
+  const hasSentOffer = sentTypes.has("make_offer");
+  const hasSentQuestion = sentTypes.has("ask_question");
 
   const hasLightRehab = property.light_rehab_arv || property.light_rehab_budget_low;
   const hasFullRehab = property.full_rehab_arv_low || property.full_rehab_budget_low;
@@ -74,12 +80,15 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
     if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
     if (type === "ask_question" && !customMessage) { setAskOpen(true); return; }
     if (type === "make_offer" && !customMessage) {
-      if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
+      if (hasSentOffer && !confirmAction) {
+        setConfirmAction(type);
+        return;
+      }
       setOfferOpen(true);
       return;
     }
-    // If conversation already exists for showing/offer, confirm first
-    if (conversationStarted && (type === "request_showing" || type === "make_offer") && !confirmAction) {
+    // If already sent this action type, confirm first
+    if (type === "request_showing" && hasSentShowing && !confirmAction) {
       setConfirmAction(type);
       return;
     }
@@ -99,6 +108,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
     if (res.ok) {
       const data = await res.json();
       setConversationStarted(true);
+      setSentTypes((prev) => new Set([...prev, type]));
       setAskOpen(false);
       setQuestion("");
       router.push(`/messages/${data.conversationId}`);
@@ -122,6 +132,22 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
           <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-2">
             <Building2 className="w-6 h-6 text-accent" />
             <span className="font-bold text-lg">REI Reach</span>
+          </div>
+        </div>
+      )}
+
+      {/* Seller status banner */}
+      {property.seller_status === "pending" && (
+        <div className="bg-warning/10 border-b border-warning/30">
+          <div className="max-w-5xl mx-auto px-4 py-3 text-center text-warning font-semibold text-sm">
+            This property is currently under contract (Pending)
+          </div>
+        </div>
+      )}
+      {property.seller_status === "sold" && (
+        <div className="bg-accent/10 border-b border-accent/30">
+          <div className="max-w-5xl mx-auto px-4 py-3 text-center text-accent font-semibold text-sm">
+            This property has been sold
           </div>
         </div>
       )}
@@ -247,18 +273,26 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
               <button
                 onClick={() => handleAction("request_showing")}
                 disabled={sending}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 disabled:opacity-50"
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 ${
+                  hasSentShowing
+                    ? "bg-accent/20 text-accent border border-accent/50"
+                    : "bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20"
+                }`}
               >
-                <Eye className="w-4 h-4" />
-                Request Showing
+                {hasSentShowing ? <Check className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {hasSentShowing ? "Showing Requested" : "Request Showing"}
               </button>
               <button
                 onClick={() => handleAction("make_offer")}
                 disabled={sending}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 disabled:opacity-50"
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 ${
+                  hasSentOffer
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                    : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                }`}
               >
-                <DollarSign className="w-4 h-4" />
-                Make Offer
+                {hasSentOffer ? <Check className="w-4 h-4" /> : <DollarSign className="w-4 h-4" />}
+                {hasSentOffer ? "Offer Sent" : "Make Offer"}
               </button>
             </div>
             {offerOpen && (
@@ -303,10 +337,14 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
                   if (!isLoggedIn) { router.push(`/login?redirect=/deals/${property.slug}`); return; }
                   setAskOpen(true);
                 }}
-                className="w-full mt-3 flex items-center justify-center gap-2 text-sm text-muted hover:text-foreground py-2.5 rounded-lg border border-border hover:border-muted transition-colors"
+                className={`w-full mt-3 flex items-center justify-center gap-2 text-sm py-2.5 rounded-lg border transition-colors ${
+                  hasSentQuestion
+                    ? "text-foreground border-border/80 bg-border/20"
+                    : "text-muted hover:text-foreground border-border hover:border-muted"
+                }`}
               >
-                <MessageSquare className="w-4 h-4" />
-                Ask a Question
+                {hasSentQuestion ? <Check className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                {hasSentQuestion ? "Question Sent" : "Ask a Question"}
               </button>
             ) : (
               <div className="flex gap-2 mt-3">

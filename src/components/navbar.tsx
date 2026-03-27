@@ -8,7 +8,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ArrowLeftRight, ShoppingCart, Home,
-  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical
+  Package, ChevronDown, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical,
+  Bell, Check, Clock, CheckCircle, Archive, RotateCcw
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
 import { useNotifications } from "@/components/notification-provider";
@@ -19,7 +20,12 @@ export default function Navbar() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [switching, setSwitching] = useState(false);
   const [showViewMenu, setShowViewMenu] = useState(false);
-  const { unreadCount, soundEnabled, toggleSound } = useNotifications();
+  const {
+    unreadCount, soundEnabled, toggleSound,
+    persistedNotifications, persistedUnreadCount,
+    markNotificationRead, markAllNotificationsRead,
+  } = useNotifications();
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -228,6 +234,98 @@ export default function Navbar() {
               <span className="hidden md:inline">Admin Dashboard</span>
             </Link>
           )}
+          {/* Notification Bell */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifPanel(!showNotifPanel)}
+              className="text-muted hover:text-foreground transition-colors relative"
+              title="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {persistedUnreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[9px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-0.5">
+                  {persistedUnreadCount > 99 ? "99+" : persistedUnreadCount}
+                </span>
+              )}
+            </button>
+            {showNotifPanel && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowNotifPanel(false)} />
+                <div className="absolute right-0 top-full mt-2 z-50 w-80 sm:w-96 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <h3 className="font-semibold text-sm">Notifications</h3>
+                    {persistedUnreadCount > 0 && (
+                      <button
+                        onClick={() => markAllNotificationsRead()}
+                        className="text-xs text-accent hover:underline"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {persistedNotifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-muted text-sm">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      persistedNotifications.map((notif) => {
+                        const metadata = notif.metadata as Record<string, string> || {};
+                        const newStatus = metadata.new_status;
+                        const StatusIcon =
+                          newStatus === "pending" ? Clock :
+                          newStatus === "sold" ? CheckCircle :
+                          newStatus === "archived" ? Archive :
+                          newStatus === "active" ? RotateCcw :
+                          Bell;
+                        const iconColor =
+                          newStatus === "pending" ? "text-warning" :
+                          newStatus === "sold" ? "text-accent" :
+                          newStatus === "archived" ? "text-muted" :
+                          newStatus === "active" ? "text-success" :
+                          "text-muted";
+
+                        return (
+                          <button
+                            key={notif.id}
+                            onClick={() => {
+                              if (!notif.is_read) markNotificationRead(notif.id);
+                              const slug = metadata.slug;
+                              if (slug && newStatus !== "archived") {
+                                window.location.href = `/deals/${slug}`;
+                              }
+                              setShowNotifPanel(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 border-b border-border last:border-b-0 hover:bg-border/30 transition-colors flex items-start gap-3 ${
+                              !notif.is_read ? "bg-accent/5" : ""
+                            }`}
+                          >
+                            <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                              !notif.is_read ? "bg-accent/10" : "bg-border/50"
+                            }`}>
+                              <StatusIcon className={`w-4 h-4 ${iconColor}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm ${!notif.is_read ? "font-semibold" : "font-medium text-muted"}`}>
+                                {notif.title}
+                              </p>
+                              <p className="text-xs text-muted mt-0.5 line-clamp-2">{notif.message}</p>
+                              <p className="text-xs text-muted/60 mt-1">
+                                {formatTimeAgo(notif.created_at)}
+                              </p>
+                            </div>
+                            {!notif.is_read && (
+                              <span className="shrink-0 w-2 h-2 rounded-full bg-accent mt-2" />
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={toggleSound}
             className="text-muted hover:text-foreground transition-colors"
@@ -275,4 +373,16 @@ export default function Navbar() {
       )}
     </nav>
   );
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
 }
