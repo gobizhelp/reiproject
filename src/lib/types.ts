@@ -58,6 +58,9 @@ export interface Property {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+  // Geolocation
+  latitude: number | null;
+  longitude: number | null;
   photos?: PropertyPhoto[];
   comps?: Comp[];
 }
