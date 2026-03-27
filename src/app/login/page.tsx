@@ -30,10 +30,12 @@ export default function LoginPage() {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("active_view")
+          .select("active_view, role_selected")
           .eq("id", user.id)
           .single();
-        if (profile?.active_view === "buyer") {
+        if (!profile?.role_selected) {
+          router.push("/select-role");
+        } else if (profile?.active_view === "buyer") {
           router.push("/marketplace");
         } else {
           router.push("/dashboard");

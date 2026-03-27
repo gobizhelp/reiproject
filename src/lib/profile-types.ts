@@ -10,6 +10,7 @@ export interface Profile {
   full_name: string | null;
   company_name: string | null;
   phone: string | null;
+  role_selected: boolean;
   is_admin: boolean;
   is_suspended: boolean;
   suspended_at: string | null;

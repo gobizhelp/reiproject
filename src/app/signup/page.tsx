@@ -62,6 +62,7 @@ export default function SignupPage() {
         id: user.id,
         user_role: selectedRole,
         active_view: selectedRole === "buyer" ? "buyer" : "seller",
+        role_selected: true,
       });
 
     if (error) {
