@@ -7,12 +7,14 @@ import { Property, Comp } from "@/lib/types";
 import { calculateDealAnalysis, formatCurrency, formatPercent, formatCurrencyRange } from "@/lib/calculations";
 import PhotoUpload from "./photo-upload";
 import CompsEditor from "./comps-editor";
+import AttachmentUpload from "./attachment-upload";
 import ListingTemplatePicker from "./listing-template-picker";
-import { Loader2, Save, Send, FileText } from "lucide-react";
+import { Loader2, Save, Send, FileText, Paperclip } from "lucide-react";
 
 interface Props {
   property?: Property & { property_photos: any[]; comps: Comp[] };
   hasTemplatesAccess?: boolean;
+  hasAttachmentAccess?: boolean;
 }
 
 const US_STATES = [
@@ -32,7 +34,7 @@ const PROPERTY_TYPES = [
   "Triplex", "Fourplex", "Mobile Home", "Land", "Commercial", "Other"
 ];
 
-export default function PropertyForm({ property, hasTemplatesAccess }: Props) {
+export default function PropertyForm({ property, hasTemplatesAccess, hasAttachmentAccess }: Props) {
   const router = useRouter();
   const isEditing = !!property;
 
@@ -690,6 +692,23 @@ export default function PropertyForm({ property, hasTemplatesAccess }: Props) {
           onPhotosChange={setPhotos}
         />
       </section>
+
+      {/* Attachments (Pro+) */}
+      {property?.id && (
+        <section className="bg-card border border-border rounded-2xl p-6 md:p-8">
+          <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+            <Paperclip className="w-5 h-5 text-accent" />
+            Attachments
+            {!hasAttachmentAccess && (
+              <span className="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded-full font-semibold">PRO</span>
+            )}
+          </h2>
+          <p className="text-muted text-sm mb-4">
+            Upload rehab estimates, comps, flyers, or other documents for buyers
+          </p>
+          <AttachmentUpload propertyId={property.id} hasAccess={hasAttachmentAccess ?? false} />
+        </section>
+      )}
 
       {/* Comps */}
       <section className="bg-card border border-border rounded-2xl p-6 md:p-8">
