@@ -50,9 +50,16 @@ export async function GET(request: NextRequest) {
   }
 
   // Filter to only buyers whose send_hour matches the current hour in their timezone
+  // and who haven't received a digest (manual or cron) in the last 24 hours
+  const oneDayMs = 24 * 60 * 60 * 1000;
   const eligibleSettings = digestSettings.filter((s) => {
     const currentHourInTz = targetTimezones.get(s.timezone);
-    return currentHourInTz !== undefined && currentHourInTz === s.send_hour;
+    if (currentHourInTz === undefined || currentHourInTz !== s.send_hour) return false;
+    if (s.last_sent_at) {
+      const elapsed = now.getTime() - new Date(s.last_sent_at).getTime();
+      if (elapsed < oneDayMs) return false;
+    }
+    return true;
   });
 
   if (eligibleSettings.length === 0) {
