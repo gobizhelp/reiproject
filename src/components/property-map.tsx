@@ -179,23 +179,35 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
       for (const prop of geocoded) {
         const priceLabel = prop.asking_price ? formatCurrency(prop.asking_price) : "N/A";
 
-        const icon = L.divIcon({
-          className: "custom-marker",
-          html: `<div style="
-            background: #3b82f6;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
+        const markerHtml = `<div style="
+            background: #1d4ed8;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
             white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            border: 2px solid white;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+            border: 2px solid #fff;
             cursor: pointer;
-            transform: translate(-50%, -100%);
-          ">${priceLabel}</div>`,
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            line-height: 1;
+          ">${priceLabel}</div>
+          <div style="
+            width: 0; height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #1d4ed8;
+            margin: -1px auto 0;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+          "></div>`;
+
+        const icon = L.divIcon({
+          className: "",
+          html: markerHtml,
           iconSize: [0, 0],
-          iconAnchor: [0, 0],
+          iconAnchor: [0, 38],
         });
 
         const marker = L.marker([prop.latitude, prop.longitude], { icon }).addTo(map);
