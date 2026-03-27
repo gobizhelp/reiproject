@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Property } from "@/lib/types";
 import { formatCurrency } from "@/lib/calculations";
@@ -1017,6 +1017,14 @@ export default function MarketplaceView({ properties, savedPropertyIds, sentMess
   );
 }
 
+function trackEvent(propertyId: string, eventType: "impression" | "click" | "view") {
+  fetch("/api/analytics/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ propertyId, eventType }),
+  }).catch(() => {});
+}
+
 function MarketplaceCard({
   property,
   isSaved,
@@ -1040,8 +1048,32 @@ function MarketplaceCard({
   const [offerAmount, setOfferAmount] = useState("");
   const [sending, setSending] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ActionType | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const impressionTracked = useRef(false);
   const photo = property.property_photos
     ?.sort((a, b) => a.display_order - b.display_order)?.[0];
+
+  // Track impressions when card is visible in viewport
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || impressionTracked.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !impressionTracked.current) {
+          impressionTracked.current = true;
+          trackEvent(property.id, "impression");
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [property.id]);
+
+  const handleClick = useCallback(() => {
+    trackEvent(property.id, "click");
+  }, [property.id]);
 
   const hasSentShowing = sentTypes.includes("request_showing");
   const hasSentOffer = sentTypes.includes("make_offer");
@@ -1092,9 +1124,9 @@ function MarketplaceCard({
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden hover:border-muted transition-colors group">
+    <div ref={cardRef} className="bg-card border border-border rounded-2xl overflow-hidden hover:border-muted transition-colors group">
       {/* Photo */}
-      <Link href={`/deals/${property.slug}`} className="block">
+      <Link href={`/deals/${property.slug}`} className="block" onClick={handleClick}>
         <div className="relative aspect-[16/10] bg-background">
           {photo ? (
             <img src={photo.url} alt={property.street_address} className="w-full h-full object-cover" />
@@ -1163,7 +1195,7 @@ function MarketplaceCard({
 
       {/* Details */}
       <div className="p-4">
-        <Link href={`/deals/${property.slug}`}>
+        <Link href={`/deals/${property.slug}`} onClick={handleClick}>
           <h3 className="font-bold text-lg group-hover:text-accent transition-colors truncate">
             {property.street_address}
           </h3>
