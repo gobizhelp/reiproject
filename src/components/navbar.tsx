@@ -29,6 +29,9 @@ export default function Navbar() {
   const [showNotifPanel, setShowNotifPanel] = useState(false);
 
   useEffect(() => {
+    // Skip re-fetch if we already have a cached profile (e.g. after a view switch)
+    if (cachedProfile) return;
+
     async function loadProfile() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -55,15 +58,16 @@ export default function Navbar() {
     router.refresh();
   }
 
-  function switchView(view: ActiveView) {
+  async function switchView(view: ActiveView) {
     if (!profile || profile.active_view === view) return;
 
     // Update cache immediately so the remount after navigation picks up the new view
     cachedProfile = { ...profile, active_view: view };
+    setProfile(cachedProfile);
 
     const supabase = createClient();
-    // Fire DB update without awaiting — navigate immediately for snappy feel
-    supabase
+    // Await the DB update so it's persisted before the page re-fetches server data
+    await supabase
       .from("profiles")
       .update({ active_view: view })
       .eq("id", profile.id);
