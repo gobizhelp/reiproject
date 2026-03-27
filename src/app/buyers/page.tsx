@@ -6,19 +6,21 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import BuyerDirectory from "@/components/buyer-directory";
 import { BuyBoxForm, BuyBoxSubmission } from "@/lib/buy-box-types";
-import { Plus, Settings, Users, Upload } from "lucide-react";
+import { Users, Upload } from "lucide-react";
 import CopyLinkButtonClient from "@/components/copy-link-button";
+import CreateBuyBoxButton from "@/components/create-buy-box-button";
 
 export default async function BuyersPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Get the user's buy box form
+  // Get the user's buy box form (exclude system template)
   const { data: forms } = await supabase
     .from("buy_box_forms")
     .select("*")
     .eq("user_id", user.id)
+    .neq("slug", "__system_buy_box_template__")
     .order("created_at", { ascending: false });
 
   const form = (forms as BuyBoxForm[] | null)?.[0] || null;
@@ -62,35 +64,20 @@ export default async function BuyersPage() {
             <p className="text-muted mt-1">
               {form
                 ? `${submissions.length} buyer${submissions.length !== 1 ? "s" : ""} in your directory`
-                : "Set up your buy box form to start collecting buyers"}
+                : "Set up your buy box link to start collecting buyers"}
             </p>
           </div>
           <div className="flex items-center gap-3">
             {form ? (
-              <>
-                <Link
-                  href="/buyers/import"
-                  className="flex items-center gap-2 border border-border hover:border-accent/50 text-foreground px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
-                >
-                  <Upload className="w-4 h-4" />
-                  Import CSV
-                </Link>
-                <Link
-                  href="/buyers/form/edit"
-                  className="flex items-center gap-2 border border-border hover:border-accent/50 text-foreground px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
-                >
-                  <Settings className="w-4 h-4" />
-                  Edit Form
-                </Link>
-              </>
-            ) : (
               <Link
-                href="/buyers/form"
-                className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-semibold transition-colors"
+                href="/buyers/import"
+                className="flex items-center gap-2 border border-border hover:border-accent/50 text-foreground px-4 py-2.5 rounded-xl font-medium transition-colors text-sm"
               >
-                <Plus className="w-5 h-5" />
-                Create Buy Box Form
+                <Upload className="w-4 h-4" />
+                Import CSV
               </Link>
+            ) : (
+              <CreateBuyBoxButton />
             )}
           </div>
         </div>
@@ -107,15 +94,9 @@ export default async function BuyersPage() {
             <Users className="w-16 h-16 text-muted mx-auto mb-4" />
             <p className="text-muted text-lg mb-2">No buy box form yet</p>
             <p className="text-muted text-sm mb-6">
-              Create a buy box form that buyers can fill out. You&apos;ll build a searchable directory of all your buyers.
+              Create your buy box link to start collecting buyer criteria. The form is standardized across the platform for better matching.
             </p>
-            <Link
-              href="/buyers/form"
-              className="inline-flex items-center gap-2 text-accent hover:underline font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              Create your first buy box form
-            </Link>
+            <CreateBuyBoxButton />
           </div>
         )}
       </div>

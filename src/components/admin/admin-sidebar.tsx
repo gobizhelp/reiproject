@@ -13,12 +13,14 @@ import {
   FlaskConical,
   ListChecks,
   Settings,
+  FileText,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/properties', label: 'Properties', icon: Building2 },
+  { href: '/admin/buy-box-form', label: 'Buy Box Form', icon: FileText },
   { href: '/admin/messages', label: 'Messages', icon: MessageCircle },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/activity', label: 'Activity Log', icon: ClipboardList },

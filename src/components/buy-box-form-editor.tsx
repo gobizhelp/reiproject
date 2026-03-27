@@ -31,9 +31,10 @@ import {
 
 interface Props {
   form?: BuyBoxForm;
+  isSystemTemplate?: boolean;
 }
 
-export default function BuyBoxFormEditor({ form }: Props) {
+export default function BuyBoxFormEditor({ form, isSystemTemplate }: Props) {
   const router = useRouter();
   const isEditing = !!form;
 
@@ -240,6 +241,8 @@ export default function BuyBoxFormEditor({ form }: Props) {
 
   // --- Save ---
 
+  const SYSTEM_TEMPLATE_SLUG = '__system_buy_box_template__';
+
   function generateSlug(): string {
     return (
       title
@@ -280,22 +283,39 @@ export default function BuyBoxFormEditor({ form }: Props) {
         updated_at: new Date().toISOString(),
       };
 
-      if (isEditing) {
+      if (isSystemTemplate) {
+        // Save as system-wide template
+        if (isEditing) {
+          const { error } = await supabase
+            .from("buy_box_forms")
+            .update(formData)
+            .eq("slug", SYSTEM_TEMPLATE_SLUG);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("buy_box_forms")
+            .insert({ ...formData, slug: SYSTEM_TEMPLATE_SLUG, user_id: user.id });
+          if (error) throw error;
+        }
+        router.push("/admin/buy-box-form");
+        router.refresh();
+      } else if (isEditing) {
         const { error } = await supabase
           .from("buy_box_forms")
           .update(formData)
           .eq("id", form.id);
         if (error) throw error;
+        router.push("/buyers");
+        router.refresh();
       } else {
         const slug = generateSlug();
         const { error } = await supabase
           .from("buy_box_forms")
           .insert({ ...formData, slug, user_id: user.id });
         if (error) throw error;
+        router.push("/buyers");
+        router.refresh();
       }
-
-      router.push("/buyers");
-      router.refresh();
     } catch (err: any) {
       setError(err.message || "Something went wrong");
       setLoading(false);
@@ -357,7 +377,7 @@ export default function BuyBoxFormEditor({ form }: Props) {
               />
               <span className="text-sm">Form is active and accepting submissions</span>
             </label>
-            {isEditing && form?.slug && (
+            {isEditing && form?.slug && !isSystemTemplate && (
               <button
                 onClick={copyLink}
                 className="flex items-center gap-2 text-accent hover:text-accent-hover text-sm transition-colors"
@@ -758,7 +778,7 @@ export default function BuyBoxFormEditor({ form }: Props) {
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {isEditing ? "Save Changes" : "Create Form"}
         </button>
-        {isEditing && form?.slug && (
+        {isEditing && form?.slug && !isSystemTemplate && (
           <a
             href={`/buy-box/${form.slug}`}
             target="_blank"

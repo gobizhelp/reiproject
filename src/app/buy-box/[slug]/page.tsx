@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import BuyBoxPublicForm from "@/components/buy-box-public-form";
 import { BuyBoxForm } from "@/lib/buy-box-types";
+import { getSystemBuyBoxFields } from "@/lib/buy-box-system-template";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -45,5 +46,9 @@ export default async function BuyBoxPage({ params }: Props) {
 
   if (!form) notFound();
 
-  return <BuyBoxPublicForm form={form as BuyBoxForm} />;
+  // Always use the system template fields so the form is standardized
+  const systemFields = await getSystemBuyBoxFields();
+  const standardizedForm = { ...form, fields: systemFields } as BuyBoxForm;
+
+  return <BuyBoxPublicForm form={standardizedForm} />;
 }
