@@ -30,9 +30,10 @@ export default async function BrowsePage() {
   const { data: listings } = await supabase
     .from("properties")
     .select(
-      "id, address, city, state, zip, asking_price, arv, property_type, status, created_at"
+      "id, address, city, state, zip, asking_price, arv, property_type, status, seller_status, created_at"
     )
     .eq("status", "published")
+    .in("seller_status", ["active", "pending"])
     .order("created_at", { ascending: false })
     .limit(12);
 

@@ -1069,6 +1069,11 @@ function MarketplaceCard({
                 Early Access
               </span>
             )}
+            {property.seller_status === "pending" && (
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm bg-yellow-500/90 text-white">
+                Pending
+              </span>
+            )}
             {property.listing_status && (
               <span className={`px-2 py-0.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
                 property.listing_status === "off_market"

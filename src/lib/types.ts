@@ -3,6 +3,7 @@ export interface Property {
   user_id: string;
   slug: string;
   status: 'draft' | 'published';
+  seller_status: 'active' | 'pending' | 'sold' | 'archived';
   // Title & Address
   title: string | null;
   street_address: string;
@@ -94,7 +95,7 @@ export interface DealAnalysis {
   profitFullRehabHigh: number;
 }
 
-export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'published_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by'>;
+export type PropertyFormData = Omit<Property, 'id' | 'user_id' | 'slug' | 'created_at' | 'updated_at' | 'published_at' | 'photos' | 'comps' | 'is_featured' | 'moderation_status' | 'moderation_note' | 'moderated_at' | 'moderated_by' | 'seller_status'>;
 
 export interface SavedListing {
   id: string;

@@ -126,6 +126,22 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
         </div>
       )}
 
+      {/* Seller status banner */}
+      {property.seller_status === "pending" && (
+        <div className="bg-warning/10 border-b border-warning/30">
+          <div className="max-w-5xl mx-auto px-4 py-3 text-center text-warning font-semibold text-sm">
+            This property is currently under contract (Pending)
+          </div>
+        </div>
+      )}
+      {property.seller_status === "sold" && (
+        <div className="bg-accent/10 border-b border-accent/30">
+          <div className="max-w-5xl mx-auto px-4 py-3 text-center text-accent font-semibold text-sm">
+            This property has been sold
+          </div>
+        </div>
+      )}
+
       {/* Hero - Photo Carousel */}
       {photos.length > 0 && (
         <div className="relative bg-black">

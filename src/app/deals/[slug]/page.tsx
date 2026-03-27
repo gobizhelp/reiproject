@@ -50,6 +50,9 @@ export default async function DealPacketPage({ params }: Props) {
 
   if (!property) notFound();
 
+  // Hide archived properties from public view entirely
+  if (property.seller_status === "archived") notFound();
+
   const photos = (property.property_photos as PropertyPhoto[])?.sort(
     (a, b) => a.display_order - b.display_order
   ) || [];
