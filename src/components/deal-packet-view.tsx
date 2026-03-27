@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 import BuyerNoteEditor from "@/components/buyer-note-editor";
+import ShareButton from "@/components/share-button";
 
 interface Props {
   property: Property;
@@ -174,6 +175,13 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
           </div>
         )}
 
+        {/* Share button - always visible for owners and non-logged-in users (non-owners get it in the action bar) */}
+        {!showActions && (
+          <div className="flex mb-6">
+            <ShareButton slug={property.slug} address={property.street_address} variant="full" />
+          </div>
+        )}
+
         {/* Tags Bar */}
         {(property.listing_status || property.ideal_investor_strategy) && (
           <div className="flex flex-wrap gap-2 mb-6">
@@ -200,6 +208,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
         {showActions && (
           <div className="bg-card border border-border rounded-2xl p-4 mb-8">
             <div className="flex flex-col sm:flex-row gap-3">
+              <ShareButton slug={property.slug} address={property.street_address} variant="full" />
               {isLoggedIn && (
                 <button
                   onClick={toggleSave}

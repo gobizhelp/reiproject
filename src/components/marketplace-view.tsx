@@ -12,6 +12,7 @@ import {
   Lock, ArrowUpDown, Bookmark, BookmarkPlus, Trash2, Check, Crown,
 } from "lucide-react";
 import ProBuyerBadge from "./pro-buyer-badge";
+import ShareButton from "./share-button";
 
 interface PropertyWithPhotos extends Property {
   property_photos: { id: string; url: string; display_order: number }[];
@@ -1061,22 +1062,25 @@ function MarketplaceCard({
               </span>
             ))}
           </div>
-          {/* Save button overlay */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleSave();
-            }}
-            className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-colors ${
-              isSaved
-                ? "bg-red-500/80 text-white"
-                : "bg-black/40 text-white/80 hover:bg-black/60 hover:text-white"
-            }`}
-            title={isSaved ? "Unsave listing" : "Save listing"}
-          >
-            <Heart className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
-          </button>
+          {/* Save & Share buttons overlay */}
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            <ShareButton slug={property.slug} address={property.street_address} />
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleSave();
+              }}
+              className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
+                isSaved
+                  ? "bg-red-500/80 text-white"
+                  : "bg-black/40 text-white/80 hover:bg-black/60 hover:text-white"
+              }`}
+              title={isSaved ? "Unsave listing" : "Save listing"}
+            >
+              <Heart className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
+            </button>
+          </div>
           {/* Price overlay */}
           {property.asking_price && (
             <div className="absolute bottom-3 right-3">
