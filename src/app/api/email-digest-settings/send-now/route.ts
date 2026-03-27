@@ -111,16 +111,16 @@ export async function POST() {
 
   // Send email
   const resend = getResend();
-  try {
-    await resend.emails.send({
-      from: EMAIL_FROM,
-      to: user.email!,
-      subject,
-      html,
-    });
-  } catch (err) {
+  const { data: sendData, error: sendError } = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: user.email!,
+    subject,
+    html,
+  });
+
+  if (sendError || !sendData) {
     return Response.json(
-      { error: `Failed to send email: ${err instanceof Error ? err.message : 'unknown'}` },
+      { error: `Failed to send email: ${sendError?.message || 'unknown error'}` },
       { status: 500 }
     );
   }

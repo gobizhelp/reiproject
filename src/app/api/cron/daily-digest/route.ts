@@ -168,12 +168,17 @@ export async function GET(request: NextRequest) {
         : 'Your daily deal digest — no new matches today';
 
     try {
-      await resend.emails.send({
+      const { data: sendData, error: sendError } = await resend.emails.send({
         from: EMAIL_FROM,
         to: email,
         subject,
         html,
       });
+
+      if (sendError || !sendData) {
+        errors.push(`Failed to send to ${userId}: ${sendError?.message || 'unknown error'}`);
+        continue;
+      }
 
       // Update last_sent_at
       await supabase
