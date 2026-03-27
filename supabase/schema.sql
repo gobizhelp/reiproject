@@ -57,7 +57,10 @@ create table if not exists properties (
   -- Timestamps
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
-  published_at timestamptz
+  published_at timestamptz,
+  -- Geolocation (populated on save via geocoding)
+  latitude double precision,
+  longitude double precision
 );
 
 -- Property photos

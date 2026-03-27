@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/calculations";
-import { MapPin, Loader2, Building2, Bed, Bath, Maximize } from "lucide-react";
+import { MapPin, Building2, Bed, Bath, Maximize } from "lucide-react";
 
-interface PropertyWithPhotos {
+interface MapProperty {
   id: string;
   slug: string;
   street_address: string;
@@ -20,117 +20,55 @@ interface PropertyWithPhotos {
   light_rehab_arv: number | null;
   arv: number | null;
   ideal_investor_strategy: string | null;
+  latitude: number | null;
+  longitude: number | null;
   property_photos: { id: string; url: string; display_order: number }[];
 }
 
-interface GeocodedProperty extends PropertyWithPhotos {
-  latitude: number;
-  longitude: number;
-}
-
 interface PropertyMapProps {
-  properties: PropertyWithPhotos[];
+  properties: MapProperty[];
 }
 
 export default function PropertyMap({ properties }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
-  const [geocoded, setGeocoded] = useState<GeocodedProperty[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState({ done: 0, total: 0 });
-  const [selectedProperty, setSelectedProperty] = useState<GeocodedProperty | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillRemaining, setBackfillRemaining] = useState<number | null>(null);
 
-  const geocodeProperties = useCallback(async () => {
-    if (properties.length === 0) {
-      setLoading(false);
-      return;
-    }
+  // Properties that already have coordinates — instant load
+  const mappable = properties.filter(
+    (p) => p.latitude && p.longitude && !(p.latitude === 0 && p.longitude === 0)
+  );
+  const unmapped = properties.length - mappable.length;
 
-    // Check sessionStorage for cached coordinates
-    const cached: Record<string, { lat: number; lon: number }> = {};
-    const uncached: { id: string; address: string }[] = [];
-
-    for (const p of properties) {
-      const key = `geo_${p.id}`;
-      const stored = sessionStorage.getItem(key);
-      if (stored) {
-        try {
-          cached[p.id] = JSON.parse(stored);
-        } catch {
-          uncached.push({
-            id: p.id,
-            address: `${p.street_address}, ${p.city}, ${p.state} ${p.zip_code}`,
-          });
-        }
-      } else {
-        uncached.push({
-          id: p.id,
-          address: `${p.street_address}, ${p.city}, ${p.state} ${p.zip_code}`,
-        });
-      }
-    }
-
-    // Build initial geocoded list from cache
-    const initial: GeocodedProperty[] = [];
-    for (const p of properties) {
-      if (cached[p.id]) {
-        initial.push({ ...p, latitude: cached[p.id].lat, longitude: cached[p.id].lon });
-      }
-    }
-    setGeocoded(initial);
-    setProgress({ done: initial.length, total: properties.length });
-
-    if (uncached.length === 0) {
-      setLoading(false);
-      return;
-    }
-
-    // Batch geocode in chunks of 10
-    const chunkSize = 10;
-    for (let i = 0; i < uncached.length; i += chunkSize) {
-      const chunk = uncached.slice(i, i + chunkSize);
-      try {
-        const res = await fetch("/api/geocode", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ properties: chunk }),
-        });
-
-        if (res.ok) {
-          const { results } = await res.json();
-          const newGeocoded: GeocodedProperty[] = [];
-
-          for (const r of results as { id: string; latitude: number; longitude: number }[]) {
-            sessionStorage.setItem(`geo_${r.id}`, JSON.stringify({ lat: r.latitude, lon: r.longitude }));
-            const prop = properties.find((p) => p.id === r.id);
-            if (prop) {
-              newGeocoded.push({ ...prop, latitude: r.latitude, longitude: r.longitude });
-            }
-          }
-
-          setGeocoded((prev) => {
-            const ids = new Set(prev.map((p) => p.id));
-            const merged = [...prev];
-            for (const np of newGeocoded) {
-              if (!ids.has(np.id)) merged.push(np);
-            }
-            return merged;
-          });
-          setProgress((prev) => ({ ...prev, done: prev.done + results.length }));
-        }
-      } catch {
-        // Continue with next chunk on error
-      }
-    }
-
-    setLoading(false);
-  }, [properties]);
-
-  // Geocode on mount
+  // Trigger backfill for properties missing coordinates
   useEffect(() => {
-    geocodeProperties();
-  }, [geocodeProperties]);
+    if (unmapped === 0) return;
+    setBackfillRemaining(unmapped);
+
+    let cancelled = false;
+
+    async function runBackfill() {
+      setBackfilling(true);
+      while (!cancelled) {
+        try {
+          const res = await fetch("/api/geocode/backfill", { method: "POST" });
+          if (!res.ok) break;
+          const { remaining } = await res.json();
+          setBackfillRemaining(remaining);
+          if (remaining === 0) break;
+        } catch {
+          break;
+        }
+      }
+      setBackfilling(false);
+    }
+
+    runBackfill();
+    return () => { cancelled = true; };
+  }, [unmapped]);
 
   // Initialize and update map
   useEffect(() => {
@@ -143,7 +81,6 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
 
       if (cancelled || !mapRef.current) return;
 
-      // Clean up existing map
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
@@ -152,7 +89,7 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
       const map = L.map(mapRef.current, {
         zoomControl: true,
         scrollWheelZoom: true,
-      }).setView([39.8283, -98.5795], 4); // Center of US
+      }).setView([39.8283, -98.5795], 4);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -161,22 +98,15 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
 
       leafletMapRef.current = map;
 
-      // Add markers
-      updateMarkers(L, map);
-    }
-
-    function updateMarkers(L: any, map: any) {
       // Clear existing markers
-      for (const m of markersRef.current) {
-        map.removeLayer(m);
-      }
+      for (const m of markersRef.current) map.removeLayer(m);
       markersRef.current = [];
 
-      if (geocoded.length === 0) return;
+      if (mappable.length === 0) return;
 
       const bounds: [number, number][] = [];
 
-      for (const prop of geocoded) {
+      for (const prop of mappable) {
         const priceLabel = prop.asking_price ? formatCurrency(prop.asking_price) : "N/A";
 
         const markerHtml = `<div style="
@@ -217,13 +147,11 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
           iconAnchor: [0, 0],
         });
 
-        const marker = L.marker([prop.latitude, prop.longitude], { icon }).addTo(map);
-        marker.on("click", () => {
-          setSelectedProperty(prop);
-        });
+        const marker = L.marker([prop.latitude!, prop.longitude!], { icon }).addTo(map);
+        marker.on("click", () => setSelectedProperty(prop));
 
         markersRef.current.push(marker);
-        bounds.push([prop.latitude, prop.longitude]);
+        bounds.push([prop.latitude!, prop.longitude!]);
       }
 
       if (bounds.length > 0) {
@@ -233,10 +161,8 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
 
     initMap();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [geocoded]);
+    return () => { cancelled = true; };
+  }, [mappable.length]);
 
   // Clean up map on unmount
   useEffect(() => {
@@ -260,13 +186,11 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
         crossOrigin=""
       />
 
-      {/* Loading overlay */}
-      {loading && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-card border border-border rounded-xl px-4 py-2 flex items-center gap-2 shadow-lg">
-          <Loader2 className="w-4 h-4 animate-spin text-accent" />
-          <span className="text-sm text-muted">
-            Loading locations... {progress.done}/{progress.total}
-          </span>
+      {/* Backfill banner */}
+      {backfilling && backfillRemaining != null && backfillRemaining > 0 && (
+        <div className="mb-3 flex items-center gap-2 text-xs text-muted bg-card border border-border rounded-lg px-3 py-2">
+          <div className="w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          Geocoding {backfillRemaining} {backfillRemaining === 1 ? "property" : "properties"} in the background — they&apos;ll appear on your next visit.
         </div>
       )}
 
@@ -278,12 +202,16 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
       />
 
       {/* No results message */}
-      {!loading && geocoded.length === 0 && (
+      {mappable.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-card/80 rounded-2xl z-[1000]">
           <div className="text-center">
             <MapPin className="w-12 h-12 text-muted mx-auto mb-3" />
             <p className="text-muted text-lg">No properties to show on map</p>
-            <p className="text-muted text-sm mt-1">Try adjusting your filters</p>
+            <p className="text-muted text-sm mt-1">
+              {unmapped > 0
+                ? "Locations are being loaded — check back shortly"
+                : "Try adjusting your filters"}
+            </p>
           </div>
         </div>
       )}
@@ -388,10 +316,10 @@ export default function PropertyMap({ properties }: PropertyMapProps) {
         </div>
       )}
 
-      {/* Geocoded count badge */}
-      {!loading && geocoded.length > 0 && (
+      {/* Property count badge */}
+      {mappable.length > 0 && (
         <div className="absolute top-4 right-4 z-[1000] bg-card border border-border rounded-lg px-3 py-1.5 text-xs text-muted shadow-md">
-          {geocoded.length} {geocoded.length === 1 ? "property" : "properties"} on map
+          {mappable.length} {mappable.length === 1 ? "property" : "properties"} on map
         </div>
       )}
     </div>

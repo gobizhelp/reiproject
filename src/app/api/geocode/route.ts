@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-interface GeocodingResult {
-  id: string;
-  latitude: number;
-  longitude: number;
-}
-
-const geocodeCache = new Map<string, { lat: number; lon: number } | null>();
-
-async function geocodeAddress(address: string): Promise<{ lat: number; lon: number } | null> {
-  if (geocodeCache.has(address)) {
-    return geocodeCache.get(address) ?? null;
-  }
-
+export async function geocodeAddress(address: string): Promise<{ lat: number; lon: number } | null> {
   const params = new URLSearchParams({
     q: address,
     format: "json",
@@ -27,55 +16,33 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lon: numb
     }
   );
 
-  if (!res.ok) {
-    geocodeCache.set(address, null);
-    return null;
-  }
+  if (!res.ok) return null;
 
   const data = await res.json();
-  if (!data.length) {
-    geocodeCache.set(address, null);
-    return null;
-  }
+  if (!data.length) return null;
 
-  const result = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-  geocodeCache.set(address, result);
-  return result;
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
 }
 
+// POST: Geocode a single property and persist to DB (called from property-form on save)
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const properties: { id: string; address: string }[] = body.properties;
+  const { propertyId, address } = body as { propertyId: string; address: string };
 
-  if (!properties || !Array.isArray(properties)) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  if (!propertyId || !address) {
+    return NextResponse.json({ error: "Missing propertyId or address" }, { status: 400 });
   }
 
-  // Limit batch size
-  const batch = properties.slice(0, 50);
-
-  const results: GeocodingResult[] = [];
-
-  // Process sequentially to respect Nominatim rate limits (1 req/sec)
-  for (const prop of batch) {
-    const cached = geocodeCache.get(prop.address);
-    if (cached !== undefined) {
-      if (cached) {
-        results.push({ id: prop.id, latitude: cached.lat, longitude: cached.lon });
-      }
-      continue;
-    }
-
-    const coords = await geocodeAddress(prop.address);
-    if (coords) {
-      results.push({ id: prop.id, latitude: coords.lat, longitude: coords.lon });
-    }
-
-    // Rate limit: wait 1 second between uncached requests
-    if (batch.indexOf(prop) < batch.length - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 1100));
-    }
+  const coords = await geocodeAddress(address);
+  if (!coords) {
+    return NextResponse.json({ geocoded: false });
   }
 
-  return NextResponse.json({ results });
+  const supabase = createAdminClient();
+  await supabase
+    .from("properties")
+    .update({ latitude: coords.lat, longitude: coords.lon })
+    .eq("id", propertyId);
+
+  return NextResponse.json({ geocoded: true, latitude: coords.lat, longitude: coords.lon });
 }

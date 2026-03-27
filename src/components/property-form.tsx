@@ -194,6 +194,16 @@ export default function PropertyForm({ property }: Props) {
 
         if (error) throw error;
 
+        // Fire-and-forget geocoding to populate lat/lng
+        fetch("/api/geocode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            propertyId: property.id,
+            address: `${streetAddress}, ${city}, ${state} ${zipCode}`,
+          }),
+        }).catch(() => {});
+
         // Update comps: delete old, insert new
         await supabase.from("comps").delete().eq("property_id", property.id);
         if (comps.length > 0) {
@@ -237,6 +247,16 @@ export default function PropertyForm({ property }: Props) {
           }));
           await supabase.from("comps").insert(compsToInsert);
         }
+
+        // Fire-and-forget geocoding to populate lat/lng
+        fetch("/api/geocode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            propertyId: newProp.id,
+            address: `${streetAddress}, ${city}, ${state} ${zipCode}`,
+          }),
+        }).catch(() => {});
 
         // Move uploaded photos to this property
         if (photos.length > 0) {
