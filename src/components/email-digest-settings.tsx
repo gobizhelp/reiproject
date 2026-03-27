@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TIMEZONE_OPTIONS, HOUR_OPTIONS } from "@/lib/email-digest-types";
-import { Mail, Loader2, Save, Clock, Globe, Send } from "lucide-react";
+import { Mail, Loader2, Save, Clock, Globe, Send, AlertTriangle } from "lucide-react";
 
 interface Props {
   userId: string;
@@ -14,6 +14,7 @@ export default function EmailDigestSettings({ userId }: Props) {
   const [sendHour, setSendHour] = useState(8);
   const [timezone, setTimezone] = useState("America/New_York");
   const [lastSentAt, setLastSentAt] = useState<string | null>(null);
+  const [hasBuyBoxes, setHasBuyBoxes] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
@@ -23,15 +24,20 @@ export default function EmailDigestSettings({ userId }: Props) {
 
   useEffect(() => {
     async function fetchSettings() {
+      const supabase = createClient();
       try {
-        const res = await fetch("/api/email-digest-settings");
-        if (res.ok) {
-          const { settings } = await res.json();
+        const [settingsRes, buyBoxRes] = await Promise.all([
+          fetch("/api/email-digest-settings"),
+          supabase.from("buyer_buy_boxes").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        ]);
+        if (settingsRes.ok) {
+          const { settings } = await settingsRes.json();
           setEnabled(settings.enabled);
           setSendHour(settings.send_hour);
           setTimezone(settings.timezone);
           setLastSentAt(settings.last_sent_at ?? null);
         }
+        setHasBuyBoxes((buyBoxRes.count ?? 0) > 0);
       } catch {
         // Use defaults
       } finally {
@@ -39,7 +45,7 @@ export default function EmailDigestSettings({ userId }: Props) {
       }
     }
     fetchSettings();
-  }, []);
+  }, [userId]);
 
   function isCooldownActive(): boolean {
     if (!lastSentAt) return false;
@@ -176,6 +182,19 @@ export default function EmailDigestSettings({ userId }: Props) {
             />
           </button>
         </div>
+
+        {/* Buy box warning */}
+        {enabled && hasBuyBoxes === false && (
+          <div className="flex items-start gap-3 bg-warning/10 border border-warning/30 text-warning rounded-lg px-4 py-3 text-sm">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <p>
+              You need at least one buy box for the digest to match listings.{" "}
+              <a href="/buyer/profile" className="underline font-medium">
+                Add a buy box
+              </a>
+            </p>
+          </div>
+        )}
 
         {/* Time and timezone (shown when enabled) */}
         {enabled && (
