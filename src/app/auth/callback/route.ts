@@ -4,13 +4,34 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
+  const next = searchParams.get('next');
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      // If an explicit redirect was provided, use it
+      if (next) {
+        return NextResponse.redirect(`${origin}${next}`);
+      }
+
+      // Otherwise route based on the user's active_view
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("active_view, role_selected")
+          .eq("id", user.id)
+          .single();
+
+        if (!profile?.role_selected) {
+          return NextResponse.redirect(`${origin}/select-role`);
+        } else if (profile?.active_view === "buyer") {
+          return NextResponse.redirect(`${origin}/marketplace`);
+        }
+      }
+
+      return NextResponse.redirect(`${origin}/dashboard`);
     }
   }
 

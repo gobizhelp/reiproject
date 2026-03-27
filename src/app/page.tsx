@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   Target,
@@ -9,6 +10,7 @@ import {
   Zap,
   DollarSign,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 import MarketingNav from "@/components/marketing/marketing-nav";
 import Footer from "@/components/marketing/footer";
 
@@ -25,7 +27,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("active_view, role_selected")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.role_selected) {
+      redirect("/select-role");
+    } else if (profile?.active_view === "buyer") {
+      redirect("/marketplace");
+    } else {
+      redirect("/dashboard");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <script
