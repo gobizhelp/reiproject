@@ -76,15 +76,11 @@ export type SellerFeature =
   | 'attachment_uploads'
   | 'inquiry_status_tracking'
   | 'buyer_list_import'
-  | 'audience_segmentation'
   | 'private_listings'
-  | 'premium_only_listings'
   | 'open_click_tracking'
-  | 'buyer_intent_tracking'
   | 'seller_team_seats'
   | 'shared_team_inbox'
   | 'internal_notes_assignment'
-  | 'offer_collection_tools'
   | 'deal_room';
 
 // --- Limit Keys ---
@@ -168,14 +164,10 @@ const PRO_SELLER_FEATURES: SellerFeature[] = [
 
 const ELITE_SELLER_FEATURES: SellerFeature[] = [
   ...PRO_SELLER_FEATURES,
-  'audience_segmentation',
   'private_listings',
-  'premium_only_listings',
-  'buyer_intent_tracking',
   'seller_team_seats',
   'shared_team_inbox',
   'internal_notes_assignment',
-  'offer_collection_tools',
   'deal_room',
 ];
 
@@ -262,7 +254,7 @@ export const MEMBERSHIP_PLANS: Record<PlanId, MembershipPlan> = {
   elite_seller: {
     id: 'elite_seller',
     name: 'Elite Seller',
-    description: 'High-volume listings, audience segmentation, and team tools.',
+    description: 'High-volume listings, private listings, and team tools.',
     planType: 'seller',
     tier: 'elite',
     monthlyPriceCents: 19900,
@@ -344,15 +336,11 @@ export const SELLER_FEATURE_LABELS: Record<SellerFeature, string> = {
   attachment_uploads: 'Attachment uploads',
   inquiry_status_tracking: 'Inquiry status tracking',
   buyer_list_import: 'Buyer list import',
-  audience_segmentation: 'Audience segmentation',
   private_listings: 'Private listings',
-  premium_only_listings: 'Premium-only listings',
   open_click_tracking: 'Open/click tracking',
-  buyer_intent_tracking: 'Buyer intent tracking',
   seller_team_seats: 'Team seats',
   shared_team_inbox: 'Shared team inbox',
   internal_notes_assignment: 'Internal notes / assignment',
-  offer_collection_tools: 'Offer collection tools',
   deal_room: 'Deal room / document vault',
 };
 

@@ -85,15 +85,11 @@ const SELLER_TIER_MAP: Record<SellerFeature, Tier> = {
   attachment_uploads: 'pro',
   inquiry_status_tracking: 'pro',
   buyer_list_import: 'free',
-  audience_segmentation: 'elite',
   private_listings: 'elite',
-  premium_only_listings: 'elite',
   open_click_tracking: 'pro',
-  buyer_intent_tracking: 'elite',
   seller_team_seats: 'elite',
   shared_team_inbox: 'elite',
   internal_notes_assignment: 'elite',
-  offer_collection_tools: 'elite',
   deal_room: 'elite',
 };
 
