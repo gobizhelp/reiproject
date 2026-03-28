@@ -75,7 +75,6 @@ export type SellerFeature =
   | 'duplicate_listing'
   | 'attachment_uploads'
   | 'inquiry_status_tracking'
-  | 'basic_dispo_pipeline'
   | 'sms_blast'
   | 'buyer_list_import'
   | 'audience_segmentation'
@@ -85,7 +84,6 @@ export type SellerFeature =
   | 'buyer_intent_tracking'
   | 'seller_team_seats'
   | 'shared_team_inbox'
-  | 'team_dispo_pipeline'
   | 'internal_notes_assignment'
   | 'offer_collection_tools'
   | 'deal_room';
@@ -166,7 +164,6 @@ const PRO_SELLER_FEATURES: SellerFeature[] = [
   'duplicate_listing',
   'attachment_uploads',
   'inquiry_status_tracking',
-  'basic_dispo_pipeline',
   'open_click_tracking',
 ];
 
@@ -179,7 +176,6 @@ const ELITE_SELLER_FEATURES: SellerFeature[] = [
   'buyer_intent_tracking',
   'seller_team_seats',
   'shared_team_inbox',
-  'team_dispo_pipeline',
   'internal_notes_assignment',
   'offer_collection_tools',
   'deal_room',
@@ -276,7 +272,7 @@ export const MEMBERSHIP_PLANS: Record<PlanId, MembershipPlan> = {
   pro_both: {
     id: 'pro_both',
     name: 'Pro Both',
-    description: 'Combine acquisition and dispo workflows in one account at a discount.',
+    description: 'Combine acquisition and selling workflows in one account at a discount.',
     planType: 'both',
     tier: 'pro',
     monthlyPriceCents: 9900,
@@ -349,7 +345,6 @@ export const SELLER_FEATURE_LABELS: Record<SellerFeature, string> = {
   duplicate_listing: 'Duplicate / clone listing',
   attachment_uploads: 'Attachment uploads',
   inquiry_status_tracking: 'Inquiry status tracking',
-  basic_dispo_pipeline: 'Basic dispo pipeline',
   sms_blast: 'SMS blast',
   buyer_list_import: 'Buyer list import',
   audience_segmentation: 'Audience segmentation',
@@ -359,7 +354,6 @@ export const SELLER_FEATURE_LABELS: Record<SellerFeature, string> = {
   buyer_intent_tracking: 'Buyer intent tracking',
   seller_team_seats: 'Team seats',
   shared_team_inbox: 'Shared team inbox',
-  team_dispo_pipeline: 'Team dispo pipeline',
   internal_notes_assignment: 'Internal notes / assignment',
   offer_collection_tools: 'Offer collection tools',
   deal_room: 'Deal room / document vault',
