@@ -101,12 +101,6 @@ export default function FeaturesPage() {
               description="Generate shareable deal packet links instantly. Send them to your network, post them anywhere — complete with full analysis."
             />
             <FeatureCard
-              icon={Mail}
-              iconColor="text-amber-400"
-              title="SMS Blasts"
-              description="Send SMS alerts to matched buyers with one click. Matched buyers also receive automatic email notifications when new deals fit their buy boxes."
-            />
-            <FeatureCard
               icon={Users}
               title="Buyer Directory"
               description="See who's interested in your deals. Track inquiries, manage buyer relationships, and build your network."

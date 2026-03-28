@@ -91,7 +91,7 @@ insert into membership_plans (id, name, description, plan_type, tier, monthly_pr
   ('elite_buyer', 'Elite Buyer', 'First-look access, team features, and multi-market watchlists.', 'buyer', 'elite', 7900),
   ('free_seller', 'Free Seller', 'List one property and receive buyer inquiries.', 'seller', 'free', 0),
   ('pro_seller', 'Pro Seller', 'List more deals, email matched buyers, and see performance analytics.', 'seller', 'pro', 7900),
-  ('elite_seller', 'Elite Seller', 'High-volume listings, SMS blasts, audience segmentation, and team tools.', 'seller', 'elite', 19900),
+  ('elite_seller', 'Elite Seller', 'High-volume listings, audience segmentation, and team tools.', 'seller', 'elite', 19900),
   ('pro_both', 'Pro Both', 'Combine acquisition and selling workflows in one account at a discount.', 'both', 'pro', 9900),
   ('elite_both', 'Elite Both', 'All elite buyer and seller features in one discounted subscription.', 'both', 'elite', 24900)
 on conflict (id) do nothing;
