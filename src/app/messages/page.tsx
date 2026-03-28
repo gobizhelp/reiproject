@@ -79,11 +79,21 @@ export default async function MessagesPage() {
       };
     }));
 
+    // For sellers, sort priority inquiries first, then by updated_at
+    const sorted = isBuyer
+      ? enriched
+      : enriched.sort((a, b) => {
+          const aPriority = a.is_priority ? 1 : 0;
+          const bPriority = b.is_priority ? 1 : 0;
+          if (bPriority !== aPriority) return bPriority - aPriority;
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        });
+
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <ConversationsList
-          conversations={enriched as any}
+          conversations={sorted as any}
           role={isBuyer ? "buyer" : "seller"}
         />
       </div>

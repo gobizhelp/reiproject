@@ -39,8 +39,9 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("conversations")
-    .select("id, property_id, buyer_id, initial_action, inquiry_status, inquiry_status_updated_at, buyer_shared_contact, created_at, updated_at, properties(id, slug, street_address, city, state)")
+    .select("id, property_id, buyer_id, initial_action, inquiry_status, inquiry_status_updated_at, buyer_shared_contact, is_priority, created_at, updated_at, properties(id, slug, street_address, city, state)")
     .eq("seller_id", user.id)
+    .order("is_priority", { ascending: false })
     .order("updated_at", { ascending: false });
 
   if (propertyId) {
