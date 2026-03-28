@@ -79,14 +79,16 @@ export async function POST(request: NextRequest) {
 
     // Log the elite alert (best-effort)
     if (hasTrackingTable) {
-      await supabase.from('instant_alert_log').insert({
-        property_id: propertyId,
-        tier: 'elite',
-        status: eliteResult.errors.length === 0 ? 'sent' : (eliteResult.sent > 0 ? 'sent' : 'failed'),
-        sent_at: new Date().toISOString(),
-        recipients_count: eliteResult.sent,
-        error_message: eliteResult.errors.length > 0 ? eliteResult.errors.join('; ') : null,
-      }).catch(() => {});
+      try {
+        await supabase.from('instant_alert_log').insert({
+          property_id: propertyId,
+          tier: 'elite',
+          status: eliteResult.errors.length === 0 ? 'sent' : (eliteResult.sent > 0 ? 'sent' : 'failed'),
+          sent_at: new Date().toISOString(),
+          recipients_count: eliteResult.sent,
+          error_message: eliteResult.errors.length > 0 ? eliteResult.errors.join('; ') : null,
+        });
+      } catch { /* best-effort logging */ }
     }
   }
 
@@ -103,26 +105,30 @@ export async function POST(request: NextRequest) {
       results.pro = { scheduled: false };
 
       if (hasTrackingTable) {
-        await supabase.from('instant_alert_log').insert({
-          property_id: propertyId,
-          tier: 'pro',
-          status: proResult.errors.length === 0 ? 'sent' : (proResult.sent > 0 ? 'sent' : 'failed'),
-          scheduled_for: scheduledFor.toISOString(),
-          sent_at: new Date().toISOString(),
-          recipients_count: proResult.sent,
-          error_message: proResult.errors.length > 0 ? proResult.errors.join('; ') : null,
-        }).catch(() => {});
+        try {
+          await supabase.from('instant_alert_log').insert({
+            property_id: propertyId,
+            tier: 'pro',
+            status: proResult.errors.length === 0 ? 'sent' : (proResult.sent > 0 ? 'sent' : 'failed'),
+            scheduled_for: scheduledFor.toISOString(),
+            sent_at: new Date().toISOString(),
+            recipients_count: proResult.sent,
+            error_message: proResult.errors.length > 0 ? proResult.errors.join('; ') : null,
+          });
+        } catch { /* best-effort logging */ }
       }
     } else {
       // Queue for later — the cron job will pick this up
       if (hasTrackingTable) {
-        await supabase.from('instant_alert_log').insert({
-          property_id: propertyId,
-          tier: 'pro',
-          status: 'pending',
-          scheduled_for: scheduledFor.toISOString(),
-          recipients_count: 0,
-        }).catch(() => {});
+        try {
+          await supabase.from('instant_alert_log').insert({
+            property_id: propertyId,
+            tier: 'pro',
+            status: 'pending',
+            scheduled_for: scheduledFor.toISOString(),
+            recipients_count: 0,
+          });
+        } catch { /* best-effort logging */ }
       }
       results.pro = { scheduled: true };
     }
