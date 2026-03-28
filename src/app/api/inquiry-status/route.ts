@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
   if (buyerIds.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, full_name, company_name")
+      .select("id, full_name, company_name, buyer_tier")
       .in("id", buyerIds);
     (profiles || []).forEach((p: any) => {
       buyerMap[p.id] = p;
