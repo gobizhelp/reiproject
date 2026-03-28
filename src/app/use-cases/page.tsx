@@ -36,7 +36,7 @@ const useCases = [
       },
       {
         label: "Instant Distribution",
-        detail: "One-click email blasts reach matched buyers immediately",
+        detail: "Matched buyers are notified automatically when new deals fit their criteria",
       },
       {
         label: "Faster Closings",

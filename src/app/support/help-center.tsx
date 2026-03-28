@@ -76,11 +76,6 @@ const categories = [
           "Use the listing form to add property details, upload photos, and include comparable sales. The platform auto-generates a deal analysis with MAO, ROI, and profit projections. Your listing becomes a professional deal packet that buyers trust.",
       },
       {
-        question: "How do email blasts work?",
-        answer:
-          "Pro and Elite sellers can send email blasts to matched buyers. When you publish a listing, go to the distribution options and click 'Send Email Blast'. All buyers whose buy boxes match your deal will receive the notification.",
-      },
-      {
         question: "How do I track listing performance?",
         answer:
           "Your dashboard shows analytics for each listing — views, saves, inquiries, and more. Pro and Elite sellers get detailed analytics to understand which deals generate the most interest.",

@@ -68,7 +68,6 @@ const SELLER_TIER_MAP: Record<SellerFeature, Tier> = {
   manual_share_link: 'free',
   inquiry_count: 'free',
   matched_buyer_count: 'pro',
-  email_blast: 'pro',
   listing_analytics: 'pro',
   views_count: 'pro',
   saves_count: 'pro',

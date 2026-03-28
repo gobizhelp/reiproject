@@ -87,7 +87,6 @@ const SELLER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
   ],
   pro: [
     ["create_listing"],         // "Up to 10 listings" (limit, always ready)
-    ["email_blast"],            // "Email blast to matched buyers"
     ["listing_analytics", "views_count"], // "Listing analytics & views"
     ["featured_listing_badge"], // "Featured listing badge"
     ["branded_seller_profile", "branded_listing_page"], // "Branded profile & pages"
@@ -168,7 +167,6 @@ const SELLER_HIGHLIGHTS: Record<Tier, string[]> = {
   ],
   pro: [
     "Up to 10 listings",
-    "Email blast to matched buyers",
     "Listing analytics & views",
     "Featured listing badge",
     "Branded profile & pages",
@@ -232,7 +230,7 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
   {
     label: "Marketing & Distribution",
     features: [
-      "manual_share_link", "email_blast", "sms_blast", "buyer_list_import",
+      "manual_share_link", "sms_blast", "buyer_list_import",
       "audience_segmentation",
     ],
   },

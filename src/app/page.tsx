@@ -172,7 +172,7 @@ export default async function HomePage() {
             <Zap className="w-10 h-10 text-amber-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Close in Days, Not Weeks</h3>
             <p className="text-muted">
-              One-click shareable links, email blasts, and real-time
+              One-click shareable links, automatic buyer notifications, and real-time
               messaging eliminate the back-and-forth that kills deals.
             </p>
           </div>

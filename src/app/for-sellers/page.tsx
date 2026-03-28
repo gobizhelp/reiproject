@@ -82,8 +82,8 @@ export default function ForSellersPage() {
           <FeatureCard
             icon={Mail}
             iconColor="text-amber-400"
-            title="Email & SMS Blasts"
-            description="Distribute deals to your matched buyers with one click. Email blasts, SMS alerts, and shareable links get your deal in front of buyers before the competition."
+            title="SMS Blasts & Auto Notifications"
+            description="Send SMS alerts to matched buyers with one click. Matched buyers also get automatic email notifications, and shareable links get your deal in front of buyers before the competition."
           />
           <FeatureCard
             icon={BarChart3}
