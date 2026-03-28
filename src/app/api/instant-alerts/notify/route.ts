@@ -51,12 +51,24 @@ export async function POST(request: NextRequest) {
   const earlyAccessHours: number = setting?.value ?? 24;
 
   // Check if we already have alerts logged for this property
-  const { data: existingLogs } = await supabase
-    .from('instant_alert_log')
-    .select('tier, status')
-    .eq('property_id', propertyId);
+  // Gracefully handle missing table (migration may not have been run yet)
+  let existingTiers = new Set<string>();
+  let hasTrackingTable = true;
+  try {
+    const { data: existingLogs, error: logError } = await supabase
+      .from('instant_alert_log')
+      .select('tier, status')
+      .eq('property_id', propertyId);
 
-  const existingTiers = new Set((existingLogs || []).map((l: { tier: string }) => l.tier));
+    if (logError) {
+      // Table likely doesn't exist — proceed without dedup tracking
+      hasTrackingTable = false;
+    } else {
+      existingTiers = new Set((existingLogs || []).map((l: { tier: string }) => l.tier));
+    }
+  } catch {
+    hasTrackingTable = false;
+  }
 
   const results: { elite?: { sent: number; errors: string[] }; pro?: { scheduled: boolean } } = {};
 
@@ -65,15 +77,17 @@ export async function POST(request: NextRequest) {
     const eliteResult = await sendAlertsForTier(supabase, property, 'elite', true);
     results.elite = eliteResult;
 
-    // Log the elite alert
-    await supabase.from('instant_alert_log').insert({
-      property_id: propertyId,
-      tier: 'elite',
-      status: eliteResult.errors.length === 0 ? 'sent' : (eliteResult.sent > 0 ? 'sent' : 'failed'),
-      sent_at: new Date().toISOString(),
-      recipients_count: eliteResult.sent,
-      error_message: eliteResult.errors.length > 0 ? eliteResult.errors.join('; ') : null,
-    });
+    // Log the elite alert (best-effort)
+    if (hasTrackingTable) {
+      await supabase.from('instant_alert_log').insert({
+        property_id: propertyId,
+        tier: 'elite',
+        status: eliteResult.errors.length === 0 ? 'sent' : (eliteResult.sent > 0 ? 'sent' : 'failed'),
+        sent_at: new Date().toISOString(),
+        recipients_count: eliteResult.sent,
+        error_message: eliteResult.errors.length > 0 ? eliteResult.errors.join('; ') : null,
+      }).catch(() => {});
+    }
   }
 
   // --- Schedule Pro buyer alerts for after early access window ---
@@ -88,24 +102,28 @@ export async function POST(request: NextRequest) {
       const proResult = await sendAlertsForTier(supabase, property, 'pro', false);
       results.pro = { scheduled: false };
 
-      await supabase.from('instant_alert_log').insert({
-        property_id: propertyId,
-        tier: 'pro',
-        status: proResult.errors.length === 0 ? 'sent' : (proResult.sent > 0 ? 'sent' : 'failed'),
-        scheduled_for: scheduledFor.toISOString(),
-        sent_at: new Date().toISOString(),
-        recipients_count: proResult.sent,
-        error_message: proResult.errors.length > 0 ? proResult.errors.join('; ') : null,
-      });
+      if (hasTrackingTable) {
+        await supabase.from('instant_alert_log').insert({
+          property_id: propertyId,
+          tier: 'pro',
+          status: proResult.errors.length === 0 ? 'sent' : (proResult.sent > 0 ? 'sent' : 'failed'),
+          scheduled_for: scheduledFor.toISOString(),
+          sent_at: new Date().toISOString(),
+          recipients_count: proResult.sent,
+          error_message: proResult.errors.length > 0 ? proResult.errors.join('; ') : null,
+        }).catch(() => {});
+      }
     } else {
       // Queue for later — the cron job will pick this up
-      await supabase.from('instant_alert_log').insert({
-        property_id: propertyId,
-        tier: 'pro',
-        status: 'pending',
-        scheduled_for: scheduledFor.toISOString(),
-        recipients_count: 0,
-      });
+      if (hasTrackingTable) {
+        await supabase.from('instant_alert_log').insert({
+          property_id: propertyId,
+          tier: 'pro',
+          status: 'pending',
+          scheduled_for: scheduledFor.toISOString(),
+          recipients_count: 0,
+        }).catch(() => {});
+      }
       results.pro = { scheduled: true };
     }
   }
