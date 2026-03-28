@@ -80,6 +80,7 @@ export default async function MatchedListingsPage() {
     .from("properties")
     .select("*, property_photos(id, url, display_order)")
     .eq("status", "published")
+    .eq("moderation_status", "approved")
     .in("seller_status", ["active", "pending"])
     .order("created_at", { ascending: false });
 

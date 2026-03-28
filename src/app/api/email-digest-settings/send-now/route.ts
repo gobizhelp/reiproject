@@ -55,14 +55,13 @@ export async function POST() {
   // Use admin client to fetch properties (no RLS restrictions on read)
   const adminSupabase = createAdminClient();
   const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - COOLDOWN_MS).toISOString();
 
   const { data: recentProperties, error: propsError } = await adminSupabase
     .from('properties')
     .select('*, property_photos(id, url, display_order)')
     .eq('status', 'published')
     .eq('moderation_status', 'approved')
-    .gte('published_at', oneDayAgo)
+    .in('seller_status', ['active', 'pending'])
     .order('published_at', { ascending: false });
 
   if (propsError) {
@@ -106,7 +105,7 @@ export async function POST() {
 
   const subject =
     matches.length > 0
-      ? `${matches.length} new deal${matches.length === 1 ? '' : 's'} matching your buy box`
+      ? `${matches.length} deal${matches.length === 1 ? '' : 's'} matching your buy box`
       : 'Your daily deal digest — no new matches today';
 
   // Send email
