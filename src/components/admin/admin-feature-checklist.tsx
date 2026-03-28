@@ -43,7 +43,6 @@ const BUYER_TIER_MAP: Record<BuyerFeature, Tier> = {
   priority_inquiry: 'pro',
   pro_buyer_badge: 'pro',
   sms_alerts: 'elite',
-  push_notifications: 'elite',
   first_look_access: 'elite',
   team_seats: 'elite',
   shared_team_pipeline: 'elite',

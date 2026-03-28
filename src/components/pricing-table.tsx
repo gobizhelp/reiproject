@@ -70,7 +70,7 @@ const BUYER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
   elite: [
     ["basic_search"],           // "Unlimited buy boxes" (limit, always ready)
     ["first_look_access"],      // "First-look access"
-    ["sms_alerts", "push_notifications"], // "SMS & push notifications"
+    ["sms_alerts"],              // "SMS alerts"
     ["team_seats", "shared_team_pipeline"], // "Team seats & shared pipeline"
     ["bulk_export", "multi_market_watchlists"], // "Bulk export & watchlists"
   ],
@@ -151,7 +151,7 @@ const BUYER_HIGHLIGHTS: Record<Tier, string[]> = {
   elite: [
     "Unlimited buy boxes",
     "First-look access",
-    "SMS & push notifications",
+    "SMS alerts",
     "Team seats & shared pipeline",
     "Bulk export & watchlists",
   ],
@@ -196,7 +196,7 @@ const BUYER_FEATURE_GROUPS: { label: string; features: BuyerFeature[] }[] = [
     label: "Alerts & Notifications",
     features: [
       "in_app_notifications", "daily_digest_alerts", "instant_email_alerts",
-      "sms_alerts", "push_notifications",
+      "sms_alerts",
     ],
   },
   {
