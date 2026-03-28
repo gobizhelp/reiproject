@@ -41,7 +41,6 @@ export type BuyerFeature =
   | 'priority_inquiry'
   | 'pro_buyer_badge'
   | 'sms_alerts'
-  | 'push_notifications'
   | 'first_look_access'
   | 'team_seats'
   | 'shared_team_pipeline'
@@ -127,7 +126,6 @@ const PRO_BUYER_FEATURES: BuyerFeature[] = [
 const ELITE_BUYER_FEATURES: BuyerFeature[] = [
   ...PRO_BUYER_FEATURES,
   'sms_alerts',
-  'push_notifications',
   'first_look_access',
   'team_seats',
   'shared_team_pipeline',
@@ -316,7 +314,6 @@ export const BUYER_FEATURE_LABELS: Record<BuyerFeature, string> = {
   priority_inquiry: 'Priority inquiry placement',
   pro_buyer_badge: 'Pro buyer badge',
   sms_alerts: 'SMS alerts',
-  push_notifications: 'Push notifications',
   first_look_access: 'First-look access',
   team_seats: 'Team seats',
   shared_team_pipeline: 'Shared team pipeline',
