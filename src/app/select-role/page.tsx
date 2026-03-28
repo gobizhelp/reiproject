@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Building2, Loader2, ShoppingCart, ArrowLeftRight } from "lucide-react";
+import { Loader2, ShoppingCart, ArrowLeftRight, Building2 } from "lucide-react";
+import Image from "next/image";
 import type { UserRole } from "@/lib/profile-types";
 
 export default function SelectRolePage() {
@@ -106,7 +107,7 @@ export default function SelectRolePage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <Building2 className="w-10 h-10 text-accent mx-auto mb-4" />
+          <Image src="/logo.svg" alt="REI Reach" width={40} height={40} className="mx-auto mb-4" />
           <h1 className="text-3xl font-bold mb-2">How will you use REI Reach?</h1>
           <p className="text-muted">Choose your role to get started. You can change this anytime in settings.</p>
         </div>
