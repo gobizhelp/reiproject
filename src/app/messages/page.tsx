@@ -21,10 +21,12 @@ export default async function MessagesPage() {
   const isBuyer = profile?.active_view === "buyer";
 
   // Try fetching conversations (new DM system)
+  // Sort by priority first (for seller view), then by most recent
   const { data: conversations, error: convError } = await supabase
     .from("conversations")
     .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_photos(id, url, display_order))")
     .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+    .order("is_priority", { ascending: false })
     .order("updated_at", { ascending: false });
 
   // If conversations table works and has data, use the new system
@@ -79,11 +81,21 @@ export default async function MessagesPage() {
       };
     }));
 
+    // For sellers, sort priority inquiries first, then by updated_at
+    const sorted = isBuyer
+      ? enriched
+      : enriched.sort((a, b) => {
+          const aPriority = a.is_priority ? 1 : 0;
+          const bPriority = b.is_priority ? 1 : 0;
+          if (bPriority !== aPriority) return bPriority - aPriority;
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        });
+
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <ConversationsList
-          conversations={enriched as any}
+          conversations={sorted as any}
           role={isBuyer ? "buyer" : "seller"}
         />
       </div>

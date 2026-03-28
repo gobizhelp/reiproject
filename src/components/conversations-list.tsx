@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/calculations";
 import {
-  MessageCircle, Eye, DollarSign, MessageSquare, Building2, MapPin, Clock, User
+  MessageCircle, Eye, DollarSign, MessageSquare, Building2, MapPin, Clock, User, ArrowUp
 } from "lucide-react";
 import ProBuyerBadge from "./pro-buyer-badge";
 import type { Tier } from "@/lib/membership/tier-config";
@@ -17,6 +17,7 @@ interface ConversationRow {
   buyer_shared_contact: boolean;
   initial_action: string;
   created_at: string;
+  is_priority?: boolean;
   updated_at: string;
   properties: {
     id: string;
@@ -105,13 +106,18 @@ export default function ConversationsList({ conversations: initial, role }: Prop
 
             const lastMsg = conv.last_message;
             const isUnread = conv.unread_count > 0;
+            const showPriority = role === "seller" && conv.is_priority;
 
             return (
               <Link
                 key={conv.id}
                 href={`/messages/${conv.id}`}
                 className={`block bg-card border rounded-2xl overflow-hidden transition-colors hover:border-accent/50 ${
-                  isUnread ? "border-accent/50 bg-accent/5" : "border-border"
+                  showPriority
+                    ? "border-amber-500/50 bg-amber-500/5"
+                    : isUnread
+                      ? "border-accent/50 bg-accent/5"
+                      : "border-border"
                 }`}
               >
                 <div className="flex items-center p-4 gap-4">
@@ -132,6 +138,12 @@ export default function ConversationsList({ conversations: initial, role }: Prop
                       <span className="font-bold truncate">
                         {conv.other_user.full_name}
                       </span>
+                      {showPriority && (
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-semibold shrink-0">
+                          <ArrowUp className="w-2.5 h-2.5" />
+                          Priority
+                        </span>
+                      )}
                       {conv.is_buyer === false && conv.other_user.buyer_tier && (
                         <ProBuyerBadge buyerTier={conv.other_user.buyer_tier as Tier} />
                       )}

@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   MessageSquare, Loader2, Lock, TrendingUp,
-  ChevronDown, User, Clock,
+  ChevronDown, User, Clock, ArrowUp,
 } from "lucide-react";
 import type { InquiryStatus } from "@/lib/types";
+import ProBuyerBadge from "./pro-buyer-badge";
+import type { Tier } from "@/lib/membership/tier-config";
 
 interface InquiryItem {
   id: string;
@@ -16,6 +18,7 @@ interface InquiryItem {
   inquiry_status: InquiryStatus;
   inquiry_status_updated_at: string;
   buyer_shared_contact: boolean;
+  is_priority?: boolean;
   created_at: string;
   updated_at: string;
   properties: {
@@ -28,6 +31,7 @@ interface InquiryItem {
   buyer: {
     full_name: string;
     company_name?: string;
+    buyer_tier?: string;
   };
 }
 
@@ -205,7 +209,9 @@ export default function InquiryStatusTracker({ hasAccess, propertyId }: Props) {
           return (
             <div
               key={inq.id}
-              className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
+              className={`bg-card border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 ${
+                inq.is_priority ? "border-amber-500/50 bg-amber-500/5" : "border-border"
+              }`}
             >
               {/* Buyer + property info */}
               <div className="flex-1 min-w-0">
@@ -217,6 +223,15 @@ export default function InquiryStatusTracker({ hasAccess, propertyId }: Props) {
                       <span className="text-muted text-sm"> ({inq.buyer.company_name})</span>
                     )}
                   </span>
+                  {inq.is_priority && (
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-semibold shrink-0">
+                      <ArrowUp className="w-2.5 h-2.5" />
+                      Priority
+                    </span>
+                  )}
+                  {inq.buyer.buyer_tier && (
+                    <ProBuyerBadge buyerTier={inq.buyer.buyer_tier as Tier} />
+                  )}
                 </div>
                 <div className="text-sm text-muted flex flex-wrap items-center gap-2">
                   <span>{inq.properties.street_address}, {inq.properties.city}, {inq.properties.state}</span>

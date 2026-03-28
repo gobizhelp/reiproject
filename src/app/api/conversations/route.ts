@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest } from "next/server";
+import { hasBuyerFeature } from "@/lib/membership/feature-gate";
+import type { Tier } from "@/lib/membership/tier-config";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +25,12 @@ export async function GET() {
   }
 
   // Fetch conversations where user is buyer or seller
+  // Priority inquiries are sorted first for sellers
   const { data: conversations, error } = await supabase
     .from("conversations")
     .select("*, properties(id, slug, street_address, city, state, zip_code, asking_price, property_photos(id, url, display_order))")
     .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+    .order("is_priority", { ascending: false })
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -136,6 +140,16 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Cannot message your own property" }, { status: 400 });
   }
 
+  // Check if buyer has priority inquiry feature
+  const { data: buyerProfile } = await supabase
+    .from("profiles")
+    .select("buyer_tier")
+    .eq("id", user.id)
+    .single();
+
+  const buyerTier = (buyerProfile?.buyer_tier as Tier) || "free";
+  const isPriority = hasBuyerFeature(buyerTier, "priority_inquiry");
+
   // Check if conversation already exists for this buyer+property
   const { data: existing } = await supabase
     .from("conversations")
@@ -148,18 +162,18 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     conversationId = existing.id;
-    // Update contact sharing if requested
+    // Update contact sharing and priority status
+    const updates: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+      is_priority: isPriority,
+    };
     if (shareContact) {
-      await supabase
-        .from("conversations")
-        .update({ buyer_shared_contact: true, updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
-    } else {
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
+      updates.buyer_shared_contact = true;
     }
+    await supabase
+      .from("conversations")
+      .update(updates)
+      .eq("id", conversationId);
   } else {
     // Create new conversation
     const { data: newConv, error: convError } = await supabase
@@ -170,6 +184,7 @@ export async function POST(request: NextRequest) {
         seller_id: property.user_id,
         initial_action: action,
         buyer_shared_contact: shareContact || false,
+        is_priority: isPriority,
       })
       .select("id")
       .single();
