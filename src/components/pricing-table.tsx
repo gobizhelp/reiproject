@@ -90,13 +90,12 @@ const SELLER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
     ["listing_analytics", "views_count"], // "Listing analytics & views"
     ["featured_listing_badge"], // "Featured listing badge"
     ["branded_seller_profile", "branded_listing_page"], // "Branded profile & pages"
-    ["basic_dispo_pipeline"],   // "Dispo pipeline"
   ],
   elite: [
     ["create_listing"],         // "Unlimited listings" (limit, always ready)
     ["sms_blast", "audience_segmentation"], // "SMS blast & audience segmentation"
     ["private_listings", "premium_only_listings"], // "Private & premium-only listings"
-    ["shared_team_inbox", "team_dispo_pipeline"], // "Team inbox & dispo pipeline"
+    ["shared_team_inbox"],      // "Team inbox"
     ["deal_room", "offer_collection_tools"], // "Deal room & offer tools"
   ],
 };
@@ -170,13 +169,12 @@ const SELLER_HIGHLIGHTS: Record<Tier, string[]> = {
     "Listing analytics & views",
     "Featured listing badge",
     "Branded profile & pages",
-    "Dispo pipeline",
   ],
   elite: [
     "Unlimited listings",
     "SMS blast & audience segmentation",
     "Private & premium-only listings",
-    "Team inbox & dispo pipeline",
+    "Team inbox",
     "Deal room & offer tools",
   ],
 };
@@ -245,9 +243,9 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
   {
     label: "Pipeline & Team",
     features: [
-      "receive_inquiries", "inquiry_status_tracking", "basic_dispo_pipeline",
+      "receive_inquiries", "inquiry_status_tracking",
       "branded_seller_profile", "seller_team_seats",
-      "shared_team_inbox", "team_dispo_pipeline", "internal_notes_assignment",
+      "shared_team_inbox", "internal_notes_assignment",
       "offer_collection_tools", "deal_room",
     ],
   },

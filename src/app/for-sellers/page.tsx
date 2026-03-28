@@ -9,10 +9,10 @@ import { DollarSign, Target, Mail, BarChart3, Share2, Users, Upload, Zap, Trendi
 
 export const metadata: Metadata = {
   title: "For Sellers",
-  description: "Move properties faster, earn bigger assignment fees, and reach qualified buyers instantly. The dispo system built for wholesalers who refuse to leave money on the table.",
+  description: "Move properties faster, earn bigger assignment fees, and reach qualified buyers instantly. The selling system built for wholesalers who refuse to leave money on the table.",
   openGraph: {
     title: "For Sellers",
-    description: "Move properties faster, earn bigger assignment fees, and reach qualified buyers instantly. The dispo system built for wholesalers who refuse to leave money on the table.",
+    description: "Move properties faster, earn bigger assignment fees, and reach qualified buyers instantly. The selling system built for wholesalers who refuse to leave money on the table.",
   },
 };
 
@@ -25,7 +25,7 @@ export default function ForSellersPage() {
         eyebrow="For Wholesalers, Investors & Agents"
         title="Stop Chasing Buyers."
         titleAccent="Start Attracting Them."
-        subtitle="The dispo system built for wholesalers who refuse to leave money on the table. Create professional deal packets, reach matched buyers instantly, and close in days — not weeks."
+        subtitle="The selling system built for wholesalers who refuse to leave money on the table. Create professional deal packets, reach matched buyers instantly, and close in days — not weeks."
         primaryCTA={{ label: "List Your First Deal Free", href: "/signup" }}
         secondaryCTA={{ label: "See How It Works", href: "/how-it-works" }}
       />
