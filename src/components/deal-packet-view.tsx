@@ -243,7 +243,7 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
         {(property.is_featured || sellerBranding) && (
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             {property.is_featured && (
-              <FeaturedListingBadge size="md" />
+              <FeaturedListingBadge />
             )}
             {sellerBranding && (
               <div className="flex-1">
