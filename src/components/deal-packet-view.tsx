@@ -239,23 +239,19 @@ export default function DealPacketView({ property, photos, comps, analysis, isLo
           </div>
         )}
 
-        {/* Featured badge + Seller branding */}
-        {(property.is_featured || sellerBranding) && (
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {property.is_featured && (
-              <FeaturedListingBadge />
-            )}
-            {sellerBranding && (
-              <div className="flex-1">
-                <SellerBrandingCard seller={sellerBranding} />
-              </div>
-            )}
+        {/* Seller branding */}
+        {sellerBranding && (
+          <div className="mb-6">
+            <SellerBrandingCard seller={sellerBranding} />
           </div>
         )}
 
         {/* Tags Bar */}
-        {(property.listing_status || property.ideal_investor_strategy) && (
+        {(property.is_featured || property.listing_status || property.ideal_investor_strategy) && (
           <div className="flex flex-wrap gap-2 mb-6">
+            {property.is_featured && (
+              <FeaturedListingBadge />
+            )}
             {property.listing_status && (
               <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
                 property.listing_status === "off_market"
