@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
+import { sendAlertsForTier } from '@/app/api/instant-alerts/notify/route';
+import { matchProperties } from '@/lib/matching';
+import type { Property } from '@/lib/types';
+import type { BuyerBuyBox } from '@/lib/profile-types';
 
 const DEMO_ACCOUNTS = [
   {
@@ -371,24 +375,51 @@ export async function POST() {
       const demoUserIds = [sellerUserId, bothUserId].filter(Boolean) as string[];
       await adminSupabase.from('properties').delete().in('user_id', demoUserIds);
 
+      const publishedPropertyIds: string[] = [];
+
       for (const prop of DEMO_PROPERTIES) {
         const ownerId = prop.contact_email === 'demo-both@reireach.test' ? bothUserId : sellerUserId;
         if (!ownerId) continue;
 
         const slug = generateSlug(prop.street_address, prop.city);
 
-        const { error: propError } = await adminSupabase.from('properties').insert({
+        const { data: newProp, error: propError } = await adminSupabase.from('properties').insert({
           ...prop,
           user_id: ownerId,
           slug,
           is_featured: false,
           moderation_status: 'approved',
-        });
+          published_at: prop.status === 'published' ? new Date().toISOString() : null,
+        }).select('id').single();
 
         if (propError) {
           results.push(`Failed to create property "${prop.title}": ${propError.message}`);
         } else {
           results.push(`Created property: ${prop.title}`);
+          if (prop.status === 'published' && newProp) {
+            publishedPropertyIds.push(newProp.id);
+          }
+        }
+      }
+
+      // Send instant email alerts for newly published demo properties
+      for (const propId of publishedPropertyIds) {
+        try {
+          const { data: propWithPhotos } = await adminSupabase
+            .from('properties')
+            .select('*, property_photos(id, url, display_order)')
+            .eq('id', propId)
+            .single();
+
+          if (propWithPhotos) {
+            const eliteResult = await sendAlertsForTier(adminSupabase, propWithPhotos, 'elite', true);
+            results.push(`Instant alerts (elite): ${eliteResult.sent} sent${eliteResult.errors.length > 0 ? `, ${eliteResult.errors.length} errors` : ''}`);
+
+            const proResult = await sendAlertsForTier(adminSupabase, propWithPhotos, 'pro', false);
+            results.push(`Instant alerts (pro): ${proResult.sent} sent${proResult.errors.length > 0 ? `, ${proResult.errors.length} errors` : ''}`);
+          }
+        } catch (err) {
+          results.push(`Failed to send instant alerts for property ${propId}: ${err instanceof Error ? err.message : 'unknown'}`);
         }
       }
     }
