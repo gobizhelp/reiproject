@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import {
   Building2, LogOut, Users, Search, Settings, ShoppingCart,
   Package, Heart, MessageCircle, Shield, Volume2, VolumeX, Target, GripVertical,
-  Bell, Check, Clock, CheckCircle, Archive, RotateCcw
+  Bell, Check, Clock, CheckCircle, Archive, RotateCcw, ArrowUpCircle
 } from "lucide-react";
 import type { Profile, ActiveView } from "@/lib/profile-types";
 import { useNotifications } from "@/components/notification-provider";
@@ -334,6 +334,19 @@ export default function Navbar() {
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
+          {/* Upgrade button for non-elite members */}
+          {profileLoaded && (() => {
+            const currentTier = isBuyer ? profile?.buyer_tier : profile?.seller_tier;
+            return currentTier && currentTier !== "elite";
+          })() && (
+            <Link
+              href="/pricing"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white rounded-lg transition-all shadow-sm"
+            >
+              <ArrowUpCircle className="w-4 h-4" />
+              <span className="hidden md:inline">Upgrade</span>
+            </Link>
+          )}
           <Link href="/settings" className="text-muted hover:text-foreground transition-colors">
             <Settings className="w-4 h-4" />
           </Link>
