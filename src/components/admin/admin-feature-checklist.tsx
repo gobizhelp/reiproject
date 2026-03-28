@@ -20,6 +20,12 @@ import {
   type Tier,
 } from '@/lib/membership/tier-config';
 
+// --- Features excluded from the checklist ---
+const EXCLUDED_BUYER_FEATURES: Set<BuyerFeature> = new Set([
+  'basic_deal_pipeline',
+  'shared_team_pipeline',
+]);
+
 // --- Feature tier assignments (which tier introduces each feature) ---
 
 const BUYER_TIER_MAP: Record<BuyerFeature, Tier> = {
@@ -193,7 +199,7 @@ export default function AdminFeatureChecklist() {
     tier: Tier,
   ): FeatureItem[] {
     return Object.entries(tierMap)
-      .filter(([, t]) => t === tier)
+      .filter(([key, t]) => t === tier && !(prefix === 'buyer' && EXCLUDED_BUYER_FEATURES.has(key as BuyerFeature)))
       .map(([key]) => ({ key: `${prefix}_${key}`, label: labels[key], tier }));
   }
 
