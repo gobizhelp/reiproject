@@ -93,10 +93,9 @@ const SELLER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
   ],
   elite: [
     ["create_listing"],         // "Unlimited listings" (limit, always ready)
-    ["audience_segmentation"], // "Audience segmentation"
-    ["private_listings", "premium_only_listings"], // "Private & premium-only listings"
+    ["private_listings"],       // "Private listings"
     ["shared_team_inbox"],      // "Team inbox"
-    ["deal_room", "offer_collection_tools"], // "Deal room & offer tools"
+    ["deal_room"],              // "Deal room"
   ],
 };
 
@@ -172,10 +171,9 @@ const SELLER_HIGHLIGHTS: Record<Tier, string[]> = {
   ],
   elite: [
     "Unlimited listings",
-    "Audience segmentation",
-    "Private & premium-only listings",
+    "Private listings",
     "Team inbox",
-    "Deal room & offer tools",
+    "Deal room",
   ],
 };
 
@@ -222,14 +220,12 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
       "archive_listing", "mark_sold", "upload_photos", "basic_property_fields",
       "listing_templates", "duplicate_listing", "attachment_uploads",
       "featured_listing_badge", "branded_listing_page", "private_listings",
-      "premium_only_listings",
     ],
   },
   {
     label: "Marketing & Distribution",
     features: [
       "manual_share_link", "buyer_list_import",
-      "audience_segmentation",
     ],
   },
   {
@@ -237,7 +233,7 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
     features: [
       "inquiry_count", "matched_buyer_count", "listing_analytics", "views_count",
       "saves_count", "inquiries_analytics",
-      "open_click_tracking", "buyer_intent_tracking",
+      "open_click_tracking",
     ],
   },
   {
@@ -246,7 +242,7 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
       "receive_inquiries", "inquiry_status_tracking",
       "branded_seller_profile", "seller_team_seats",
       "shared_team_inbox", "internal_notes_assignment",
-      "offer_collection_tools", "deal_room",
+      "deal_room",
     ],
   },
 ];
