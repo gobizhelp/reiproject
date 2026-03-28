@@ -26,8 +26,6 @@ export async function GET(request: Request) {
 
         if (!profile?.role_selected) {
           return NextResponse.redirect(`${origin}/select-role`);
-        } else if (profile?.active_view === "buyer") {
-          return NextResponse.redirect(`${origin}/marketplace`);
         }
       }
 

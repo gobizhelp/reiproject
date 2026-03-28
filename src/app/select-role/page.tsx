@@ -66,11 +66,7 @@ export default function SelectRolePage() {
       return;
     }
 
-    if (selectedRole === "buyer") {
-      router.push("/marketplace");
-    } else {
-      router.push("/dashboard");
-    }
+    router.push("/dashboard");
     router.refresh();
   }
 

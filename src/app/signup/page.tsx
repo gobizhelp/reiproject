@@ -71,12 +71,8 @@ export default function SignupPage() {
       return;
     }
 
-    // Redirect based on role
-    if (selectedRole === "buyer") {
-      router.push("/marketplace");
-    } else {
-      router.push("/dashboard");
-    }
+    // Redirect new users to dashboard
+    router.push("/dashboard");
     router.refresh();
   }
 
