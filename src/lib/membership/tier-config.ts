@@ -65,7 +65,6 @@ export type SellerFeature =
   | 'manual_share_link'
   | 'inquiry_count'
   | 'matched_buyer_count'
-  | 'email_blast'
   | 'listing_analytics'
   | 'views_count'
   | 'saves_count'
@@ -158,7 +157,6 @@ const FREE_SELLER_FEATURES: SellerFeature[] = [
 const PRO_SELLER_FEATURES: SellerFeature[] = [
   ...FREE_SELLER_FEATURES,
   'matched_buyer_count',
-  'email_blast',
   'listing_analytics',
   'views_count',
   'saves_count',
@@ -264,7 +262,7 @@ export const MEMBERSHIP_PLANS: Record<PlanId, MembershipPlan> = {
   pro_seller: {
     id: 'pro_seller',
     name: 'Pro Seller',
-    description: 'List more deals, email matched buyers, and see performance analytics.',
+    description: 'List more deals, see performance analytics, and get featured listing badges.',
     planType: 'seller',
     tier: 'pro',
     monthlyPriceCents: 7900,
@@ -343,7 +341,6 @@ export const SELLER_FEATURE_LABELS: Record<SellerFeature, string> = {
   manual_share_link: 'Manual share link',
   inquiry_count: 'Inquiry count',
   matched_buyer_count: 'Matched buyer count',
-  email_blast: 'Email blast to matched buyers',
   listing_analytics: 'Listing analytics',
   views_count: 'Views count',
   saves_count: 'Saves count',

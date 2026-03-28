@@ -11,10 +11,10 @@ import {
 
 export const metadata: Metadata = {
   title: "Features",
-  description: "Explore every tool REI Reach offers — buy boxes, instant matching, deal analysis, email blasts, analytics, team features, and more. Built for serious real estate investors.",
+  description: "Explore every tool REI Reach offers — buy boxes, instant matching, deal analysis, analytics, team features, and more. Built for serious real estate investors.",
   openGraph: {
     title: "Features",
-    description: "Explore every tool REI Reach offers — buy boxes, instant matching, deal analysis, email blasts, analytics, team features, and more. Built for serious real estate investors.",
+    description: "Explore every tool REI Reach offers — buy boxes, instant matching, deal analysis, analytics, team features, and more. Built for serious real estate investors.",
   },
 };
 
@@ -103,8 +103,8 @@ export default function FeaturesPage() {
             <FeatureCard
               icon={Mail}
               iconColor="text-amber-400"
-              title="Email & SMS Blasts"
-              description="Distribute deals to matched buyers with one click. Email blasts and SMS alerts ensure your deal gets seen immediately."
+              title="SMS Blasts"
+              description="Send SMS alerts to matched buyers with one click. Matched buyers also receive automatic email notifications when new deals fit their buy boxes."
             />
             <FeatureCard
               icon={Users}

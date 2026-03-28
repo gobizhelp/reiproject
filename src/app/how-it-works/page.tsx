@@ -55,7 +55,7 @@ export default function HowItWorksPage() {
             step={4}
             icon={Send}
             title="Inquiries & Distribution"
-            description="Buyers inquire with one click. Sellers distribute via email blasts, messaging, and shareable deal packet links. The back-and-forth that kills deals? Eliminated."
+            description="Buyers inquire with one click. Sellers distribute via messaging and shareable deal packet links. Matched buyers are notified automatically. The back-and-forth that kills deals? Eliminated."
           />
         </div>
       </section>
