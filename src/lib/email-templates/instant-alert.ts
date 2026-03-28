@@ -50,7 +50,7 @@ function propertyCard(match: MatchedProperty): string {
             ${matchReasons}
           </span>
         </div>
-        <a href="${APP_URL}/listings/${p.slug}" style="display:inline-block;background:#7c3aed;color:white;text-decoration:none;padding:8px 20px;border-radius:6px;font-size:13px;font-weight:600;">
+        <a href="${APP_URL}/deals/${p.slug}" style="display:inline-block;background:#7c3aed;color:white;text-decoration:none;padding:8px 20px;border-radius:6px;font-size:13px;font-weight:600;">
           View Deal
         </a>
       </div>
@@ -106,7 +106,7 @@ export function buildInstantAlertHtml(
 
     <!-- CTA -->
     <div style="text-align:center;margin:32px 0;">
-      <a href="${APP_URL}/buyer/matches" style="display:inline-block;background:#7c3aed;color:white;text-decoration:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:600;">
+      <a href="${APP_URL}/matched-listings" style="display:inline-block;background:#7c3aed;color:white;text-decoration:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:600;">
         View All Matches
       </a>
     </div>
