@@ -178,7 +178,7 @@ export default function PropertyList({ properties: initial, hasFeaturedAccess, h
   return (
     <div>
       {/* Status filter tabs */}
-      <div className="flex items-center gap-1 mb-4 border-b border-border overflow-x-auto">
+      <div className="flex items-center gap-1 mb-4 border-b border-border overflow-x-auto overflow-y-hidden">
         {STATUS_TABS.map((tab) => {
           const count = counts[tab.key] || 0;
           // For "all" tab, subtract archived from total count since we hide them by default
