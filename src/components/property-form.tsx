@@ -264,6 +264,15 @@ export default function PropertyForm({ property, hasTemplatesAccess, hasAttachme
           }),
         }).catch(() => {});
 
+        // Fire-and-forget instant email alerts when first publishing
+        if (status === "published" && !property.published_at) {
+          fetch("/api/instant-alerts/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ propertyId: property.id }),
+          }).catch(() => {});
+        }
+
         // Update comps: delete old, insert new
         await supabase.from("comps").delete().eq("property_id", property.id);
         if (comps.length > 0) {
@@ -317,6 +326,15 @@ export default function PropertyForm({ property, hasTemplatesAccess, hasAttachme
             address: `${streetAddress}, ${city}, ${state} ${zipCode}`,
           }),
         }).catch(() => {});
+
+        // Fire-and-forget instant email alerts when publishing a new listing
+        if (status === "published") {
+          fetch("/api/instant-alerts/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ propertyId: newProp.id }),
+          }).catch(() => {});
+        }
 
         // Move uploaded photos to this property
         if (photos.length > 0) {
