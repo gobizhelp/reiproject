@@ -75,7 +75,6 @@ export type SellerFeature =
   | 'duplicate_listing'
   | 'attachment_uploads'
   | 'inquiry_status_tracking'
-  | 'sms_blast'
   | 'buyer_list_import'
   | 'audience_segmentation'
   | 'private_listings'
@@ -169,7 +168,6 @@ const PRO_SELLER_FEATURES: SellerFeature[] = [
 
 const ELITE_SELLER_FEATURES: SellerFeature[] = [
   ...PRO_SELLER_FEATURES,
-  'sms_blast',
   'audience_segmentation',
   'private_listings',
   'premium_only_listings',
@@ -264,7 +262,7 @@ export const MEMBERSHIP_PLANS: Record<PlanId, MembershipPlan> = {
   elite_seller: {
     id: 'elite_seller',
     name: 'Elite Seller',
-    description: 'High-volume listings, SMS blasts, audience segmentation, and team tools.',
+    description: 'High-volume listings, audience segmentation, and team tools.',
     planType: 'seller',
     tier: 'elite',
     monthlyPriceCents: 19900,
@@ -345,7 +343,6 @@ export const SELLER_FEATURE_LABELS: Record<SellerFeature, string> = {
   duplicate_listing: 'Duplicate / clone listing',
   attachment_uploads: 'Attachment uploads',
   inquiry_status_tracking: 'Inquiry status tracking',
-  sms_blast: 'SMS blast',
   buyer_list_import: 'Buyer list import',
   audience_segmentation: 'Audience segmentation',
   private_listings: 'Private listings',

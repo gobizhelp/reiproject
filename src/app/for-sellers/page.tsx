@@ -5,7 +5,7 @@ import HeroSection from "@/components/marketing/hero-section";
 import FeatureCard from "@/components/marketing/feature-card";
 import StepCard from "@/components/marketing/step-card";
 import CTASection from "@/components/marketing/cta-section";
-import { DollarSign, Target, Mail, BarChart3, Share2, Users, Upload, Zap, TrendingUp } from "lucide-react";
+import { DollarSign, Target, BarChart3, Share2, Users, Upload, Zap, TrendingUp } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "For Sellers",
@@ -78,12 +78,6 @@ export default function ForSellersPage() {
             iconColor="text-success"
             title="Instant Buyer Matching"
             description="Every listing is automatically matched to buyers whose buy boxes fit your deal. No more blasting and hoping — reach the right people, every time."
-          />
-          <FeatureCard
-            icon={Mail}
-            iconColor="text-amber-400"
-            title="SMS Blasts & Auto Notifications"
-            description="Send SMS alerts to matched buyers with one click. Matched buyers also get automatic email notifications, and shareable links get your deal in front of buyers before the competition."
           />
           <FeatureCard
             icon={BarChart3}

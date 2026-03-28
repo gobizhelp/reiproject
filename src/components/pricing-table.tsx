@@ -93,7 +93,7 @@ const SELLER_HIGHLIGHT_FEATURES: Record<Tier, string[][]> = {
   ],
   elite: [
     ["create_listing"],         // "Unlimited listings" (limit, always ready)
-    ["sms_blast", "audience_segmentation"], // "SMS blast & audience segmentation"
+    ["audience_segmentation"], // "Audience segmentation"
     ["private_listings", "premium_only_listings"], // "Private & premium-only listings"
     ["shared_team_inbox"],      // "Team inbox"
     ["deal_room", "offer_collection_tools"], // "Deal room & offer tools"
@@ -172,7 +172,7 @@ const SELLER_HIGHLIGHTS: Record<Tier, string[]> = {
   ],
   elite: [
     "Unlimited listings",
-    "SMS blast & audience segmentation",
+    "Audience segmentation",
     "Private & premium-only listings",
     "Team inbox",
     "Deal room & offer tools",
@@ -228,7 +228,7 @@ const SELLER_FEATURE_GROUPS: { label: string; features: SellerFeature[] }[] = [
   {
     label: "Marketing & Distribution",
     features: [
-      "manual_share_link", "sms_blast", "buyer_list_import",
+      "manual_share_link", "buyer_list_import",
       "audience_segmentation",
     ],
   },

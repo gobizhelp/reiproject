@@ -84,7 +84,6 @@ const SELLER_TIER_MAP: Record<SellerFeature, Tier> = {
   duplicate_listing: 'pro',
   attachment_uploads: 'pro',
   inquiry_status_tracking: 'pro',
-  sms_blast: 'elite',
   buyer_list_import: 'free',
   audience_segmentation: 'elite',
   private_listings: 'elite',
